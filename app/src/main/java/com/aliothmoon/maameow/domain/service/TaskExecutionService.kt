@@ -47,13 +47,14 @@ class TaskExecutionService : Service() {
         private const val PROGRESS_COLOR_ACTIVE = 0xFF2196F3.toInt()
         private const val PROGRESS_COLOR_PENDING = 0xFF9E9E9E.toInt()
         private const val PROGRESS_COLOR_ERROR = 0xFFD32F2F.toInt()
-        private val VISIBLE_TASK_TITLES = setOf(
-            "理智作战",
-            "自动公招",
-            "基建换班",
-            "信用收支",
-            "领取奖励",
+                private val VISIBLE_TASK_TITLES = mapOf(
+            "Fight" to "理智作战",
+            "Recruit" to "自动公招",
+            "Infrast" to "基建换班",
+            "Mall" to "信用收支",
+            "Award" to "领取奖励",
         )
+
 
         fun start(context: Context) {
             val intent = Intent(context, TaskExecutionService::class.java)
@@ -324,14 +325,15 @@ class TaskExecutionService : Service() {
     }
 
         private fun buildNotificationTitle(snapshot: TaskNotificationSnapshot): String {
-        val currentTaskTitle = snapshot.tasks
-            .firstOrNull { it.status == TaskRunStatus.IN_PROGRESS }
-            ?.taskChain
-            ?.trim()
-            ?.takeIf { it in VISIBLE_TASK_TITLES }
+            val currentTaskTitle = snapshot.tasks
+                .firstOrNull { it.status == TaskRunStatus.IN_PROGRESS }
+                ?.taskChain
+                ?.trim()
+                ?.let { taskChain -> VISIBLE_TASK_TITLES[taskChain] ?: taskChain.takeIf { it in VISIBLE_TASK_TITLES.values } }
 
-        return currentTaskTitle ?: getString(R.string.notification_task_running_title)
-    }
+            return currentTaskTitle ?: getString(R.string.notification_task_running_title)
+        }
+
 
 
     private fun colorForStatus(status: TaskRunStatus): Int = when (status) {
