@@ -323,15 +323,16 @@ class TaskExecutionService : Service() {
         return "$progressText · $statusText"
     }
 
-    private fun buildNotificationTitle(snapshot: TaskNotificationSnapshot): String {
-        val visibleTasks = snapshot.tasks
-            .map { it.taskChain.trim() }
-            .filter { it in VISIBLE_TASK_TITLES }
-            .distinct()
+        private fun buildNotificationTitle(snapshot: TaskNotificationSnapshot): String {
+        val currentTaskTitle = snapshot.tasks
+            .firstOrNull { it.status == TaskRunStatus.IN_PROGRESS }
+            ?.taskChain
+            ?.trim()
+            ?.takeIf { it in VISIBLE_TASK_TITLES }
 
-        return visibleTasks.joinToString("、")
-            .ifBlank { getString(R.string.notification_task_running_title) }
+        return currentTaskTitle ?: getString(R.string.notification_task_running_title)
     }
+
 
     private fun colorForStatus(status: TaskRunStatus): Int = when (status) {
         TaskRunStatus.PENDING -> PROGRESS_COLOR_PENDING
