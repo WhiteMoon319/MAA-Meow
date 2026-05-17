@@ -27,7 +27,7 @@
         android:strokeColor="#5FB6C9"
         android:strokeWidth="0.5"
         android:strokeLineJoin="round"
-        android:pathData="M9.1,8.8 L14.9,8.8 L14.3,10.9 L9.7,10.9 Z" />
+        android:pathData="M9.1,8.8 L14.9,8.8 L14.3,10.9 L9.7,10.9 L9.1,8.8 Z" />
 
     <!-- 主体外形 -->
     <path
@@ -47,7 +47,9 @@
     <path
         android:fillColor="#176F97"
         android:strokeColor="#5DAFC4"
-        android:strokeWidth="0.55        android:pathData="M7,18 L17,18 L17.8,19.8 L6.2,19.8 Z" />
+        android:strokeWidth="0.55"
+        android:strokeLineJoin="round"
+        android:pathData="M7,18 L17,18 L17.8,19.8 L6.2,19.8 Z" />
 
     <!-- 高光线 -->
     <path
