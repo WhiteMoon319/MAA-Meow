@@ -271,7 +271,7 @@ class TaskExecutionService : Service() {
             )
         }
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+                return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(contentText)
@@ -283,7 +283,6 @@ class TaskExecutionService : Service() {
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setSubText(statusText)
-            .setProgress(progressInfo.max, progressInfo.progress, progressInfo.totalCount == 0)
             .build()
     }
 
