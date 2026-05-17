@@ -35,10 +35,11 @@ import timber.log.Timber
 class TaskExecutionService : Service() {
 
     companion object {
-        private const val CHANNEL_ID = "task_execution"
-        private const val NOTIFICATION_ID = 9003
+        private const val TASK_CHANNEL_ID = "task_execution_live"
+        private const val RESULT_CHANNEL_ID = "task_execution_result"
+                private const val NOTIFICATION_ID = 9003
         private const val RESULT_NOTIFICATION_ID = 9004
-                private const val MIN_UPDATE_INTERVAL_MS = 1000L
+        private const val MIN_UPDATE_INTERVAL_MS = 1000L
         private const val PROGRESS_STYLE_MAX = 1000
         private const val PERMISSION_POST_PROMOTED_NOTIFICATIONS =
             "android.permission.POST_PROMOTED_NOTIFICATIONS"
@@ -180,17 +181,25 @@ class TaskExecutionService : Service() {
         }
     }
 
-    private fun ensureNotificationChannel() {
+        private fun ensureNotificationChannel() {
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channel = NotificationChannel(
-            CHANNEL_ID,
+        val taskChannel = NotificationChannel(
+            TASK_CHANNEL_ID,
+            getString(R.string.notification_channel_task_execution),
+            NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply {
+            description = getString(R.string.notification_channel_task_execution_desc)
+            setShowBadge(false)
+        }
+        val resultChannel = NotificationChannel(
+            RESULT_CHANNEL_ID,
             getString(R.string.notification_channel_task_execution),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
             description = getString(R.string.notification_channel_task_execution_desc)
             setShowBadge(false)
         }
-        manager.createNotificationChannel(channel)
+        manager.createNotificationChannels(listOf(taskChannel, resultChannel))
     }
 
     private fun startAsForeground(notification: Notification) {
@@ -271,7 +280,7 @@ class TaskExecutionService : Service() {
             )
         }
 
-                return NotificationCompat.Builder(this, CHANNEL_ID)
+                return NotificationCompat.Builder(this, TASK_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(contentText)
@@ -407,7 +416,7 @@ class TaskExecutionService : Service() {
 
     private fun showResultNotification(title: String, text: String) {
         stopForeground(STOP_FOREGROUND_REMOVE)
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(this, RESULT_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(text)
