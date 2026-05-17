@@ -38,7 +38,7 @@ class TaskExecutionService : Service() {
         private const val CHANNEL_ID = "task_execution"
         private const val NOTIFICATION_ID = 9003
         private const val RESULT_NOTIFICATION_ID = 9004
-        private const val MIN_UPDATE_INTERVAL_MS = 1000L
+                private const val MIN_UPDATE_INTERVAL_MS = 1000L
         private const val PROGRESS_STYLE_MAX = 1000
         private const val PERMISSION_POST_PROMOTED_NOTIFICATIONS =
             "android.permission.POST_PROMOTED_NOTIFICATIONS"
@@ -47,7 +47,7 @@ class TaskExecutionService : Service() {
         private const val PROGRESS_COLOR_ACTIVE = 0xFF2196F3.toInt()
         private const val PROGRESS_COLOR_PENDING = 0xFF9E9E9E.toInt()
         private const val PROGRESS_COLOR_ERROR = 0xFFD32F2F.toInt()
-                private val VISIBLE_TASK_TITLES = mapOf(
+        private val VISIBLE_TASK_TITLES = mapOf(
             "Fight" to "理智作战",
             "Recruit" to "自动公招",
             "Infrast" to "基建换班",
@@ -300,7 +300,7 @@ class TaskExecutionService : Service() {
             )
         }
 
-        val unit = PROGRESS_STYLE_MAX / total
+                val unit = PROGRESS_STYLE_MAX / total
         val remainder = PROGRESS_STYLE_MAX % total
         val segments = tasks.mapIndexed { index, task ->
             val length = unit + if (index < remainder) 1 else 0
@@ -309,22 +309,24 @@ class TaskExecutionService : Service() {
         val completed = tasks.count { it.status == TaskRunStatus.COMPLETED }
         val activeIndex = tasks.indexOfFirst { it.status == TaskRunStatus.IN_PROGRESS }
             .takeIf { it >= 0 }
+        val taskErrorIndex = tasks.indexOfFirst { it.status == TaskRunStatus.ERROR }
+            .takeIf { it >= 0 }
+        val completedProgress = segments.take(completed.coerceIn(0, total)).sumOf { it.length }
         val progress = when {
-            snapshot.state == MaaExecutionState.ERROR || tasks.any { it.status == TaskRunStatus.ERROR } -> {
-                val errorIndex = tasks.indexOfFirst { it.status == TaskRunStatus.ERROR }
-                    .takeIf { it >= 0 }
-                    ?: activeIndex
-                    ?: completed
-                segments.take(errorIndex.coerceIn(0, total)).sumOf { it.length }
+            // Error semantics: fill through the first failed task so the red segment is always visible.
+            // If the service state is ERROR but no task reported ERROR, preserve completed progress only.
+            taskErrorIndex != null -> {
+                segments.take((taskErrorIndex + 1).coerceIn(0, total)).sumOf { it.length }
             }
 
+            snapshot.state == MaaExecutionState.ERROR -> completedProgress
             snapshot.state == MaaExecutionState.IDLE -> PROGRESS_STYLE_MAX
             snapshot.state == MaaExecutionState.STOPPING -> segments.take(
                 completed.coerceAtLeast(activeIndex ?: completed).coerceIn(0, total)
             ).sumOf { it.length }
 
             activeIndex != null -> segments.take(activeIndex).sumOf { it.length } + segments[activeIndex].length / 2
-            completed > 0 -> segments.take(completed).sumOf { it.length }
+            completed > 0 -> completedProgress
             else -> 0
         }.coerceIn(0, PROGRESS_STYLE_MAX)
 
@@ -356,17 +358,17 @@ class TaskExecutionService : Service() {
         return "$progressText · $statusText"
     }
 
-        private fun buildNotificationTitle(snapshot: TaskNotificationSnapshot): String {
-            val currentTaskTitle = snapshot.tasks
-                .firstOrNull { it.status == TaskRunStatus.IN_PROGRESS }
-                ?.taskChain
-                ?.trim()
-                ?.let { taskChain -> VISIBLE_TASK_TITLES[taskChain] ?: taskChain.takeIf { it in VISIBLE_TASK_TITLES.values } }
+                private fun buildNotificationTitle(snapshot: TaskNotificationSnapshot): String {
+        val currentTaskTitle = snapshot.tasks
+            .firstOrNull { it.status == TaskRunStatus.IN_PROGRESS }
+            ?.taskChain
+            ?.trim()
+            ?.let { taskChain ->
+                VISIBLE_TASK_TITLES[taskChain] ?: taskChain.takeIf { it in VISIBLE_TASK_TITLES.values }
+            }
 
-            return currentTaskTitle ?: getString(R.string.notification_task_running_title)
-        }
-
-
+        return currentTaskTitle ?: getString(R.string.notification_task_running_title)
+    }
 
     private fun colorForStatus(status: TaskRunStatus): Int = when (status) {
         TaskRunStatus.PENDING -> PROGRESS_COLOR_PENDING
