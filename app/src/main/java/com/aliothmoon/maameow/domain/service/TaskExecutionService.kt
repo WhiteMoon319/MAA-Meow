@@ -26,7 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -89,9 +89,47 @@ class TaskExecutionService : Service() {
         observeProgress()
     }
 
-    private fun observeProgress() {
+        private fun observeProgress() {
         observeJob = serviceScope.launch {
             var lastUpdateTime = 0L
+            var pendingRunningSnapshot: TaskNotificationSnapshot? = null
+            var scheduledRunningUpdateJob: Job? = null
+
+            fun cancelScheduledRunningUpdate() {
+                scheduledRunningUpdateJob?.cancel()
+                scheduledRunningUpdateJob = null
+                pendingRunningSnapshot = null
+            }
+
+            fun scheduleRunningUpdate(snapshot: TaskNotificationSnapshot) {
+                pendingRunningSnapshot = snapshot
+                val now = System.currentTimeMillis()
+                val elapsed = now - lastUpdateTime
+                if (elapsed >= MIN_UPDATE_INTERVAL_MS) {
+                    lastUpdateTime = now
+                    val latestSnapshot = pendingRunningSnapshot ?: snapshot
+                    pendingRunningSnapshot = null
+                    scheduledRunningUpdateJob?.cancel()
+                    scheduledRunningUpdateJob = null
+                    updateNotification(latestSnapshot)
+                    return
+                }
+
+                if (scheduledRunningUpdateJob?.isActive == true) {
+                    return
+                }
+
+                scheduledRunningUpdateJob = serviceScope.launch {
+                    delay((MIN_UPDATE_INTERVAL_MS - elapsed).coerceAtLeast(0L))
+                    pendingRunningSnapshot?.let { latestSnapshot ->
+                        lastUpdateTime = System.currentTimeMillis()
+                        pendingRunningSnapshot = null
+                        updateNotification(latestSnapshot)
+                    }
+                    scheduledRunningUpdateJob = null
+                }
+            }
+
             combine(
                 compositionService.state,
                 sessionLogger.logs,
@@ -102,11 +140,12 @@ class TaskExecutionService : Service() {
                     statusText = logs.lastOrNull()?.content,
                     tasks = tasks,
                 )
-            }.collectLatest { snapshot ->
+            }.collect { snapshot ->
                 val state = snapshot.state
                 val latestLog = snapshot.statusText
                 when (state) {
                     MaaExecutionState.IDLE, MaaExecutionState.ERROR -> {
+                        cancelScheduledRunningUpdate()
                         Timber.i("TaskExecutionService: state=$state, stopping")
                         val title = getString(
                             if (state == MaaExecutionState.IDLE) R.string.notification_task_completed
@@ -117,12 +156,14 @@ class TaskExecutionService : Service() {
                     }
 
                     MaaExecutionState.STARTING -> {
+                        cancelScheduledRunningUpdate()
                         updateNotification(
                             snapshot.copy(statusText = getString(R.string.notification_task_starting))
                         )
                     }
 
                     MaaExecutionState.STOPPING -> {
+                        cancelScheduledRunningUpdate()
                         updateNotification(
                             snapshot.copy(statusText = getString(R.string.notification_task_stopping))
                         )
@@ -132,15 +173,7 @@ class TaskExecutionService : Service() {
                         val runningSnapshot = snapshot.copy(
                             statusText = latestLog ?: getString(R.string.notification_task_running)
                         )
-                        val now = System.currentTimeMillis()
-                        if (now - lastUpdateTime >= MIN_UPDATE_INTERVAL_MS) {
-                            lastUpdateTime = now
-                            updateNotification(runningSnapshot)
-                        } else {
-                            delay(MIN_UPDATE_INTERVAL_MS - (now - lastUpdateTime))
-                            lastUpdateTime = System.currentTimeMillis()
-                            updateNotification(runningSnapshot)
-                        }
+                        scheduleRunningUpdate(runningSnapshot)
                     }
                 }
             }
