@@ -221,7 +221,7 @@ class TaskExecutionService : Service() {
         val style = NotificationCompat.ProgressStyle()
             .setStyledByProgress(true)
             .setProgressIndeterminate(progressInfo.totalCount == 0)
-            .setProgressTrackerIcon(IconCompat.createWithResource(this, R.drawable.point_yu))
+            .setProgressTrackerIcon(IconCompat.createWithResource(this, R.drawable.ic_progress_tracker))
 
         if (progressInfo.totalCount > 0) {
             style.setProgress(progressInfo.progress)
