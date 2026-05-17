@@ -27,7 +27,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -56,6 +55,12 @@ class TaskExecutionService : Service() {
             "Infrast" to R.string.maa_infrast,
             "Mall" to R.string.maa_mall,
             "Award" to R.string.maa_award,
+            "Roguelike" to R.string.maa_roguelike,
+            "Copilot" to R.string.maa_copilot,
+            "SSSCopilot" to R.string.maa_sss_copilot,
+            "Reclamation" to R.string.maa_reclamation,
+            "Custom" to R.string.maa_custom,
+            "CloseDown" to R.string.maa_close_down,
         )
 
         fun start(context: Context) {
@@ -248,7 +253,8 @@ class TaskExecutionService : Service() {
         val statusText = snapshot.statusText ?: defaultStatusText(snapshot.state)
         val progressInfo = buildProgressInfo(snapshot)
         val contentText = buildContentText(statusText, progressInfo)
-        val title = buildNotificationTitle(snapshot)
+        val title = activeTaskName(snapshot)
+            ?: getString(R.string.notification_task_running_title)
 
         return buildCompatProgressNotification(
             title = title,
@@ -289,15 +295,12 @@ class TaskExecutionService : Service() {
                     .setColor(segment.color)
             )
         }
-        progressInfo.points.forEach { point ->
-            style.addProgressPoint(
-                NotificationCompat.ProgressStyle.Point(point.position)
-                    .setColor(point.color)
-            )
-        }
+
+        val shortCritical = progressInfo.progressLabel
 
         return NotificationCompat.Builder(this, TASK_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher_foreground)
+            .setColor(progressInfo.barColor)
             .setContentTitle(title)
             .setContentText(contentText)
             .setStyle(style)
@@ -307,11 +310,15 @@ class TaskExecutionService : Service() {
             .setSilent(true)
             .setOnlyAlertOnce(true)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-            .setSubText(statusText)
+            .apply {
+                if (shortCritical != null) {
+                    setShortCriticalText(shortCritical)
+                }
+            }
             .build()
     }
 
-    private fun buildProgressInfo(snapshot: TaskNotificationSnapshot): TaskProgressInfo {
+private fun buildProgressInfo(snapshot: TaskNotificationSnapshot): TaskProgressInfo {
         val tasks = snapshot.tasks
         val total = tasks.size
         if (total == 0) {
@@ -320,18 +327,12 @@ class TaskExecutionService : Service() {
                 progress = 0,
                 completedCount = 0,
                 totalCount = 0,
+                barColor = PROGRESS_COLOR_ACTIVE,
+                progressLabel = null,
                 segments = listOf(
                     ProgressSegmentInfo(PROGRESS_STYLE_MAX, PROGRESS_COLOR_PENDING)
                 ),
-                points = emptyList(),
             )
-        }
-
-        val unit = PROGRESS_STYLE_MAX / total
-        val remainder = PROGRESS_STYLE_MAX % total
-        val segments = tasks.mapIndexed { index, task ->
-            val length = unit + if (index < remainder) 1 else 0
-            ProgressSegmentInfo(length, colorForStatus(task.status))
         }
 
         val completedCount = tasks.count { it.status == TaskRunStatus.COMPLETED }
@@ -339,83 +340,60 @@ class TaskExecutionService : Service() {
             .takeIf { it >= 0 }
         val taskErrorIndex = tasks.indexOfFirst { it.status == TaskRunStatus.ERROR }
             .takeIf { it >= 0 }
-        val completedProgress = segments
-            .take(completedCount.coerceIn(0, total))
-            .sumOf { it.length }
+
+        fun progressFor(finishedCount: Int): Int =
+            (finishedCount.toLong() * PROGRESS_STYLE_MAX / total).toInt()
 
         val progress = when {
-            // Fill through the first failed task so the errored segment is always visible.
-            taskErrorIndex != null -> {
-                segments.take((taskErrorIndex + 1).coerceIn(0, total)).sumOf { it.length }
-            }
-
-            // If the service enters ERROR without a task-level error marker, preserve only
-            // completed progress instead of implying the whole chain failed at once.
-            snapshot.state == MaaExecutionState.ERROR -> completedProgress
+            taskErrorIndex != null -> progressFor(taskErrorIndex + 1)
+            snapshot.state == MaaExecutionState.ERROR -> progressFor(completedCount)
             snapshot.state == MaaExecutionState.IDLE -> PROGRESS_STYLE_MAX
             snapshot.state == MaaExecutionState.STOPPING -> {
-                segments.take(
-                    completedCount.coerceAtLeast(activeIndex ?: completedCount)
-                        .coerceIn(0, total)
-                ).sumOf { it.length }
+                val idx = completedCount.coerceAtLeast(activeIndex ?: completedCount)
+                    .coerceIn(0, total)
+                progressFor(idx)
             }
 
             activeIndex != null -> {
-                segments.take(activeIndex).sumOf { it.length } +
-                    segments[activeIndex].length / 2
+                progressFor(activeIndex) + (PROGRESS_STYLE_MAX / total) / 2
             }
 
-            completedCount > 0 -> completedProgress
+            completedCount > 0 -> progressFor(completedCount)
             else -> 0
         }.coerceIn(0, PROGRESS_STYLE_MAX)
+
+        val barColor = when {
+            taskErrorIndex != null || snapshot.state == MaaExecutionState.ERROR ->
+                PROGRESS_COLOR_ERROR
+
+            snapshot.state == MaaExecutionState.IDLE -> PROGRESS_COLOR_COMPLETED
+            else -> PROGRESS_COLOR_ACTIVE
+        }
 
         return TaskProgressInfo(
             max = PROGRESS_STYLE_MAX,
             progress = progress,
             completedCount = completedCount,
             totalCount = total,
-            segments = segments,
-            points = buildProgressPoints(segments),
+            barColor = barColor,
+            progressLabel = "$completedCount/$total",
+            segments = listOf(ProgressSegmentInfo(PROGRESS_STYLE_MAX, barColor)),
         )
     }
 
-    private fun buildProgressPoints(segments: List<ProgressSegmentInfo>): List<ProgressPointInfo> {
-        if (segments.size <= 1) return emptyList()
-
-        var position = 0
-        return segments.dropLast(1).map { segment ->
-            position += segment.length
-            ProgressPointInfo(position, PROGRESS_COLOR_PENDING)
-        }
-    }
-
     private fun buildContentText(statusText: String, progressInfo: TaskProgressInfo): String {
-        val progressText = if (progressInfo.totalCount > 0) {
-            "${progressInfo.completedCount}/${progressInfo.totalCount}"
-        } else {
-            getString(R.string.notification_task_running)
-        }
-        return "$progressText · $statusText"
+        val label = progressInfo.progressLabel ?: return statusText
+        return "$label · $statusText"
     }
 
-    private fun buildNotificationTitle(snapshot: TaskNotificationSnapshot): String {
-        val currentTaskTitle = snapshot.tasks
+    private fun activeTaskName(snapshot: TaskNotificationSnapshot): String? =
+        snapshot.tasks
             .firstOrNull { it.status == TaskRunStatus.IN_PROGRESS }
             ?.taskChain
             ?.trim()
             ?.let { taskChain ->
-                VISIBLE_TASK_TITLE_RES[taskChain]?.let { getString(it) }
+                VISIBLE_TASK_TITLE_RES[taskChain]?.let(::getString)
             }
-
-        return currentTaskTitle ?: getString(R.string.notification_task_running_title)
-    }
-
-    private fun colorForStatus(status: TaskRunStatus): Int = when (status) {
-        TaskRunStatus.PENDING -> PROGRESS_COLOR_PENDING
-        TaskRunStatus.IN_PROGRESS -> PROGRESS_COLOR_ACTIVE
-        TaskRunStatus.COMPLETED -> PROGRESS_COLOR_COMPLETED
-        TaskRunStatus.ERROR -> PROGRESS_COLOR_ERROR
-    }
 
     private fun canRequestPromotedOngoing(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
@@ -471,17 +449,13 @@ class TaskExecutionService : Service() {
         val progress: Int,
         val completedCount: Int,
         val totalCount: Int,
+        val barColor: Int,
+        val progressLabel: String?,
         val segments: List<ProgressSegmentInfo>,
-        val points: List<ProgressPointInfo>,
     )
 
     private data class ProgressSegmentInfo(
         val length: Int,
-        val color: Int,
-    )
-
-    private data class ProgressPointInfo(
-        val position: Int,
         val color: Int,
     )
 }
