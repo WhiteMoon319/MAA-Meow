@@ -112,8 +112,8 @@
 
     <!-- home: service status strings -->
     <string name="home_status_service_error">Service Error</string>
-    <string name="home_status_service_connecting">Connecting…</string>
-    <string name="home_status_disconnected">Disconnected</string>
+    <string name="home_status_service_connecting">Starting…</string>
+    <string name="home_status_disconnected">Not Started</string>
     <string name="home_status_resource_loading">Loading Resources…</string>
     <string name="home_status_resource_failed">Resource Load Failed</string>
     <string name="home_status_resource_not_loaded">Resources Not Loaded</string>
@@ -1097,7 +1097,7 @@
     <string name="task_start_error_portrait_orientation">The screen is in portrait mode. Switch to landscape before starting</string>
     <string name="task_start_error_display_mode">Failed to set display mode. Please try again</string>
     <string name="task_start_error_virtual_display">Failed to start the virtual display. Check service permissions</string>
-    <string name="task_start_error_connect_timeout">Timed out while connecting to MaaCore. Please try again</string>
+    <string name="task_start_error_connect_timeout">Timed out while starting MaaCore. Please try again</string>
     <string name="task_start_error_start_failed">MaaCore failed to start. Check the task configuration</string>
     <string name="task_start_success">MAA started successfully</string>
     <string name="task_start_dialog_failed_title">Start failed</string>

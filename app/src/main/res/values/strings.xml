@@ -313,8 +313,8 @@
 
     <!-- home: service status strings -->
     <string name="home_status_service_error">服务异常</string>
-    <string name="home_status_service_connecting">服务连接中…</string>
-    <string name="home_status_disconnected">未连接</string>
+    <string name="home_status_service_connecting">服务启动中…</string>
+    <string name="home_status_disconnected">未启动</string>
     <string name="home_status_resource_loading">资源加载中…</string>
     <string name="home_status_resource_failed">资源加载失败</string>
     <string name="home_status_resource_not_loaded">资源未加载</string>
@@ -1152,7 +1152,7 @@
     <string name="task_start_error_portrait_orientation">当前屏幕为竖屏，请切换为横屏后启动</string>
     <string name="task_start_error_display_mode">显示模式设置失败，请重试</string>
     <string name="task_start_error_virtual_display">虚拟屏幕启动失败，请检查服务权限</string>
-    <string name="task_start_error_connect_timeout">连接 MaaCore 超时，请重试</string>
+    <string name="task_start_error_connect_timeout">启动 MaaCore 超时，请重试</string>
     <string name="task_start_error_start_failed">MaaCore 启动失败，请检查任务配置</string>
     <string name="task_start_success">Maa启动成功</string>
     <string name="task_start_dialog_failed_title">启动失败</string>
