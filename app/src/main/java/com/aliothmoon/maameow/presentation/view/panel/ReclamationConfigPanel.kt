@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,14 @@ import kotlinx.coroutines.launch
 fun ReclamationConfigPanel(config: ReclamationConfig, onConfigChange: (ReclamationConfig) -> Unit) {
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
+
+    // v6.10.3 起 RelaunchAnchor 主题 mode 改为 flags 编码(16/32),旧版本残留 0/1 时自愈为 RA-1
+    val sanitized = config.sanitizedMode()
+    LaunchedEffect(config.theme, config.mode) {
+        if (sanitized != config.mode) {
+            onConfigChange(config.copy(mode = sanitized))
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -102,9 +111,16 @@ fun ReclamationConfigPanel(config: ReclamationConfig, onConfigChange: (Reclamati
                                 onValueChange = {
                                     val theme = it as String
                                     val updated = if (theme == "RelaunchAnchor") {
-                                        config.copy(theme = theme, mode = 0, clearStore = false)
+                                        config.copy(
+                                            theme = theme,
+                                            mode = ReclamationConfig.MODE_RA1,
+                                            clearStore = false
+                                        )
                                     } else {
-                                        config.copy(theme = theme, mode = 0)
+                                        config.copy(
+                                            theme = theme,
+                                            mode = ReclamationConfig.MODE_PROSPERITY_NO_SAVE
+                                        )
                                     }
                                     onConfigChange(updated)
                                 }
@@ -131,7 +147,10 @@ fun ReclamationConfigPanel(config: ReclamationConfig, onConfigChange: (Reclamati
                             }
                         }
                         item {
-                            AnimatedVisibility(visible = !isRelaunchAnchor && config.mode == 0) {
+                            AnimatedVisibility(
+                                visible = !isRelaunchAnchor
+                                        && config.mode == ReclamationConfig.MODE_PROSPERITY_NO_SAVE
+                            ) {
                                 CheckBoxWithLabel(
                                     checked = config.clearStore,
                                     onCheckedChange = { onConfigChange(config.copy(clearStore = it)) },
@@ -143,7 +162,7 @@ fun ReclamationConfigPanel(config: ReclamationConfig, onConfigChange: (Reclamati
                         when {
                             isRelaunchAnchor -> {
                                 item {
-                                    val isRa15 = config.mode == 1
+                                    val isRa15 = config.mode == ReclamationConfig.MODE_RA15
                                     val containerColor = if (isRa15) {
                                         MaterialTheme.colorScheme.errorContainer
                                     } else {
@@ -174,7 +193,7 @@ fun ReclamationConfigPanel(config: ReclamationConfig, onConfigChange: (Reclamati
                                 }
                             }
 
-                            config.mode == 0 -> {
+                            config.mode == ReclamationConfig.MODE_PROSPERITY_NO_SAVE -> {
                                 // Tales 无存档
                                 item {
                                     Surface(
@@ -273,7 +292,8 @@ fun ReclamationConfigPanel(config: ReclamationConfig, onConfigChange: (Reclamati
 
                     // 高级设置 Tab
                     1 -> {
-                        val isArchiveMode = config.theme != "RelaunchAnchor" && config.mode == 1
+                        val isArchiveMode = config.theme != "RelaunchAnchor"
+                                && config.mode == ReclamationConfig.MODE_PROSPERITY_IN_SAVE
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(
@@ -367,10 +387,10 @@ private fun localizedReclamationThemeOptions(): List<Pair<Any, String>> {
 
 @Composable
 private fun localizedReclamationModeOptions(): List<Pair<Any, String>> {
-    return ReclamationConfig.MODE_VALUES.map { mode ->
+    return ReclamationConfig.TALES_MODE_VALUES.map { mode ->
         mode to when (mode) {
-            0 -> stringResource(R.string.panel_reclamation_mode_no_save)
-            1 -> stringResource(R.string.panel_reclamation_mode_with_save)
+            ReclamationConfig.MODE_PROSPERITY_NO_SAVE -> stringResource(R.string.panel_reclamation_mode_no_save)
+            ReclamationConfig.MODE_PROSPERITY_IN_SAVE -> stringResource(R.string.panel_reclamation_mode_with_save)
             else -> mode.toString()
         }
     }
@@ -380,8 +400,8 @@ private fun localizedReclamationModeOptions(): List<Pair<Any, String>> {
 private fun localizedRelaunchAnchorModeOptions(): List<Pair<Any, String>> {
     return ReclamationConfig.RELAUNCH_ANCHOR_MODE_VALUES.map { mode ->
         mode to when (mode) {
-            0 -> stringResource(R.string.panel_reclamation_mode_ra1)
-            1 -> stringResource(R.string.panel_reclamation_mode_ra15)
+            ReclamationConfig.MODE_RA1 -> stringResource(R.string.panel_reclamation_mode_ra1)
+            ReclamationConfig.MODE_RA15 -> stringResource(R.string.panel_reclamation_mode_ra15)
             else -> mode.toString()
         }
     }

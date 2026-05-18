@@ -3,6 +3,7 @@ package com.aliothmoon.maameow.domain.usecase
 import com.aliothmoon.maameow.constant.Packages
 import com.aliothmoon.maameow.data.model.FightConfig
 import com.aliothmoon.maameow.data.model.MallConfig
+import com.aliothmoon.maameow.data.model.ReclamationConfig
 import com.aliothmoon.maameow.data.model.TaskChainNode
 import com.aliothmoon.maameow.data.model.WakeUpConfig
 import com.aliothmoon.maameow.data.preferences.TaskChainState
@@ -96,6 +97,8 @@ class AnalyzeTaskChainUseCase(
                     clientType = clientType,
                 )
             }
+
+            is ReclamationConfig -> config.toTaskParams(clientType = clientType)
 
             else -> node.config.toTaskParams()
         }
