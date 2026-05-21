@@ -35,7 +35,7 @@ interface RemoteService {
 
     int startVirtualDisplay() = 14;
 
-    void stopGameAndCleanup(String packageName) = 15;
+    void stopVirtualDisplay() = 15;
 
     oneway void touchDown(int x, int y) = 17;
 

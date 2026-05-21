@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 object VirtualDisplayManager {
 
-    private const val STATE_COLD = 0
-    private const val STATE_HOT = 1
+    private const val STATE_IDLE = 0
+    private const val STATE_CAPTURING = 1
 
     private const val VIRTUAL_DISPLAY_FLAG_PUBLIC: Int = DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
     private const val VIRTUAL_DISPLAY_FLAG_PRESENTATION: Int =
@@ -47,7 +47,7 @@ object VirtualDisplayManager {
         val dpi: Int = DefaultDisplayConfig.DPI
     )
 
-    private val state = AtomicInteger(STATE_COLD)
+    private val state = AtomicInteger(STATE_IDLE)
     private val config = AtomicReference(DisplayConfig())
     private val displayId = AtomicInteger(DISPLAY_NONE)
     private val virtualDisplay = AtomicReference<VirtualDisplay?>()
@@ -63,62 +63,58 @@ object VirtualDisplayManager {
         Ln.i("setMonitorSurface: old=${old != null}, new=${surface != null}")
     }
 
-    /**
-     * 幂等：COLD 时建 VD + AImageReader，HOT 时直接返回当前 displayId。
-     * VD 与 AImageReader 在 HOT 状态下常驻，由 release() 显式释放。
-     */
     fun start(): Int {
-        if (state.get() == STATE_HOT) {
+        if (!state.compareAndSet(STATE_IDLE, STATE_CAPTURING)) {
+            Ln.w("start: already capturing")
             return displayId.get()
         }
-        if (!state.compareAndSet(STATE_COLD, STATE_HOT)) {
-            return displayId.get()
-        }
-        return try {
-            val cfg = config.get()
-            val surface = NativeBridgeLib.setupNativeCapturer(cfg.width, cfg.height)
-            createVirtualDisplay(surface, cfg)
-            Ln.i("VirtualDisplayManager started, displayId=${displayId.get()}")
-            displayId.get()
-        } catch (e: Exception) {
-            Ln.e("VirtualDisplayManager start failed", e)
-            releaseInternal()
-            state.set(STATE_COLD)
-            DISPLAY_NONE
-        }
+        return startInternal()
     }
 
-    /**
-     * 硬释放：销毁 VD + AImageReader + monitorSurface，回到 COLD。
-     * 仅由模式切换 PRIMARY、分辨率变化、紧急清理、进程退出路径调用。
-     */
-    fun release() {
-        if (!state.compareAndSet(STATE_HOT, STATE_COLD)) {
+    fun stop() {
+        if (!state.compareAndSet(STATE_CAPTURING, STATE_IDLE)) {
             return
         }
-        releaseInternal()
+        releaseResources()
         monitorSurface.getAndSet(null)?.release()
-        Ln.i("VirtualDisplayManager released")
+        Ln.i("VirtualDisplayManager stopped")
     }
 
-    /**
-     * 仅记录新分辨率：变化且当前 HOT 时直接 release，让下一次 start() 用新 config 重建；
-     * COLD 时仅更新 config 不释放。
-     * 调用方必须保证：setResolution 之后再调 start()，不能复用之前的 displayId。
-     */
+    fun restart() {
+        if (state.get() != STATE_CAPTURING) {
+            return
+        }
+        releaseResources()
+        startInternal()
+    }
+
     fun setResolution(width: Int, height: Int, dpi: Int = config.get().dpi) {
         val newConfig = DisplayConfig(width, height, dpi)
         val oldConfig = config.getAndSet(newConfig)
-        if (oldConfig == newConfig) return
-        Ln.i("Resolution changed: ${oldConfig.width}x${oldConfig.height} -> ${width}x${height}")
-        if (state.get() == STATE_HOT) {
-            release()
+        if (state.get() == STATE_CAPTURING && oldConfig != newConfig) {
+            Ln.i("Resolution changed: ${oldConfig.width}x${oldConfig.height} -> ${width}x${height}, restart")
+            restart()
         }
     }
 
     fun getDisplayId(): Int = displayId.get()
 
-    private fun releaseInternal() {
+    private fun startInternal(): Int {
+        try {
+            val cfg = config.get()
+            val surface = NativeBridgeLib.setupNativeCapturer(cfg.width, cfg.height)
+            createVirtualDisplay(surface, cfg)
+
+            Ln.i("VirtualDisplayManager started, displayId=${displayId.get()}")
+            return displayId.get()
+        } catch (e: Exception) {
+            Ln.e("VirtualDisplayManager start failed", e)
+            state.set(STATE_IDLE)
+            return DISPLAY_NONE
+        }
+    }
+
+    private fun releaseResources() {
         virtualDisplay.getAndSet(null)?.release()
         NativeBridgeLib.releaseNativeCapturer()
         displayId.set(DISPLAY_NONE)

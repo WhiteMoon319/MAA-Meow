@@ -6,7 +6,6 @@ import com.aliothmoon.maameow.MaaCoreCallback
 import com.aliothmoon.maameow.MaaCoreService
 import com.aliothmoon.maameow.RemoteService
 import com.aliothmoon.maameow.constant.DefaultDisplayConfig
-import com.aliothmoon.maameow.constant.Packages
 import com.aliothmoon.maameow.data.model.LogLevel
 
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
@@ -273,10 +272,6 @@ class MaaCompositionService(
                 "设置显示模式失败", "DISPLAY_MODE_ERROR",
                 StartResult.ConnectionError(StartResult.ConnectionError.ConnectPhase.DISPLAY_MODE)
             )
-        // 分辨率修改时需要重建所以需要提前
-        val resolved = if (mode == RunMode.BACKGROUND) {
-            resolveAndSetResolution(service, clientType)
-        } else null
         val displayId = service.startVirtualDisplay()
         if (displayId == -1)
             return failStart(
@@ -290,8 +285,8 @@ class MaaCompositionService(
             }
 
             RunMode.BACKGROUND -> {
-                val cfg = resolved!!
-                buildConnectConfig(cfg.width, cfg.height, displayId)
+                val r = resolveAndSetResolution(service, clientType)
+                buildConnectConfig(r.width, r.height, displayId)
             }
         }
         // 在 MAA 连接（含 force_stop 重启游戏）之前提前授予电池优化豁免与后台不受限权限，
@@ -441,14 +436,9 @@ class MaaCompositionService(
         return result
     }
 
-    /**
-     * 关闭游戏并清理任务期副作用，但保留 VirtualDisplay 与 AImageReader 常驻。
-     * 下一次 startVirtualDisplay 会复用同一 displayId，避免 VD 重建开销。
-     */
-    suspend fun stopGameAndCleanup(clientType: String?) {
+    suspend fun stopVirtualDisplay() {
         appWatchdog.stopWatching()
         _displayResolution.value = defaultResolution
-        val packageName = clientType?.let { Packages[it] }
-        useRemoteService { it.stopGameAndCleanup(packageName) }
+        useRemoteService { it.stopVirtualDisplay() }
     }
 }

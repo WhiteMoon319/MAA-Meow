@@ -138,7 +138,7 @@ class BackgroundTaskViewModel(
                     && appSettingsManager.closeAppOnTaskEnd.value
                 ) {
                     Timber.i("Task ended (%s), auto closing app", current)
-                    compositionService.stopGameAndCleanup(chainState.getClientTypeOrNull())
+                    compositionService.stopVirtualDisplay()
                 }
                 prev = current
             }
