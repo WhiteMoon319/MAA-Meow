@@ -62,4 +62,6 @@ interface RemoteService {
     boolean isPackageInstalled(String packageName) = 28;
 
     boolean isAppOnVirtualDisplay(String packageName) = 29;
+
+    oneway void setForceFullscreenOnVirtualDisplay(boolean enabled) = 30;
 }

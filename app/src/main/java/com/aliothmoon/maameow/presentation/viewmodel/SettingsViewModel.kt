@@ -151,6 +151,15 @@ class SettingsViewModel(
         }
     }
 
+    val forceFullscreenOnVirtualDisplay: StateFlow<Boolean> = appSettingsManager.forceFullscreenOnVirtualDisplay
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setForceFullscreenOnVirtualDisplay(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setForceFullscreenOnVirtualDisplay(enabled)
+        }
+    }
+
     val updateChannel: StateFlow<UpdateChannel> = appSettingsManager.updateChannel
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UpdateChannel.STABLE)
 

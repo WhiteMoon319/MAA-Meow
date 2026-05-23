@@ -58,6 +58,7 @@ class MaaResourceLoader(
             withContext(Dispatchers.IO) {
                 useRemoteService { srv ->
                     srv.setup(pathConfig.rootDir, appSettings.debugMode.value)
+                    srv.setForceFullscreenOnVirtualDisplay(appSettings.forceFullscreenOnVirtualDisplay.value)
 
                     if (appSettings.debugMode.value) {
                         val appPid = Process.myPid()

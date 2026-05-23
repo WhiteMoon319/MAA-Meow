@@ -82,6 +82,7 @@ fun SettingsView(
     val startupBackend by viewModel.startupBackend.collectAsStateWithLifecycle()
     val skipShizukuCheck by viewModel.skipShizukuCheck.collectAsStateWithLifecycle()
     val deploymentWithPause by viewModel.deploymentWithPause.collectAsStateWithLifecycle()
+    val forceFullscreenOnVirtualDisplay by viewModel.forceFullscreenOnVirtualDisplay.collectAsStateWithLifecycle()
     val updateChannel by viewModel.updateChannel.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val backgroundResolution by viewModel.backgroundResolution.collectAsStateWithLifecycle()
@@ -331,6 +332,13 @@ fun SettingsView(
                         contentColor = contentColor,
                         checked = deploymentWithPause,
                         onCheckedChange = { viewModel.setDeploymentWithPause(it) }
+                    )
+                    SettingsDivider(contentColor)
+                    SettingSwitchItem(
+                        title = stringResource(R.string.settings_force_fullscreen_on_virtual_display),
+                        contentColor = contentColor,
+                        checked = forceFullscreenOnVirtualDisplay,
+                        onCheckedChange = { viewModel.setForceFullscreenOnVirtualDisplay(it) }
                     )
                 }
             }

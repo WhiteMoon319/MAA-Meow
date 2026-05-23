@@ -15,6 +15,9 @@ object ActivityUtils {
     // android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN
     private const val WINDOWING_MODE_FULLSCREEN = 1
 
+    @Volatile
+    var forceFullscreenOnVirtualDisplay: Boolean = false
+
     private val setLaunchWindowingMode by lazy {
         runCatching {
             ActivityOptions::class.java
@@ -34,10 +37,12 @@ object ActivityUtils {
             val launchOptions = ActivityOptions.makeBasic()
             if (displayId != 0) {
                 launchOptions.setLaunchDisplayId(displayId)
-                runCatching {
-                    setLaunchWindowingMode?.invoke(launchOptions, WINDOWING_MODE_FULLSCREEN)
-                }.onFailure {
-                    Ln.e("invoke setLaunchWindowingMode failed", it)
+                if (forceFullscreenOnVirtualDisplay) {
+                    runCatching {
+                        setLaunchWindowingMode?.invoke(launchOptions, WINDOWING_MODE_FULLSCREEN)
+                    }.onFailure {
+                        Ln.e("invoke setLaunchWindowingMode failed", it)
+                    }
                 }
             }
             val ret = try {

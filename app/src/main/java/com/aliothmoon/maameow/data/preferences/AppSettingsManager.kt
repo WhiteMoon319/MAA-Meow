@@ -416,6 +416,21 @@ class AppSettingsManager(private val context: Context) {
         }
     }
 
+    // 虚拟屏启动游戏时强制全屏模式
+    val forceFullscreenOnVirtualDisplay: StateFlow<Boolean> = settings
+        .map { it.forceFullscreenOnVirtualDisplay.toBooleanStrictOrNull() ?: false }
+        .distinctUntilChanged()
+        .stateIn(
+            scope, SharingStarted.Eagerly,
+            initialSettings.forceFullscreenOnVirtualDisplay.toBooleanStrictOrNull() ?: false
+        )
+
+    suspend fun setForceFullscreenOnVirtualDisplay(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[forceFullscreenOnVirtualDisplay] = enabled.toString() }
+        }
+    }
+
     // 长期公告已读版本
     val announcementReadVersion: StateFlow<String> = settings
         .map { it.announcementReadVersion }

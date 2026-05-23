@@ -54,4 +54,6 @@ data class AppSettings(
     @PrefKey(default = "true") val deploymentWithPause: String = "true",
 
     @PrefKey(default = "") val announcementReadVersion: String = "",
+
+    @PrefKey(default = "false") val forceFullscreenOnVirtualDisplay: String = "false",
 )

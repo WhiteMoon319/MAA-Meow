@@ -283,6 +283,11 @@ class RemoteServiceImpl : RemoteService.Stub() {
         return ActivityUtils.startActivity(intent)
     }
 
+    override fun setForceFullscreenOnVirtualDisplay(enabled: Boolean) {
+        Ln.i("$TAG: setForceFullscreenOnVirtualDisplay($enabled)")
+        ActivityUtils.forceFullscreenOnVirtualDisplay = enabled
+    }
+
     override fun setVirtualDisplayResolution(width: Int, height: Int, dpi: Int) {
         Ln.i("$TAG: setVirtualDisplayResolution(${width}x${height}, dpi=$dpi)")
         VirtualDisplayManager.setResolution(width, height, dpi)
