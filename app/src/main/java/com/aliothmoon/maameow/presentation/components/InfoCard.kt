@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.theme.MaaDesignTokens
+import com.aliothmoon.maameow.theme.MaaThemeStyle
 
 @Composable
 fun InfoCard(
@@ -24,12 +26,17 @@ fun InfoCard(
     contentPadding: PaddingValues = PaddingValues(MaaDesignTokens.Card.innerPadding),
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val useMiuixTheme = MaaThemeStyle.useMiuixTheme
+    val cardShape = if (useMiuixTheme) RoundedCornerShape(24.dp) else MaterialTheme.shapes.medium
+    val cardColor = if (useMiuixTheme) MaterialTheme.colorScheme.surfaceContainerLow else containerColor
+    val cardElevation = if (useMiuixTheme) 0.dp else MaaDesignTokens.Card.elevation
+
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = MaaDesignTokens.Card.elevation),
-        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.cardElevation(defaultElevation = cardElevation),
+        shape = cardShape,
         colors = CardDefaults.cardColors(
-            containerColor = containerColor
+            containerColor = cardColor
         )
     ) {
         Column(

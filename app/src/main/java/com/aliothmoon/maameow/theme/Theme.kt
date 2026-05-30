@@ -12,7 +12,9 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.DelegatableNode
@@ -161,6 +163,14 @@ object MaaThemeAlphas {
     const val Medium = 0.74f
 }
 
+val LocalMaaUseMiuixTheme = staticCompositionLocalOf { false }
+
+object MaaThemeStyle {
+    val useMiuixTheme: Boolean
+        @Composable @ReadOnlyComposable
+        get() = LocalMaaUseMiuixTheme.current
+}
+
 @Composable
 fun MaaMeowTheme(
     themeMode: AppSettingsManager.ThemeMode = AppSettingsManager.ThemeMode.SYSTEM,
@@ -195,7 +205,8 @@ fun MaaMeowTheme(
     }
 
     CompositionLocalProvider(
-        LocalIndication provides NoIndication
+        LocalIndication provides NoIndication,
+        LocalMaaUseMiuixTheme provides useMiuixTheme
     ) {
         if (useMiuixTheme) {
             MiuixThemeProvider(controller = miuixController) {

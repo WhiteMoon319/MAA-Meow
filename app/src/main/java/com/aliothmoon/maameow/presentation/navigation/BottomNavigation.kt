@@ -1,6 +1,7 @@
 package com.aliothmoon.maameow.presentation.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -27,12 +29,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.constant.Routes
 import com.aliothmoon.maameow.theme.MaaDesignTokens
+import com.aliothmoon.maameow.theme.MaaThemeStyle
 
 sealed class BottomNavTab(
     val route: String,
@@ -73,17 +77,27 @@ fun AppBottomNavigation(
     currentRoute: String,
     onTabSelected: (BottomNavTab) -> Unit
 ) {
+    val useMiuixTheme = MaaThemeStyle.useMiuixTheme
+    val containerColor = if (useMiuixTheme) {
+        MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.96f)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 0.dp
+        color = containerColor,
+        shadowElevation = if (useMiuixTheme) 8.dp else 0.dp,
+        shape = if (useMiuixTheme) RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp) else RoundedCornerShape(0.dp)
     ) {
         Column {
-            HorizontalDivider(thickness = MaaDesignTokens.Separator.thickness, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            if (!useMiuixTheme) {
+                HorizontalDivider(thickness = MaaDesignTokens.Separator.thickness, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(horizontal = 24.dp, vertical = 6.dp),
+                    .padding(horizontal = if (useMiuixTheme) 14.dp else 24.dp, vertical = if (useMiuixTheme) 10.dp else 6.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -94,15 +108,21 @@ fun AppBottomNavigation(
                         MaterialTheme.colorScheme.primary
                     else
                         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    val selectedBackground = if (useMiuixTheme && selected) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+                    } else {
+                        Color.Transparent
+                    }
 
                     Column(
                         modifier = Modifier
+                            .background(selectedBackground, RoundedCornerShape(22.dp))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
                             ) { onTabSelected(tab) }
                             .heightIn(min = 48.dp)
-                            .padding(horizontal = 20.dp, vertical = 2.dp),
+                            .padding(horizontal = if (useMiuixTheme) 16.dp else 20.dp, vertical = if (useMiuixTheme) 7.dp else 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
