@@ -12,12 +12,16 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
+import top.yukonga.miuix.kmp.theme.ColorSchemeMode
+import top.yukonga.miuix.kmp.theme.ThemeController
+import top.yukonga.miuix.kmp.theme.MiuixTheme as MiuixThemeProvider
 
 private val LightBackground = Color(0xFFF5F2ED)
 private val LightSurface = Color(0xFFF9F7F3)
@@ -160,23 +164,108 @@ object MaaThemeAlphas {
 @Composable
 fun MaaMeowTheme(
     themeMode: AppSettingsManager.ThemeMode = AppSettingsManager.ThemeMode.SYSTEM,
+    useMiuixTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val isDark = when (themeMode) {
+        AppSettingsManager.ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        AppSettingsManager.ThemeMode.WHITE -> false
+        AppSettingsManager.ThemeMode.DARK,
+        AppSettingsManager.ThemeMode.PURE_DARK -> true
+    }
+
     val colorScheme = when (themeMode) {
-        AppSettingsManager.ThemeMode.SYSTEM -> if (isSystemInDarkTheme()) BlueDark else BlueLight
+        AppSettingsManager.ThemeMode.SYSTEM -> if (isDark) BlueDark else BlueLight
         AppSettingsManager.ThemeMode.WHITE -> BlueLight
         AppSettingsManager.ThemeMode.DARK -> BlueDark
         AppSettingsManager.ThemeMode.PURE_DARK -> BluePureDark
     }
 
+    val miuixController = remember(themeMode, isDark) {
+        ThemeController(
+            colorSchemeMode = when (themeMode) {
+                AppSettingsManager.ThemeMode.SYSTEM -> ColorSchemeMode.System
+                AppSettingsManager.ThemeMode.WHITE -> ColorSchemeMode.Light
+                AppSettingsManager.ThemeMode.DARK,
+                AppSettingsManager.ThemeMode.PURE_DARK -> ColorSchemeMode.Dark
+            },
+            keyColor = colorScheme.primary,
+            isDark = isDark
+        )
+    }
+
     CompositionLocalProvider(
         LocalIndication provides NoIndication
     ) {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = Typography,
-            shapes = MaaShapes,
-            content = content
-        )
+        if (useMiuixTheme) {
+            MiuixThemeProvider(controller = miuixController) {
+                val miuixColors = MiuixThemeProvider.colorScheme
+                val materialColorScheme = if (isDark) {
+                    darkColorScheme(
+                        primary = miuixColors.primary,
+                        onPrimary = miuixColors.onPrimary,
+                        primaryContainer = miuixColors.primaryContainer,
+                        onPrimaryContainer = miuixColors.onPrimaryContainer,
+                        secondary = miuixColors.onSecondaryVariant,
+                        onSecondary = miuixColors.secondaryVariant,
+                        secondaryContainer = miuixColors.secondaryContainer,
+                        onSecondaryContainer = miuixColors.onSecondaryContainer,
+                        tertiary = miuixColors.primaryVariant,
+                        onTertiary = miuixColors.onPrimaryVariant,
+                        background = if (themeMode == AppSettingsManager.ThemeMode.PURE_DARK) Color.Black else miuixColors.background,
+                        onBackground = miuixColors.onBackground,
+                        surface = if (themeMode == AppSettingsManager.ThemeMode.PURE_DARK) Color.Black else miuixColors.surfaceContainer,
+                        onSurface = miuixColors.onSurface,
+                        surfaceVariant = miuixColors.surfaceContainerHighest,
+                        onSurfaceVariant = miuixColors.onSurfaceVariantSummary,
+                        outline = miuixColors.outline,
+                        outlineVariant = miuixColors.dividerLine,
+                        error = miuixColors.error,
+                        onError = miuixColors.onError,
+                        errorContainer = miuixColors.errorContainer,
+                        onErrorContainer = miuixColors.onErrorContainer
+                    )
+                } else {
+                    lightColorScheme(
+                        primary = miuixColors.primary,
+                        onPrimary = miuixColors.onPrimary,
+                        primaryContainer = miuixColors.primaryContainer,
+                        onPrimaryContainer = miuixColors.onPrimaryContainer,
+                        secondary = miuixColors.onSecondaryVariant,
+                        onSecondary = miuixColors.secondaryVariant,
+                        secondaryContainer = miuixColors.secondaryContainer,
+                        onSecondaryContainer = miuixColors.onSecondaryContainer,
+                        tertiary = miuixColors.primaryVariant,
+                        onTertiary = miuixColors.onPrimaryVariant,
+                        background = miuixColors.background,
+                        onBackground = miuixColors.onBackground,
+                        surface = miuixColors.surfaceContainer,
+                        onSurface = miuixColors.onSurface,
+                        surfaceVariant = miuixColors.surfaceContainerHighest,
+                        onSurfaceVariant = miuixColors.onSurfaceVariantSummary,
+                        outline = miuixColors.outline,
+                        outlineVariant = miuixColors.dividerLine,
+                        error = miuixColors.error,
+                        onError = miuixColors.onError,
+                        errorContainer = miuixColors.errorContainer,
+                        onErrorContainer = miuixColors.onErrorContainer
+                    )
+                }
+
+                MaterialTheme(
+                    colorScheme = materialColorScheme,
+                    typography = Typography,
+                    shapes = MaaShapes,
+                    content = content
+                )
+            }
+        } else {
+            MaterialTheme(
+                colorScheme = colorScheme,
+                typography = Typography,
+                shapes = MaaShapes,
+                content = content
+            )
+        }
     }
 }

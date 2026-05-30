@@ -317,6 +317,20 @@ class AppSettingsManager(private val context: Context) {
         }
     }
 
+    val useMiuixTheme: StateFlow<Boolean> = settings
+        .map { it.useMiuixTheme.toBooleanStrictOrNull() ?: true }
+        .distinctUntilChanged()
+        .stateIn(
+            scope, SharingStarted.Eagerly,
+            initialSettings.useMiuixTheme.toBooleanStrictOrNull() ?: true
+        )
+
+    suspend fun setUseMiuixTheme(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[useMiuixTheme] = enabled.toString() }
+        }
+    }
+
     // 内部通知级别
     enum class EventNotificationLevel(@param:androidx.annotation.StringRes val labelRes: Int) {
         OFF(R.string.notification_level_off),

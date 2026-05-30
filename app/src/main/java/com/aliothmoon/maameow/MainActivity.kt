@@ -59,8 +59,9 @@ class MainActivity : AppCompatActivity() {
         })
         setContent {
             val themeMode by appSettingsManager.themeMode.collectAsStateWithLifecycle()
+            val useMiuixTheme by appSettingsManager.useMiuixTheme.collectAsStateWithLifecycle()
 
-            MaaMeowTheme(themeMode = themeMode) {
+            MaaMeowTheme(themeMode = themeMode, useMiuixTheme = useMiuixTheme) {
                 AppNavigation(backgroundTaskViewModel = backgroundTaskViewModel)
             }
         }

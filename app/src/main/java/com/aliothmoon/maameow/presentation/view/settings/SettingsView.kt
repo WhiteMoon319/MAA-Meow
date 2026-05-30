@@ -85,6 +85,7 @@ fun SettingsView(
     val forceFullscreenOnVirtualDisplay by viewModel.forceFullscreenOnVirtualDisplay.collectAsStateWithLifecycle()
     val updateChannel by viewModel.updateChannel.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val useMiuixTheme by viewModel.useMiuixTheme.collectAsStateWithLifecycle()
     val backgroundResolution by viewModel.backgroundResolution.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
@@ -304,6 +305,14 @@ fun SettingsView(
                         contentColor = contentColor,
                         selectedMode = themeMode,
                         onModeSelected = { viewModel.setThemeMode(it) }
+                    )
+                    SettingsDivider(contentColor)
+                    SettingSwitchItem(
+                        title = stringResource(R.string.settings_use_miuix_theme_title),
+                        description = stringResource(R.string.settings_use_miuix_theme_desc),
+                        contentColor = contentColor,
+                        checked = useMiuixTheme,
+                        onCheckedChange = { viewModel.setUseMiuixTheme(it) }
                     )
                     SettingsDivider(contentColor)
                     SettingLanguageItem(

@@ -182,6 +182,15 @@ class SettingsViewModel(
         }
     }
 
+    val useMiuixTheme: StateFlow<Boolean> = appSettingsManager.useMiuixTheme
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    fun setUseMiuixTheme(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setUseMiuixTheme(enabled)
+        }
+    }
+
     val backgroundResolution: StateFlow<DefaultDisplayConfig.ResolutionPreference> =
         appSettingsManager.backgroundResolution
             .stateIn(

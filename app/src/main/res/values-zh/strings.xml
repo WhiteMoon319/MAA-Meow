@@ -247,6 +247,8 @@
     <string name="settings_theme_white">白色</string>
     <string name="settings_theme_dark">暗色</string>
     <string name="settings_theme_pure_dark">纯黑</string>
+    <string name="settings_use_miuix_theme_title">使用 Miuix 风格</string>
+    <string name="settings_use_miuix_theme_desc">关闭后恢复原来的应用主题</string>
     <string name="settings_language_title">语言</string>
     <string name="settings_language_system">跟随系统</string>
     <string name="settings_language_zh">中文</string>
