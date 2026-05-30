@@ -314,44 +314,34 @@ fun AppNavigation(
                         ScheduleTriggerLogView(navController = navController)
                     }
                 }
-
-                if (showBottomBar && enableMiuixFloatingBottomBar) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .align(Alignment.BottomCenter),
-                        contentAlignment = Alignment.BottomCenter
-                    ) {
-                        AppBottomNavigation(
-                            currentRoute = currentNavRoute ?: Routes.HOME,
-                            onTabSelected = { tab ->
-                                if (tab.route == currentNavRoute) return@AppBottomNavigation
-
-                                if (tab.route == Routes.BACKGROUND_TASK && runMode == RunMode.FOREGROUND) {
-                                    Toast.makeText(
-                                        context,
-                                        switchBackgroundModeMessage,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                    return@AppBottomNavigation
-                                }
-
-                                navController.navigate(tab.route) {
-                                    popUpTo(Routes.HOME) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            glassBackdrop = glassBackdrop
-                        )
-                    }
-                }
             }
         }
 
         ResourceLoadingOverlay()
+
+        if (showBottomBar && enableMiuixFloatingBottomBar) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                AppBottomNavigation(
+                    currentRoute = currentNavRoute ?: Routes.HOME,
+                    glassBackdrop = glassBackdrop,
+                    onTabSelected = { tab ->
+                        if (tab.route == currentNavRoute) return@AppBottomNavigation
+                        if (tab.route == Routes.BACKGROUND_TASK && runMode == RunMode.FOREGROUND) {
+                            Toast.makeText(context, switchBackgroundModeMessage, Toast.LENGTH_SHORT).show()
+                            return@AppBottomNavigation
+                        }
+                        navController.navigate(tab.route) {
+                            popUpTo(Routes.HOME) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+        }
 
         // 全局定时任务倒计时弹窗
         val countdown = scheduledCountdownState

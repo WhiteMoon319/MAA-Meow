@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -34,7 +33,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.constant.Routes
-import com.aliothmoon.maameow.presentation.components.miuixLiquidGlass
 import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.theme.LocalMaaMiuixLiquidGlass
 import com.aliothmoon.maameow.theme.MaaDesignTokens
@@ -95,11 +93,6 @@ fun AppBottomNavigation(
                 contentAlignment = Alignment.BottomCenter
             ) {
                 MiuixFloatingNavigationBar(
-                    modifier = Modifier.miuixLiquidGlass(
-                        backdrop = glassBackdrop,
-                        shape = RoundedCornerShape(34.dp),
-                        enabled = useLiquidGlass
-                    ),
                     color = MiuixTheme.colorScheme.surfaceContainer.copy(alpha = if (useLiquidGlass) 0.18f else 1f),
                     cornerRadius = 34.dp,
                     horizontalOutSidePadding = 24.dp,
