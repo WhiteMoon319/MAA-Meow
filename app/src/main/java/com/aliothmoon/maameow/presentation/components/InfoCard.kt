@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.theme.MaaDesignTokens
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
@@ -31,7 +32,7 @@ fun InfoCard(
     if (useMiuixTheme) {
         MiuixCard(
             modifier = modifier.fillMaxWidth(),
-            insideMargin = contentPadding
+            insideMargin = PaddingValues(vertical = 0.dp)
         ) {
             if (title.isNotEmpty()) {
                 top.yukonga.miuix.kmp.basic.Text(

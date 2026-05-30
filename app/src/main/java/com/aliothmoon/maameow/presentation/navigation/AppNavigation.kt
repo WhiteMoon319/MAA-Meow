@@ -10,7 +10,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,6 +35,7 @@ import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.domain.models.RunMode
 import com.aliothmoon.maameow.domain.service.ExternalNotificationService
 import com.aliothmoon.maameow.presentation.components.AnnouncementDialog
+import com.aliothmoon.maameow.presentation.components.AdaptiveScaffold
 import com.aliothmoon.maameow.presentation.components.ResourceLoadingOverlay
 import com.aliothmoon.maameow.presentation.view.background.BackgroundTaskView
 import com.aliothmoon.maameow.presentation.view.home.HomeView
@@ -51,6 +51,8 @@ import com.aliothmoon.maameow.schedule.ui.ScheduleListView
 import com.aliothmoon.maameow.schedule.ui.ScheduleTriggerLogView
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import top.yukonga.miuix.kmp.blur.layerBackdrop
+import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 
 @Composable
 fun AppNavigation(
@@ -84,6 +86,7 @@ fun AppNavigation(
     // 判断是否显示底部导航
     val showBottomBar = !isFullscreen && isOnMainTab
     val switchBackgroundModeMessage = stringResource(R.string.navigation_toast_switch_background_mode)
+    val glassBackdrop = rememberLayerBackdrop()
 
     LaunchedEffect(pendingScheduledExecution?.requestId) {
         if (pendingScheduledExecution != null && currentNavRoute != Routes.BACKGROUND_TASK) {
@@ -114,7 +117,7 @@ fun AppNavigation(
     val tabExitTransition = fadeOut(animationSpec = tween(150))
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
+        AdaptiveScaffold(
             bottomBar = {
                 if (showBottomBar && !enableMiuixFloatingBottomBar) {
                     AppBottomNavigation(
@@ -146,6 +149,7 @@ fun AppNavigation(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .layerBackdrop(glassBackdrop)
                     .padding(bottom = if (enableMiuixFloatingBottomBar) 0.dp else paddingValues.calculateBottomPadding())
             ) {
                 NavHost(
@@ -302,6 +306,7 @@ fun AppNavigation(
             ) {
                 AppBottomNavigation(
                     currentRoute = currentNavRoute ?: Routes.HOME,
+                    glassBackdrop = glassBackdrop,
                     onTabSelected = { tab ->
                         if (tab.route == currentNavRoute) return@AppBottomNavigation
                         if (tab.route == Routes.BACKGROUND_TASK && runMode == RunMode.FOREGROUND) {

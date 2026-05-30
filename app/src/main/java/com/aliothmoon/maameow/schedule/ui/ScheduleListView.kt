@@ -15,20 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,6 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.aliothmoon.maameow.R
+import com.aliothmoon.maameow.presentation.components.AdaptiveCard
+import com.aliothmoon.maameow.presentation.components.AdaptiveFloatingActionButton
+import com.aliothmoon.maameow.presentation.components.AdaptiveIconButton
+import com.aliothmoon.maameow.presentation.components.AdaptiveScaffold
+import com.aliothmoon.maameow.presentation.components.AdaptiveSwitch
 import com.aliothmoon.maameow.presentation.components.TopAppBar
 import com.aliothmoon.maameow.constant.Routes
 import com.aliothmoon.maameow.schedule.model.ExecutionResult
@@ -53,6 +52,9 @@ import com.aliothmoon.maameow.schedule.service.AutoStartHelper
 import com.aliothmoon.maameow.schedule.model.ScheduleStrategy
 import org.koin.androidx.compose.koinViewModel
 import androidx.core.content.edit
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun ScheduleListView(
@@ -78,25 +80,32 @@ fun ScheduleListView(
         }
     }
 
-    Scaffold(
+    AdaptiveScaffold(
         topBar = {
             TopAppBar(
                 title = stringResource(R.string.schedule_title),
                 actions = {
-                    IconButton(onClick = { navController.navigate(Routes.SCHEDULE_TRIGGER_LOG) }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.List,
-                            contentDescription = stringResource(R.string.schedule_trigger_log_title)
-                        )
-                    }
+                    AdaptiveIconButton(
+                        onClick = { navController.navigate(Routes.SCHEDULE_TRIGGER_LOG) },
+                        imageVector = Icons.AutoMirrored.Filled.List,
+                        contentDescription = stringResource(R.string.schedule_trigger_log_title)
+                    )
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            AdaptiveFloatingActionButton(
                 onClick = { navController.navigate("schedule_edit/new") }
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.schedule_create_strategy))
+                if (LocalMaaUseMiuixTheme.current) {
+                    MiuixIcon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.schedule_create_strategy),
+                        tint = MiuixTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.schedule_create_strategy))
+                }
             }
         }
     ) { padding ->
@@ -196,11 +205,10 @@ private fun StrategyCard(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
-    ElevatedCard(
+    AdaptiveCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp)
+            .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -250,15 +258,13 @@ private fun StrategyCard(
                 }
             }
 
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Outlined.Delete,
-                    contentDescription = stringResource(R.string.common_delete),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            AdaptiveIconButton(
+                onClick = onDelete,
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = stringResource(R.string.common_delete)
+            )
 
-            Switch(
+            AdaptiveSwitch(
                 checked = strategy.enabled,
                 onCheckedChange = onToggleEnabled
             )

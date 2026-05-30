@@ -11,28 +11,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold as MaterialScaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager.EventNotificationLevel
 import com.aliothmoon.maameow.domain.service.MaaEventNotifier
+import com.aliothmoon.maameow.presentation.components.AdaptiveButton
+import com.aliothmoon.maameow.presentation.components.AdaptiveScaffold
+import com.aliothmoon.maameow.presentation.components.AdaptiveSwitch
 import com.aliothmoon.maameow.presentation.components.ITextField
 import com.aliothmoon.maameow.presentation.components.InfoCard
 import com.aliothmoon.maameow.presentation.components.TopAppBar
@@ -42,9 +39,6 @@ import com.aliothmoon.maameow.theme.MaaDesignTokens
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import top.yukonga.miuix.kmp.basic.Button as MiuixButton
-import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
-import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val PROVIDERS: List<Pair<String, Int>> = listOf(
@@ -221,11 +215,7 @@ fun NotificationSettingsView(
         item { Spacer(Modifier.height(MaaDesignTokens.Spacing.xxl)) }
     }
 }
-    if (LocalMaaUseMiuixTheme.current) {
-        MiuixScaffold(topBar = topBar, content = content)
-    } else {
-        MaterialScaffold(topBar = topBar, content = content)
-    }
+    AdaptiveScaffold(topBar = topBar, content = content)
 }
 
 @Composable
@@ -479,12 +469,12 @@ private fun SwitchItem(
     contentColor: Color,
     onCheckedChange: (Boolean) -> Unit
 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = MaaDesignTokens.Spacing.sm),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = MaaDesignTokens.Spacing.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Text(
             text = title,
             style = MaterialTheme.typography.bodyLarge,
@@ -511,11 +501,7 @@ private fun NotificationSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    if (LocalMaaUseMiuixTheme.current) {
-        MiuixSwitch(checked = checked, onCheckedChange = onCheckedChange)
-    } else {
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
+    AdaptiveSwitch(checked = checked, onCheckedChange = onCheckedChange)
 }
 
 @Composable
@@ -525,24 +511,11 @@ private fun NotificationButton(
     enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    if (LocalMaaUseMiuixTheme.current) {
-        MiuixButton(
-            onClick = onClick,
-            modifier = modifier.height(44.dp),
-            enabled = enabled,
-            insideMargin = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-        ) {
-            content()
-        }
-    } else {
-        Button(
-            onClick = onClick,
-            modifier = modifier,
-            enabled = enabled,
-            shape = MaterialTheme.shapes.small,
-            contentPadding = ButtonDefaults.ContentPadding
-        ) {
-            content()
-        }
+    AdaptiveButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled
+    ) {
+        content()
     }
 }

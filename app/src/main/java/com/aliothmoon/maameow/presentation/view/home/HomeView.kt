@@ -641,14 +641,19 @@ private fun ScreenInfoCard(
                         color = statusColor
                     )
                     if (serviceStatusLoading) {
-                        if (LocalMaaUseMiuixTheme.current) {
-                            MiuixCircularProgressIndicator(size = 12.dp)
-                        } else {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(12.dp),
-                                strokeWidth = 1.5.dp,
-                                color = statusColor
-                            )
+                        Box(
+                            modifier = Modifier.size(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (LocalMaaUseMiuixTheme.current) {
+                                MiuixCircularProgressIndicator(size = 12.dp)
+                            } else {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(12.dp),
+                                    strokeWidth = 1.5.dp,
+                                    color = statusColor
+                                )
+                            }
                         }
                     }
                 }
@@ -735,13 +740,18 @@ private fun PermissionRow(
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
         ) {
             if (isLoading) {
-                if (LocalMaaUseMiuixTheme.current) {
-                    MiuixCircularProgressIndicator(size = 16.dp)
-                } else {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
+                Box(
+                    modifier = Modifier.size(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (LocalMaaUseMiuixTheme.current) {
+                        MiuixCircularProgressIndicator(size = 16.dp)
+                    } else {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
                 }
             } else {
                 Text(text = if (granted) grantedText else ungrantedText)

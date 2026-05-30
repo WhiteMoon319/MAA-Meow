@@ -30,13 +30,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,6 +62,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.aliothmoon.maameow.R
+import com.aliothmoon.maameow.presentation.components.AdaptiveScaffold
+import com.aliothmoon.maameow.presentation.components.AdaptiveSwitch
 import com.aliothmoon.maameow.presentation.components.TopAppBar
 import com.aliothmoon.maameow.presentation.components.tip.ExpandableTipContent
 import com.aliothmoon.maameow.presentation.components.tip.ExpandableTipIcon
@@ -76,6 +76,10 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.core.net.toUri
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.TabRow as MiuixTabRow
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -113,7 +117,7 @@ fun ScheduleEditView(
         }
     }
 
-    Scaffold(
+    AdaptiveScaffold(
         topBar = {
             TopAppBar(
                 title = if (state.isNew) {
@@ -125,12 +129,19 @@ fun ScheduleEditView(
                 onNavigationClick = { navController.popBackStack() },
                 actions = {
                     if (state.isSaving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .padding(end = 16.dp),
-                            strokeWidth = 2.dp
-                        )
+                        if (LocalMaaUseMiuixTheme.current) {
+                            MiuixCircularProgressIndicator(
+                                modifier = Modifier.padding(end = 16.dp),
+                                size = 24.dp
+                            )
+                        } else {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .padding(end = 16.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
                     } else {
                         TextButton(onClick = { viewModel.onSave() }) {
                             Text(stringResource(R.string.schedule_save))
@@ -176,27 +187,38 @@ fun ScheduleEditView(
                 SectionHeader(stringResource(R.string.schedule_section_type))
             }
             item {
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    ScheduleType.entries.forEachIndexed { index, type ->
-                        SegmentedButton(
-                            selected = state.scheduleType == type,
-                            onClick = { viewModel.onScheduleTypeChanged(type) },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = ScheduleType.entries.size,
-                                baseShape = RoundedCornerShape(4.dp)
-                            )
-                        ) {
-                            Text(
-                                when (type) {
-                                    ScheduleType.FIXED_TIME -> stringResource(R.string.schedule_type_fixed_time)
-                                    ScheduleType.INTERVAL -> stringResource(R.string.schedule_type_interval)
-                                }
-                            )
+                val typeLabels = ScheduleType.entries.map { type ->
+                    when (type) {
+                        ScheduleType.FIXED_TIME -> stringResource(R.string.schedule_type_fixed_time)
+                        ScheduleType.INTERVAL -> stringResource(R.string.schedule_type_interval)
+                    }
+                }
+                if (LocalMaaUseMiuixTheme.current) {
+                    MiuixTabRow(
+                        tabs = typeLabels,
+                        selectedTabIndex = ScheduleType.entries.indexOf(state.scheduleType),
+                        onTabSelected = { index -> viewModel.onScheduleTypeChanged(ScheduleType.entries[index]) },
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        height = 44.dp
+                    )
+                } else {
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        ScheduleType.entries.forEachIndexed { index, type ->
+                            SegmentedButton(
+                                selected = state.scheduleType == type,
+                                onClick = { viewModel.onScheduleTypeChanged(type) },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = ScheduleType.entries.size,
+                                    baseShape = RoundedCornerShape(4.dp)
+                                )
+                            ) {
+                                Text(typeLabels[index])
+                            }
                         }
                     }
                 }
@@ -472,7 +494,7 @@ fun ScheduleEditView(
                             expanded = expanded,
                             onExpandedChange = { setExpanded(it) })
                     }
-                    Switch(
+                    AdaptiveSwitch(
                         checked = state.forceStart,
                         onCheckedChange = { viewModel.onForceStartChanged(it) }
                     )
@@ -556,11 +578,20 @@ fun ScheduleEditView(
 
 @Composable
 private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
-    )
+    if (LocalMaaUseMiuixTheme.current) {
+        top.yukonga.miuix.kmp.basic.Text(
+            text = title,
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onBackgroundVariant,
+            modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
+        )
+    } else {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

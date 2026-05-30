@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
@@ -25,12 +24,9 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,11 +41,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.aliothmoon.maameow.R
+import com.aliothmoon.maameow.presentation.components.AdaptiveCard
+import com.aliothmoon.maameow.presentation.components.AdaptiveIconButton
+import com.aliothmoon.maameow.presentation.components.AdaptiveScaffold
 import com.aliothmoon.maameow.presentation.components.TopAppBar
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.schedule.model.ExecutionResult
 import com.aliothmoon.maameow.schedule.model.TriggerLogEntry
 import com.aliothmoon.maameow.schedule.service.ScheduleTriggerLogger.TriggerLogSummary
 import org.koin.androidx.compose.koinViewModel
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -76,7 +77,7 @@ fun ScheduleTriggerLogView(
     }
 
     // 列表模式
-    Scaffold(
+    AdaptiveScaffold(
         topBar = {
             TopAppBar(
                 title = stringResource(R.string.schedule_trigger_log_title),
@@ -84,9 +85,11 @@ fun ScheduleTriggerLogView(
                 onNavigationClick = { navController.popBackStack() },
                 actions = {
                     if (summaries.isNotEmpty()) {
-                        IconButton(onClick = { showClearConfirm = true }) {
-                            Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.schedule_log_clear_title))
-                        }
+                        AdaptiveIconButton(
+                            onClick = { showClearConfirm = true },
+                            imageVector = Icons.Rounded.Delete,
+                            contentDescription = stringResource(R.string.schedule_log_clear_title)
+                        )
                     }
                 }
             )
@@ -100,7 +103,11 @@ fun ScheduleTriggerLogView(
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    if (LocalMaaUseMiuixTheme.current) {
+                        MiuixCircularProgressIndicator(size = 32.dp)
+                    } else {
+                        CircularProgressIndicator()
+                    }
                 }
             }
 
@@ -196,11 +203,10 @@ private fun SummaryCard(
     val resultLabel = summary.footer?.result?.let { scheduleExecutionResultLabel(it) }
         ?: stringResource(R.string.schedule_result_in_progress)
 
-    ElevatedCard(
+    AdaptiveCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(8.dp)
+            .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
@@ -251,13 +257,11 @@ private fun SummaryCard(
                     )
                 }
             }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Outlined.Delete,
-                    contentDescription = stringResource(R.string.common_delete),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            AdaptiveIconButton(
+                onClick = onDelete,
+                imageVector = Icons.Outlined.Delete,
+                contentDescription = stringResource(R.string.common_delete)
+            )
         }
     }
 }
@@ -271,7 +275,7 @@ private fun DetailView(
 ) {
     val header = entries.firstOrNull() as? TriggerLogEntry.Header
 
-    Scaffold(
+    AdaptiveScaffold(
         topBar = {
             TopAppBar(
                 title = header?.strategyName ?: stringResource(R.string.schedule_log_detail_title),
