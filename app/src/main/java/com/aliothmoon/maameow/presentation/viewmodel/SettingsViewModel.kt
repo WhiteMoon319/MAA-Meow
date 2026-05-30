@@ -227,6 +227,15 @@ class SettingsViewModel(
         }
     }
 
+    val enablePredictiveBack: StateFlow<Boolean> = appSettingsManager.enablePredictiveBack
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    fun setEnablePredictiveBack(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setEnablePredictiveBack(enabled)
+        }
+    }
+
     val backgroundResolution: StateFlow<DefaultDisplayConfig.ResolutionPreference> =
         appSettingsManager.backgroundResolution
             .stateIn(

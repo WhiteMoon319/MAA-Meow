@@ -191,15 +191,17 @@ fun MaaMeowTheme(
         miuixKeyColor.toLongOrNull(16)?.let { Color(it.toInt()) }
     }
 
-    val miuixController = remember(themeMode, isDark, useMiuixDynamicColor, customMiuixKeyColor) {
+    val hasCustomMiuixKeyColor = customMiuixKeyColor != null
+    val shouldUseMiuixDynamicColor = useMiuixDynamicColor && !hasCustomMiuixKeyColor
+    val miuixController = remember(themeMode, isDark, shouldUseMiuixDynamicColor, customMiuixKeyColor) {
         ThemeController(
             colorSchemeMode = when (themeMode) {
-                AppSettingsManager.ThemeMode.SYSTEM -> if (useMiuixDynamicColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
-                AppSettingsManager.ThemeMode.WHITE -> if (useMiuixDynamicColor) ColorSchemeMode.MonetLight else ColorSchemeMode.Light
+                AppSettingsManager.ThemeMode.SYSTEM -> if (shouldUseMiuixDynamicColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
+                AppSettingsManager.ThemeMode.WHITE -> if (shouldUseMiuixDynamicColor) ColorSchemeMode.MonetLight else ColorSchemeMode.Light
                 AppSettingsManager.ThemeMode.DARK,
-                AppSettingsManager.ThemeMode.PURE_DARK -> if (useMiuixDynamicColor) ColorSchemeMode.MonetDark else ColorSchemeMode.Dark
+                AppSettingsManager.ThemeMode.PURE_DARK -> if (shouldUseMiuixDynamicColor) ColorSchemeMode.MonetDark else ColorSchemeMode.Dark
             },
-            keyColor = if (useMiuixDynamicColor) null else customMiuixKeyColor ?: colorScheme.primary,
+            keyColor = customMiuixKeyColor ?: if (shouldUseMiuixDynamicColor) null else colorScheme.primary,
             isDark = isDark
         )
     }

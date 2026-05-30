@@ -88,15 +88,18 @@ fun AppBottomNavigation(
     val useLiquidGlass = LocalMaaMiuixLiquidGlass.current
 
     if (useMiuixTheme) {
-        if (useLiquidGlass) {
+        if (glassBackdrop != null) {
             MiuixFloatingNavigationBar(
                 modifier = Modifier.miuixLiquidGlass(
                     backdrop = glassBackdrop,
-                    shape = RoundedCornerShape(28.dp)
+                    shape = RoundedCornerShape(34.dp),
+                    enabled = useLiquidGlass
                 ),
-                color = MiuixTheme.colorScheme.surface.copy(alpha = 0.78f),
+                color = MiuixTheme.colorScheme.surface.copy(alpha = if (useLiquidGlass) 0.34f else 1f),
+                cornerRadius = 34.dp,
+                horizontalOutSidePadding = 24.dp,
                 showDivider = true,
-                shadowElevation = 0.dp
+                shadowElevation = if (useLiquidGlass) 8.dp else 2.dp
             ) {
                 BottomNavTab.all.forEach { tab ->
                     val label = stringResource(tab.labelRes)

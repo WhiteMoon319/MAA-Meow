@@ -42,6 +42,7 @@ import com.aliothmoon.maameow.presentation.view.home.HomeView
 import com.aliothmoon.maameow.presentation.view.notification.NotificationSettingsView
 import com.aliothmoon.maameow.presentation.view.settings.ErrorLogView
 import com.aliothmoon.maameow.presentation.view.settings.LogHistoryView
+import com.aliothmoon.maameow.presentation.view.settings.PersonalizationView
 import com.aliothmoon.maameow.presentation.view.settings.SettingsView
 import com.aliothmoon.maameow.presentation.viewmodel.BackgroundTaskViewModel
 import com.aliothmoon.maameow.schedule.model.CountdownState
@@ -74,6 +75,7 @@ fun AppNavigation(
     val announcementReadVersion by appSettings.announcementReadVersion.collectAsStateWithLifecycle()
     val language by appSettings.language.collectAsStateWithLifecycle()
     val enableMiuixFloatingBottomBar by appSettings.enableMiuixFloatingBottomBar.collectAsStateWithLifecycle()
+    val enablePredictiveBack by appSettings.enablePredictiveBack.collectAsStateWithLifecycle()
     val pendingScheduledExecution by backgroundTaskViewModel.coordinator.pendingExecution.collectAsStateWithLifecycle()
     val scheduledCountdownState by backgroundTaskViewModel.coordinator.countdownState.collectAsStateWithLifecycle()
 
@@ -173,7 +175,7 @@ fun AppNavigation(
                         popEnterTransition = { tabEnterTransition },
                         popExitTransition = { tabExitTransition }
                     ) {
-                        BackHandler { navController.popBackStack() }
+                        BackHandler(enabled = !enablePredictiveBack) { navController.popBackStack() }
                         BackgroundTaskView(
                             onFullscreenChanged = { isFullscreen = it },
                             viewModel = backgroundTaskViewModel,
@@ -187,7 +189,7 @@ fun AppNavigation(
                         popEnterTransition = { tabEnterTransition },
                         popExitTransition = { tabExitTransition }
                     ) {
-                        BackHandler { navController.popBackStack() }
+                        BackHandler(enabled = !enablePredictiveBack) { navController.popBackStack() }
                         ScheduleListView(navController = navController)
                     }
 
@@ -198,8 +200,26 @@ fun AppNavigation(
                         popEnterTransition = { tabEnterTransition },
                         popExitTransition = { tabExitTransition }
                     ) {
-                        BackHandler { navController.popBackStack() }
+                        BackHandler(enabled = !enablePredictiveBack) { navController.popBackStack() }
                         NotificationSettingsView()
+                    }
+
+                    composable(
+                        route = Routes.PERSONALIZATION,
+                        enterTransition = {
+                            slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(350))
+                        },
+                        exitTransition = {
+                            slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(350))
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(initialOffsetX = { -it / 3 }, animationSpec = tween(350))
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(350))
+                        }
+                    ) {
+                        PersonalizationView(navController = navController)
                     }
 
                     composable(

@@ -23,12 +23,15 @@ fun Modifier.miuixLiquidGlass(
     return textureBlur(
         backdrop = backdrop,
         shape = shape,
-        blurRadius = 25f,
+        blurRadius = 42f,
         colors = BlurColors(
             blendColors = listOf(
-                BlendColorEntry(MiuixTheme.colorScheme.surface.copy(alpha = 0.72f))
+                BlendColorEntry(MiuixTheme.colorScheme.surface.copy(alpha = 0.46f)),
+                BlendColorEntry(MiuixTheme.colorScheme.primary.copy(alpha = 0.10f))
             ),
-            saturation = 1.25f
+            brightness = 0.04f,
+            contrast = 1.08f,
+            saturation = 1.45f
         )
     )
 }

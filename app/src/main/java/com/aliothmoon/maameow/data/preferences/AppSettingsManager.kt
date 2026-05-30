@@ -386,6 +386,21 @@ class AppSettingsManager(private val context: Context) {
         }
     }
 
+    val enablePredictiveBack: StateFlow<Boolean> = settings
+        .map { it.enablePredictiveBack.toBooleanStrictOrNull() ?: true }
+        .distinctUntilChanged()
+        .stateIn(
+            scope,
+            SharingStarted.Eagerly,
+            initialSettings.enablePredictiveBack.toBooleanStrictOrNull() ?: true
+        )
+
+    suspend fun setEnablePredictiveBack(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[enablePredictiveBack] = enabled.toString() }
+        }
+    }
+
     // 内部通知级别
     enum class EventNotificationLevel(@param:androidx.annotation.StringRes val labelRes: Int) {
         OFF(R.string.notification_level_off),

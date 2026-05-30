@@ -47,6 +47,8 @@ data class AppSettings(
 
     @PrefKey(default = "false") val enableMiuixLiquidGlass: String = "false",
 
+    @PrefKey(default = "true") val enablePredictiveBack: String = "true",
+
     @PrefKey(default = "DEFAULT") val eventNotificationLevel: String = "DEFAULT",
 
     @PrefKey(default = "P720") val backgroundResolution: String = "P720",

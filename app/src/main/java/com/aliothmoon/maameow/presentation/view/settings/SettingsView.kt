@@ -4,14 +4,10 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
@@ -43,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -54,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.aliothmoon.maameow.BuildConfig
 import com.aliothmoon.maameow.R
+import com.aliothmoon.maameow.constant.Routes
 import com.aliothmoon.maameow.constant.DefaultDisplayConfig
 import com.aliothmoon.maameow.data.model.update.UpdateChannel
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
@@ -78,9 +73,7 @@ import org.koin.compose.koinInject
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.RadioButtonPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
-import top.yukonga.miuix.kmp.basic.ColorPicker as MiuixColorPicker
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -214,10 +207,6 @@ private fun SettingsContent(
     val updateChannel by viewModel.updateChannel.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val useMiuixTheme by viewModel.useMiuixTheme.collectAsStateWithLifecycle()
-    val useMiuixDynamicColor by viewModel.useMiuixDynamicColor.collectAsStateWithLifecycle()
-    val miuixKeyColor by viewModel.miuixKeyColor.collectAsStateWithLifecycle()
-    val enableMiuixFloatingBottomBar by viewModel.enableMiuixFloatingBottomBar.collectAsStateWithLifecycle()
-    val enableMiuixLiquidGlass by viewModel.enableMiuixLiquidGlass.collectAsStateWithLifecycle()
     val backgroundResolution by viewModel.backgroundResolution.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
@@ -366,46 +355,14 @@ private fun SettingsContent(
                     onCheckedChange = { viewModel.setUseMiuixTheme(it) }
                 )
                 SettingsDivider(contentColor)
-                SettingSwitchItem(
-                    title = stringResource(R.string.settings_use_miuix_dynamic_color_title),
-                    description = stringResource(R.string.settings_use_miuix_dynamic_color_desc),
-                    contentColor = contentColor,
-                    checked = useMiuixDynamicColor,
-                    enabled = useMiuixTheme,
-                    onCheckedChange = { viewModel.setUseMiuixDynamicColor(it) }
-                )
-                SettingsDivider(contentColor)
-                if (useMiuixTheme) {
-                    MiuixThemePreviewCard(
-                        keyColor = miuixKeyColor,
-                        dynamicColorEnabled = useMiuixDynamicColor,
-                        floatingBottomBarEnabled = enableMiuixFloatingBottomBar,
-                        liquidGlassEnabled = enableMiuixLiquidGlass
-                    )
-                    MiuixColorSettingsItem(
-                        keyColor = miuixKeyColor,
-                        dynamicColorEnabled = useMiuixDynamicColor,
-                        onColorChanged = { viewModel.setMiuixKeyColor(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_miuix_floating_bottom_bar_title),
-                        description = stringResource(R.string.settings_miuix_floating_bottom_bar_desc),
-                        contentColor = contentColor,
-                        checked = enableMiuixFloatingBottomBar,
-                        onCheckedChange = { viewModel.setEnableMiuixFloatingBottomBar(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_miuix_liquid_glass_title),
-                        description = stringResource(R.string.settings_miuix_liquid_glass_desc),
-                        contentColor = contentColor,
-                        checked = enableMiuixLiquidGlass,
-                        enabled = enableMiuixFloatingBottomBar,
-                        onCheckedChange = { viewModel.setEnableMiuixLiquidGlass(it) }
-                    )
-                    SettingsDivider(contentColor)
+                SettingClickItem(
+                    title = stringResource(R.string.personalization_title),
+                    description = stringResource(R.string.personalization_desc),
+                    contentColor = contentColor
+                ) {
+                    navController.navigate(Routes.PERSONALIZATION)
                 }
+                SettingsDivider(contentColor)
                 SettingLanguageItem(
                     contentColor = contentColor,
                     selectedLanguage = language,
@@ -533,211 +490,6 @@ private data class SettingsContextActions(
     val showReInitConfirm: () -> Unit,
     val showDebugModeConfirm: () -> Unit
 )
-
-private val MiuixPresetKeyColors = listOf(
-    Color(0xFFF44336),
-    Color(0xFFE91E63),
-    Color(0xFF9C27B0),
-    Color(0xFF673AB7),
-    Color(0xFF3F51B5),
-    Color(0xFF2196F3),
-    Color(0xFF00BCD4),
-    Color(0xFF009688),
-    Color(0xFF4FAF50),
-    Color(0xFFFFEB3B),
-    Color(0xFFFFC107),
-    Color(0xFFFF9800),
-    Color(0xFF795548),
-    Color(0xFF607D8F),
-    Color(0xFFFF9CA8)
-)
-
-@Composable
-private fun MiuixThemePreviewCard(
-    keyColor: String,
-    dynamicColorEnabled: Boolean,
-    floatingBottomBarEnabled: Boolean,
-    liquidGlassEnabled: Boolean
-) {
-    val seedColor = keyColor.toLongOrNull(16)?.let { Color(it.toInt()) } ?: MiuixTheme.colorScheme.primary
-    val backgroundColor = MiuixTheme.colorScheme.background
-    val cardColor = MiuixTheme.colorScheme.surfaceContainer
-    val navColor = MiuixTheme.colorScheme.surface.copy(alpha = if (liquidGlassEnabled) 0.58f else 1f)
-
-    MiuixCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
-        insideMargin = PaddingValues(14.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 112.dp, height = 168.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(backgroundColor)
-                    .border(1.dp, MiuixTheme.colorScheme.dividerLine, RoundedCornerShape(20.dp))
-            ) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.62f)
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(seedColor)
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(seedColor.copy(alpha = 0.24f))
-                        )
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(cardColor)
-                        )
-                    }
-                    repeat(3) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(16.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(cardColor)
-                        )
-                    }
-                }
-                if (floatingBottomBarEnabled) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 8.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(navColor)
-                            .border(0.5.dp, MiuixTheme.colorScheme.dividerLine, RoundedCornerShape(14.dp))
-                            .padding(horizontal = 12.dp, vertical = 7.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        repeat(4) { index ->
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(if (index == 0) seedColor else MiuixTheme.colorScheme.onSurfaceVariantSummary)
-                            )
-                        }
-                    }
-                }
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                top.yukonga.miuix.kmp.basic.Text(
-                    text = stringResource(R.string.settings_miuix_key_color_preview),
-                    style = MiuixTheme.textStyles.headline1,
-                    color = MiuixTheme.colorScheme.onSurface
-                )
-                top.yukonga.miuix.kmp.basic.Text(
-                    text = if (dynamicColorEnabled) {
-                        stringResource(R.string.settings_miuix_key_color_dynamic_notice)
-                    } else {
-                        "#${seedColor.toArgb().toUInt().toString(16).uppercase()}"
-                    },
-                    style = MiuixTheme.textStyles.footnote1,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MiuixColorSettingsItem(
-    keyColor: String,
-    dynamicColorEnabled: Boolean,
-    onColorChanged: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val defaultColor = MiuixTheme.colorScheme.primary
-    val selectedColor = remember(keyColor, defaultColor) {
-        keyColor.toLongOrNull(16)?.let { Color(it.toInt()) } ?: defaultColor
-    }
-
-    MiuixSettingChoiceGroup(
-        title = stringResource(R.string.settings_miuix_key_color_title),
-        summary = stringResource(R.string.settings_miuix_key_color_desc)
-    ) {
-        ArrowPreference(
-            title = stringResource(R.string.settings_miuix_key_color_preview),
-            summary = if (dynamicColorEnabled) {
-                stringResource(R.string.settings_miuix_key_color_dynamic_notice)
-            } else {
-                "#${selectedColor.toArgb().toUInt().toString(16).uppercase()}"
-            },
-            onClick = { expanded = !expanded }
-        )
-        if (expanded) {
-            Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    MiuixPresetKeyColors.forEach { color ->
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(color)
-                                .border(
-                                    width = if (color.toArgb() == selectedColor.toArgb()) 2.dp else 0.5.dp,
-                                    color = if (color.toArgb() == selectedColor.toArgb()) {
-                                        MiuixTheme.colorScheme.onSurface
-                                    } else {
-                                        MiuixTheme.colorScheme.dividerLine
-                                    },
-                                    shape = RoundedCornerShape(14.dp)
-                                )
-                                .clickable {
-                                    onColorChanged(color.toArgb().toUInt().toString(16).uppercase())
-                                }
-                        )
-                    }
-                }
-                MiuixColorPicker(
-                    color = selectedColor,
-                    onColorChanged = { color ->
-                        onColorChanged(color.toArgb().toUInt().toString(16).uppercase())
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    showPreview = true
-                )
-                top.yukonga.miuix.kmp.basic.Text(
-                    text = stringResource(R.string.settings_miuix_key_color_preview_hint),
-                    style = MiuixTheme.textStyles.footnote1,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun MiuixSettingChoiceGroup(
