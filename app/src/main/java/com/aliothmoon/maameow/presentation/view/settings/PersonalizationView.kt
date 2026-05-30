@@ -48,7 +48,7 @@ import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val MiuixPresetKeyColors = listOf(
-    Color(0xFFF44336),
+    Color(0xFFFF8A80),
     Color(0xFFE91E63),
     Color(0xFF9C27B0),
     Color(0xFF673AB7),
@@ -64,6 +64,16 @@ private val MiuixPresetKeyColors = listOf(
     Color(0xFF607D8F),
     Color(0xFFFF9CA8)
 )
+
+private fun parseArgbColor(color: String): Color? {
+    val value = color.removePrefix("#")
+    val argb = when (value.length) {
+        6 -> "FF$value"
+        8 -> value
+        else -> return null
+    }
+    return argb.toULongOrNull(16)?.let { Color(it.toInt()) }
+}
 
 @Composable
 fun PersonalizationView(
@@ -133,13 +143,13 @@ fun PersonalizationView(
                     )
                     SwitchPreference(
                         title = stringResource(R.string.settings_predictive_back_title),
-                        summary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        summary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             stringResource(R.string.settings_predictive_back_desc)
                         } else {
                             stringResource(R.string.settings_predictive_back_unsupported_desc)
                         },
                         checked = enablePredictiveBack,
-                        enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+                        enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
                         onCheckedChange = { viewModel.setEnablePredictiveBack(it) }
                     )
                 }
@@ -156,7 +166,7 @@ private fun MiuixThemePreviewCard(
     floatingBottomBarEnabled: Boolean,
     liquidGlassEnabled: Boolean
 ) {
-    val seedColor = keyColor.toLongOrNull(16)?.let { Color(it.toInt()) } ?: MiuixTheme.colorScheme.primary
+    val seedColor = parseArgbColor(keyColor) ?: MiuixTheme.colorScheme.primary
     val navColor = MiuixTheme.colorScheme.surface.copy(alpha = if (liquidGlassEnabled) 0.34f else 1f)
     MiuixCard(insideMargin = PaddingValues(16.dp)) {
         Row(
@@ -264,7 +274,7 @@ private fun MiuixColorSettingsItem(
     var expanded by remember { mutableStateOf(false) }
     val defaultColor = MiuixTheme.colorScheme.primary
     val selectedColor = remember(keyColor, defaultColor) {
-        keyColor.toLongOrNull(16)?.let { Color(it.toInt()) } ?: defaultColor
+        parseArgbColor(keyColor) ?: defaultColor
     }
 
     MiuixSettingGroup(

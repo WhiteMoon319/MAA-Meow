@@ -131,6 +131,16 @@ private val BluePureDark = createDarkColorScheme(
     isPureDark = true
 )
 
+private fun parseArgbColor(color: String): Color? {
+    val value = color.removePrefix("#")
+    val argb = when (value.length) {
+        6 -> "FF$value"
+        8 -> value
+        else -> return null
+    }
+    return argb.toULongOrNull(16)?.let { Color(it.toInt()) }
+}
+
 val MaaShapes = Shapes(
     extraSmall = RoundedCornerShape(MaaDesignTokens.CornerRadius.inner),
     small = RoundedCornerShape(MaaDesignTokens.CornerRadius.button),
@@ -188,20 +198,20 @@ fun MaaMeowTheme(
     }
 
     val customMiuixKeyColor = remember(miuixKeyColor) {
-        miuixKeyColor.toLongOrNull(16)?.let { Color(it.toInt()) }
+        parseArgbColor(miuixKeyColor)
     }
 
     val hasCustomMiuixKeyColor = customMiuixKeyColor != null
-    val shouldUseMiuixDynamicColor = useMiuixDynamicColor && !hasCustomMiuixKeyColor
-    val miuixController = remember(themeMode, isDark, shouldUseMiuixDynamicColor, customMiuixKeyColor) {
+    val shouldUseMiuixMonetColor = useMiuixDynamicColor || hasCustomMiuixKeyColor
+    val miuixController = remember(themeMode, isDark, shouldUseMiuixMonetColor, customMiuixKeyColor) {
         ThemeController(
             colorSchemeMode = when (themeMode) {
-                AppSettingsManager.ThemeMode.SYSTEM -> if (shouldUseMiuixDynamicColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
-                AppSettingsManager.ThemeMode.WHITE -> if (shouldUseMiuixDynamicColor) ColorSchemeMode.MonetLight else ColorSchemeMode.Light
+                AppSettingsManager.ThemeMode.SYSTEM -> if (shouldUseMiuixMonetColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
+                AppSettingsManager.ThemeMode.WHITE -> if (shouldUseMiuixMonetColor) ColorSchemeMode.MonetLight else ColorSchemeMode.Light
                 AppSettingsManager.ThemeMode.DARK,
-                AppSettingsManager.ThemeMode.PURE_DARK -> if (shouldUseMiuixDynamicColor) ColorSchemeMode.MonetDark else ColorSchemeMode.Dark
+                AppSettingsManager.ThemeMode.PURE_DARK -> if (shouldUseMiuixMonetColor) ColorSchemeMode.MonetDark else ColorSchemeMode.Dark
             },
-            keyColor = customMiuixKeyColor ?: if (shouldUseMiuixDynamicColor) null else colorScheme.primary,
+            keyColor = customMiuixKeyColor,
             isDark = isDark
         )
     }

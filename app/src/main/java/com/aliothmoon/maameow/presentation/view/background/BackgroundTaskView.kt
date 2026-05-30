@@ -140,6 +140,7 @@ fun BackgroundTaskView(
     permissionManager: PermissionManager = koinInject(),
     screenSaverManager: ScreenSaverOverlayManager = koinInject(),
     appWatchdog: AppWatchdog = koinInject(),
+    appSettingsManager: AppSettingsManager = koinInject(),
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -165,6 +166,8 @@ fun BackgroundTaskView(
     val activeProfileId by viewModel.chainState.activeProfileId.collectAsStateWithLifecycle()
     val selectedNode = nodes.find { it.id == state.selectedNodeId }
     val canShowTaskActions = PanelTab.canShowTaskActions(state.current)
+    val enableFloatingBottomBar by appSettingsManager.enableMiuixFloatingBottomBar.collectAsStateWithLifecycle()
+    val liftTaskActions = LocalMaaUseMiuixTheme.current && enableFloatingBottomBar
 
     val pagerState = rememberPagerState(
         initialPage = state.current.ordinal,
@@ -480,7 +483,9 @@ fun BackgroundTaskView(
                             Spacer(modifier = Modifier.height(6.dp))
                             val focusManager = LocalFocusManager.current
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = if (liftTaskActions) 72.dp else 0.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {

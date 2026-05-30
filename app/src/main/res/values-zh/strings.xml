@@ -251,9 +251,9 @@
     <string name="settings_use_miuix_theme_desc">关闭后恢复原来的应用主题</string>
     <string name="personalization_title">个性化</string>
     <string name="personalization_desc">主题取色、悬浮底栏、液态玻璃和返回手势</string>
-    <string name="settings_use_miuix_dynamic_color_title">Miuix 动态取色</string>
-    <string name="settings_use_miuix_dynamic_color_desc">未设置自定义颜色时使用系统壁纸颜色生成 Miuix 配色</string>
-    <string name="settings_miuix_key_color_title">Miuix 自定义取色</string>
+    <string name="settings_use_miuix_dynamic_color_title">莫奈动态取色</string>
+    <string name="settings_use_miuix_dynamic_color_desc">未设置自定义颜色时使用系统壁纸颜色生成莫奈配色</string>
+    <string name="settings_miuix_key_color_title">莫奈自定义取色</string>
     <string name="settings_miuix_key_color_desc">设置后优先使用此颜色生成主题</string>
     <string name="settings_miuix_key_color_preview">主题颜色预览</string>
     <string name="settings_miuix_key_color_dynamic_notice">当前使用系统动态取色</string>

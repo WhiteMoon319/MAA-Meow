@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -89,17 +90,43 @@ fun AppBottomNavigation(
 
     if (useMiuixTheme) {
         if (glassBackdrop != null) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                MiuixFloatingNavigationBar(
+                    modifier = Modifier.miuixLiquidGlass(
+                        backdrop = glassBackdrop,
+                        shape = RoundedCornerShape(34.dp),
+                        enabled = useLiquidGlass
+                    ),
+                    color = MiuixTheme.colorScheme.surfaceContainer.copy(alpha = if (useLiquidGlass) 0.18f else 1f),
+                    cornerRadius = 34.dp,
+                    horizontalOutSidePadding = 24.dp,
+                    showDivider = !useLiquidGlass,
+                    shadowElevation = if (useLiquidGlass) 10.dp else 2.dp
+                ) {
+                    BottomNavTab.all.forEach { tab ->
+                        val label = stringResource(tab.labelRes)
+                        MiuixFloatingNavigationBarItem(
+                            selected = currentRoute == tab.route,
+                            onClick = { onTabSelected(tab) },
+                            icon = tab.icon,
+                            label = label
+                        )
+                    }
+                }
+            }
+            return
+        }
+
+        if (useLiquidGlass) {
             MiuixFloatingNavigationBar(
-                modifier = Modifier.miuixLiquidGlass(
-                    backdrop = glassBackdrop,
-                    shape = RoundedCornerShape(34.dp),
-                    enabled = useLiquidGlass
-                ),
-                color = MiuixTheme.colorScheme.surface.copy(alpha = if (useLiquidGlass) 0.34f else 1f),
+                color = MiuixTheme.colorScheme.surfaceContainer.copy(alpha = 0.68f),
                 cornerRadius = 34.dp,
                 horizontalOutSidePadding = 24.dp,
-                showDivider = true,
-                shadowElevation = if (useLiquidGlass) 8.dp else 2.dp
+                showDivider = false,
+                shadowElevation = 10.dp
             ) {
                 BottomNavTab.all.forEach { tab ->
                     val label = stringResource(tab.labelRes)
