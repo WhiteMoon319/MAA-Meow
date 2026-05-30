@@ -14,8 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.theme.MaaDesignTokens
-import com.aliothmoon.maameow.theme.MaaThemeStyle
 
 @Composable
 fun InfoCard(
@@ -26,17 +26,19 @@ fun InfoCard(
     contentPadding: PaddingValues = PaddingValues(MaaDesignTokens.Card.innerPadding),
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val useMiuixTheme = MaaThemeStyle.useMiuixTheme
-    val cardShape = if (useMiuixTheme) RoundedCornerShape(24.dp) else MaterialTheme.shapes.medium
-    val cardColor = if (useMiuixTheme) MaterialTheme.colorScheme.surfaceContainerLow else containerColor
-    val cardElevation = if (useMiuixTheme) 0.dp else MaaDesignTokens.Card.elevation
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    val actualContainerColor = if (useMiuixTheme) {
+        MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
+    } else {
+        containerColor
+    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = cardElevation),
-        shape = cardShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = if (useMiuixTheme) 0.dp else MaaDesignTokens.Card.elevation),
+        shape = if (useMiuixTheme) RoundedCornerShape(MaaDesignTokens.CornerRadius.miuixCard) else MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
-            containerColor = cardColor
+            containerColor = actualContainerColor
         )
     ) {
         Column(

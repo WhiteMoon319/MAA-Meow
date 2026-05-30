@@ -22,7 +22,9 @@ object MaaDesignTokens {
 
     object CornerRadius {
         val card: Dp = 12.dp
+        val miuixCard: Dp = 20.dp
         val button: Dp = 10.dp
+        val miuixButton: Dp = 16.dp
         val pill: Dp = 20.dp
         val inner: Dp = 8.dp
     }

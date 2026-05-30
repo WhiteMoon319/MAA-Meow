@@ -12,7 +12,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -20,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.ThemeController
@@ -140,6 +140,14 @@ val MaaShapes = Shapes(
     extraLarge = RoundedCornerShape(MaaDesignTokens.CornerRadius.pill)
 )
 
+val MiuixMaaShapes = Shapes(
+    extraSmall = RoundedCornerShape(MaaDesignTokens.CornerRadius.button),
+    small = RoundedCornerShape(MaaDesignTokens.CornerRadius.miuixButton),
+    medium = RoundedCornerShape(MaaDesignTokens.CornerRadius.miuixCard),
+    large = RoundedCornerShape(MaaDesignTokens.CornerRadius.miuixCard),
+    extraLarge = RoundedCornerShape(28.dp)
+)
+
 
 private object NoIndication : IndicationNodeFactory {
     private class NoIndicationNode : Modifier.Node(), DrawModifierNode {
@@ -164,12 +172,6 @@ object MaaThemeAlphas {
 }
 
 val LocalMaaUseMiuixTheme = staticCompositionLocalOf { false }
-
-object MaaThemeStyle {
-    val useMiuixTheme: Boolean
-        @Composable @ReadOnlyComposable
-        get() = LocalMaaUseMiuixTheme.current
-}
 
 @Composable
 fun MaaMeowTheme(
@@ -225,9 +227,9 @@ fun MaaMeowTheme(
                         onTertiary = miuixColors.onPrimaryVariant,
                         background = if (themeMode == AppSettingsManager.ThemeMode.PURE_DARK) Color.Black else miuixColors.background,
                         onBackground = miuixColors.onBackground,
-                        surface = if (themeMode == AppSettingsManager.ThemeMode.PURE_DARK) Color.Black else miuixColors.surfaceContainer,
+                        surface = if (themeMode == AppSettingsManager.ThemeMode.PURE_DARK) Color.Black else miuixColors.surfaceContainerHighest,
                         onSurface = miuixColors.onSurface,
-                        surfaceVariant = miuixColors.surfaceContainerHighest,
+                        surfaceVariant = miuixColors.secondaryVariant,
                         onSurfaceVariant = miuixColors.onSurfaceVariantSummary,
                         outline = miuixColors.outline,
                         outlineVariant = miuixColors.dividerLine,
@@ -248,11 +250,11 @@ fun MaaMeowTheme(
                         onSecondaryContainer = miuixColors.onSecondaryContainer,
                         tertiary = miuixColors.primaryVariant,
                         onTertiary = miuixColors.onPrimaryVariant,
-                        background = miuixColors.background,
+                        background = miuixColors.surface,
                         onBackground = miuixColors.onBackground,
-                        surface = miuixColors.surfaceContainer,
+                        surface = miuixColors.surfaceVariant,
                         onSurface = miuixColors.onSurface,
-                        surfaceVariant = miuixColors.surfaceContainerHighest,
+                        surfaceVariant = miuixColors.secondaryVariant,
                         onSurfaceVariant = miuixColors.onSurfaceVariantSummary,
                         outline = miuixColors.outline,
                         outlineVariant = miuixColors.dividerLine,
@@ -266,7 +268,7 @@ fun MaaMeowTheme(
                 MaterialTheme(
                     colorScheme = materialColorScheme,
                     typography = Typography,
-                    shapes = MaaShapes,
+                    shapes = MiuixMaaShapes,
                     content = content
                 )
             }

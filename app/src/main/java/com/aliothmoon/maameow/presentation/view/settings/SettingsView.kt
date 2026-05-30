@@ -4,7 +4,6 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,7 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Switch as MaterialSwitch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,14 +60,15 @@ import com.aliothmoon.maameow.presentation.components.ReInitializeConfirmDialog
 import com.aliothmoon.maameow.presentation.components.ResourceInitDialog
 import com.aliothmoon.maameow.presentation.components.TopAppBar
 import com.aliothmoon.maameow.presentation.viewmodel.SettingsViewModel
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.theme.MaaDesignTokens
-import com.aliothmoon.maameow.theme.MaaThemeStyle
 import com.aliothmoon.maameow.utils.Misc
 import com.aliothmoon.maameow.utils.i18n.LocaleBootstrap.resolveSelectedLanguage
 import com.aliothmoon.maameow.utils.i18n.resolve
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
 
 @Composable
 fun SettingsView(
@@ -94,7 +94,6 @@ fun SettingsView(
     val showRestartDialog by viewModel.showRestartDialog.collectAsStateWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val useMiuixStyle = MaaThemeStyle.useMiuixTheme
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -188,7 +187,7 @@ fun SettingsView(
                 SectionHeader(stringResource(R.string.settings_section_update))
                 InfoCard(
                     title = "",
-                    modifier = Modifier.padding(horizontal = if (useMiuixStyle) 12.dp else 16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     contentColor = contentColor,
                     contentPadding = PaddingValues(
                         horizontal = MaaDesignTokens.Card.innerPadding,
@@ -233,7 +232,7 @@ fun SettingsView(
                 SectionHeader(stringResource(R.string.settings_section_log))
                 InfoCard(
                     title = "",
-                    modifier = Modifier.padding(horizontal = if (useMiuixStyle) 12.dp else 16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     contentColor = contentColor,
                     contentPadding = PaddingValues(
                         horizontal = MaaDesignTokens.Card.innerPadding,
@@ -291,7 +290,7 @@ fun SettingsView(
                 SectionHeader(stringResource(R.string.settings_section_other))
                 InfoCard(
                     title = "",
-                    modifier = Modifier.padding(horizontal = if (useMiuixStyle) 12.dp else 16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     contentColor = contentColor,
                     contentPadding = PaddingValues(
                         horizontal = MaaDesignTokens.Card.innerPadding,
@@ -360,7 +359,7 @@ fun SettingsView(
                 SectionHeader(stringResource(R.string.settings_section_data))
                 InfoCard(
                     title = "",
-                    modifier = Modifier.padding(horizontal = if (useMiuixStyle) 12.dp else 16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     contentColor = contentColor,
                     contentPadding = PaddingValues(
                         horizontal = MaaDesignTokens.Card.innerPadding,
@@ -390,7 +389,7 @@ fun SettingsView(
                 SectionHeader(stringResource(R.string.settings_section_about))
                 InfoCard(
                     title = "",
-                    modifier = Modifier.padding(horizontal = if (useMiuixStyle) 12.dp else 16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     contentColor = contentColor,
                     contentPadding = PaddingValues(
                         horizontal = MaaDesignTokens.Card.innerPadding,
@@ -446,8 +445,6 @@ private fun SettingThemeModeItem(
     selectedMode: AppSettingsManager.ThemeMode,
     onModeSelected: (AppSettingsManager.ThemeMode) -> Unit
 ) {
-    val useMiuixStyle = MaaThemeStyle.useMiuixTheme
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -467,29 +464,20 @@ private fun SettingThemeModeItem(
                 AppSettingsManager.ThemeMode.PURE_DARK to stringResource(R.string.settings_theme_pure_dark)
             )
             modes.forEach { (mode, label) ->
-                val selected = mode == selectedMode
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(if (useMiuixStyle) 18.dp else 8.dp))
-                        .background(
-                            if (useMiuixStyle && selected) {
-                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
-                            } else {
-                                Color.Transparent
-                            }
-                        )
+                        .clip(RoundedCornerShape(8.dp))
                         .selectable(
-                            selected = selected,
+                            selected = mode == selectedMode,
                             onClick = { onModeSelected(mode) },
                             role = Role.RadioButton
                         )
-                        .padding(horizontal = if (useMiuixStyle) 4.dp else 0.dp, vertical = if (useMiuixStyle) 4.dp else 0.dp)
                 ) {
                     RadioButton(
-                        selected = selected,
+                        selected = mode == selectedMode,
                         onClick = null
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -512,14 +500,11 @@ private fun SettingClickItem(
     contentColor: Color,
     onClick: () -> Unit
 ) {
-    val useMiuixStyle = MaaThemeStyle.useMiuixTheme
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(if (useMiuixStyle) 16.dp else 0.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = if (useMiuixStyle) 4.dp else 0.dp, vertical = MaaDesignTokens.Spacing.listItemVertical),
+            .padding(vertical = MaaDesignTokens.Spacing.listItemVertical),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -546,14 +531,11 @@ private fun SettingSwitchItem(
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    val useMiuixStyle = MaaThemeStyle.useMiuixTheme
-
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(if (useMiuixStyle) 16.dp else 0.dp))
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
-            .padding(horizontal = if (useMiuixStyle) 4.dp else 0.dp, vertical = MaaDesignTokens.Spacing.listItemVertical),
+            .padding(vertical = MaaDesignTokens.Spacing.listItemVertical),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -575,11 +557,19 @@ private fun SettingSwitchItem(
             }
 
         }
-        Switch(
-            checked = checked,
-            enabled = enabled,
-            onCheckedChange = null
-        )
+        if (useMiuixTheme) {
+            MiuixSwitch(
+                checked = checked,
+                enabled = enabled,
+                onCheckedChange = onCheckedChange
+            )
+        } else {
+            MaterialSwitch(
+                checked = checked,
+                enabled = enabled,
+                onCheckedChange = onCheckedChange
+            )
+        }
     }
 }
 
@@ -610,27 +600,23 @@ private fun SettingInfoRow(
 
 @Composable
 private fun SettingsDivider(contentColor: Color) {
-    val useMiuixStyle = MaaThemeStyle.useMiuixTheme
-
     HorizontalDivider(
-        modifier = Modifier.padding(start = if (useMiuixStyle) 8.dp else MaaDesignTokens.Separator.inset),
+        modifier = Modifier.padding(start = MaaDesignTokens.Separator.inset),
         thickness = MaaDesignTokens.Separator.thickness,
-        color = contentColor.copy(alpha = if (useMiuixStyle) 0.08f else 0.12f)
+        color = contentColor.copy(alpha = 0.12f)
     )
 }
 
 @Composable
 private fun SectionHeader(title: String) {
-    val useMiuixStyle = MaaThemeStyle.useMiuixTheme
-
     Text(
         text = title,
-        style = if (useMiuixStyle) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (useMiuixStyle) 0.86f else 1f),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(
-            start = if (useMiuixStyle) 24.dp else 32.dp,
-            top = if (useMiuixStyle) MaaDesignTokens.Spacing.xl else MaaDesignTokens.Spacing.lg,
-            bottom = if (useMiuixStyle) MaaDesignTokens.Spacing.sm else MaaDesignTokens.Spacing.xs
+            start = 32.dp,
+            top = MaaDesignTokens.Spacing.lg,
+            bottom = MaaDesignTokens.Spacing.xs
         )
     )
 }
