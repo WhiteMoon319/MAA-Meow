@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.graphics.drawscope.ContentDrawScope
-import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.ThemeController
@@ -140,15 +139,6 @@ val MaaShapes = Shapes(
     extraLarge = RoundedCornerShape(MaaDesignTokens.CornerRadius.pill)
 )
 
-val MiuixMaaShapes = Shapes(
-    extraSmall = RoundedCornerShape(MaaDesignTokens.CornerRadius.button),
-    small = RoundedCornerShape(MaaDesignTokens.CornerRadius.miuixButton),
-    medium = RoundedCornerShape(MaaDesignTokens.CornerRadius.miuixCard),
-    large = RoundedCornerShape(MaaDesignTokens.CornerRadius.miuixCard),
-    extraLarge = RoundedCornerShape(28.dp)
-)
-
-
 private object NoIndication : IndicationNodeFactory {
     private class NoIndicationNode : Modifier.Node(), DrawModifierNode {
         override fun ContentDrawScope.draw() {
@@ -227,9 +217,9 @@ fun MaaMeowTheme(
                         onTertiary = miuixColors.onPrimaryVariant,
                         background = if (themeMode == AppSettingsManager.ThemeMode.PURE_DARK) Color.Black else miuixColors.background,
                         onBackground = miuixColors.onBackground,
-                        surface = if (themeMode == AppSettingsManager.ThemeMode.PURE_DARK) Color.Black else miuixColors.surfaceContainerHighest,
+                        surface = if (themeMode == AppSettingsManager.ThemeMode.PURE_DARK) Color.Black else miuixColors.surface,
                         onSurface = miuixColors.onSurface,
-                        surfaceVariant = miuixColors.secondaryVariant,
+                        surfaceVariant = miuixColors.surfaceVariant,
                         onSurfaceVariant = miuixColors.onSurfaceVariantSummary,
                         outline = miuixColors.outline,
                         outlineVariant = miuixColors.dividerLine,
@@ -250,11 +240,11 @@ fun MaaMeowTheme(
                         onSecondaryContainer = miuixColors.onSecondaryContainer,
                         tertiary = miuixColors.primaryVariant,
                         onTertiary = miuixColors.onPrimaryVariant,
-                        background = miuixColors.surface,
+                        background = miuixColors.background,
                         onBackground = miuixColors.onBackground,
-                        surface = miuixColors.surfaceVariant,
+                        surface = miuixColors.surface,
                         onSurface = miuixColors.onSurface,
-                        surfaceVariant = miuixColors.secondaryVariant,
+                        surfaceVariant = miuixColors.surfaceVariant,
                         onSurfaceVariant = miuixColors.onSurfaceVariantSummary,
                         outline = miuixColors.outline,
                         outlineVariant = miuixColors.dividerLine,
@@ -268,7 +258,7 @@ fun MaaMeowTheme(
                 MaterialTheme(
                     colorScheme = materialColorScheme,
                     typography = Typography,
-                    shapes = MiuixMaaShapes,
+                    shapes = MaaShapes,
                     content = content
                 )
             }

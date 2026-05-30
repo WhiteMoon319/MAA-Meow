@@ -1,7 +1,6 @@
 package com.aliothmoon.maameow.presentation.navigation
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -14,14 +13,13 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Icon as MaterialIcon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,6 +34,9 @@ import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.constant.Routes
 import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.theme.MaaDesignTokens
+import top.yukonga.miuix.kmp.basic.NavigationBar as MiuixNavigationBar
+import top.yukonga.miuix.kmp.basic.NavigationBarItem as MiuixNavigationBarItem
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 sealed class BottomNavTab(
     val route: String,
@@ -77,19 +78,37 @@ fun AppBottomNavigation(
     onTabSelected: (BottomNavTab) -> Unit
 ) {
     val useMiuixTheme = LocalMaaUseMiuixTheme.current
+
+    if (useMiuixTheme) {
+        MiuixNavigationBar(
+            color = MiuixTheme.colorScheme.surface,
+            showDivider = false
+        ) {
+            BottomNavTab.all.forEach { tab ->
+                val label = stringResource(tab.labelRes)
+                val selected = currentRoute == tab.route
+                MiuixNavigationBarItem(
+                    selected = selected,
+                    onClick = { onTabSelected(tab) },
+                    icon = tab.icon,
+                    label = label
+                )
+            }
+        }
+        return
+    }
+
     Surface(
-        color = if (useMiuixTheme) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 0.dp
     ) {
         Column {
-            if (!useMiuixTheme) {
-                HorizontalDivider(thickness = MaaDesignTokens.Separator.thickness, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-            }
+            HorizontalDivider(thickness = MaaDesignTokens.Separator.thickness, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(horizontal = if (useMiuixTheme) 16.dp else 24.dp, vertical = if (useMiuixTheme) 10.dp else 6.dp),
+                    .padding(horizontal = 24.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -103,19 +122,15 @@ fun AppBottomNavigation(
 
                     Column(
                         modifier = Modifier
-                            .background(
-                                color = if (useMiuixTheme && selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.background.copy(alpha = 0f),
-                                shape = RoundedCornerShape(22.dp)
-                            )
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
                             ) { onTabSelected(tab) }
                             .heightIn(min = 48.dp)
-                            .padding(horizontal = if (useMiuixTheme) 18.dp else 20.dp, vertical = if (useMiuixTheme) 6.dp else 2.dp),
+                            .padding(horizontal = 20.dp, vertical = 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
+                        MaterialIcon(
                             imageVector = tab.icon,
                             contentDescription = label,
                             modifier = Modifier.size(20.dp),

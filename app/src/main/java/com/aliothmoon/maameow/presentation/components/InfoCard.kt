@@ -5,17 +5,17 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Card as MaterialCard
+import androidx.compose.material3.CardDefaults as MaterialCardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.theme.MaaDesignTokens
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun InfoCard(
@@ -27,18 +27,31 @@ fun InfoCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val useMiuixTheme = LocalMaaUseMiuixTheme.current
-    val actualContainerColor = if (useMiuixTheme) {
-        MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
-    } else {
-        containerColor
+
+    if (useMiuixTheme) {
+        MiuixCard(
+            modifier = modifier.fillMaxWidth(),
+            insideMargin = contentPadding
+        ) {
+            if (title.isNotEmpty()) {
+                top.yukonga.miuix.kmp.basic.Text(
+                    text = title,
+                    style = MiuixTheme.textStyles.subtitle,
+                    color = MiuixTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = MaaDesignTokens.Spacing.sm)
+                )
+            }
+            content()
+        }
+        return
     }
 
-    Card(
+    MaterialCard(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (useMiuixTheme) 0.dp else MaaDesignTokens.Card.elevation),
-        shape = if (useMiuixTheme) RoundedCornerShape(MaaDesignTokens.CornerRadius.miuixCard) else MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = actualContainerColor
+        elevation = MaterialCardDefaults.cardElevation(defaultElevation = MaaDesignTokens.Card.elevation),
+        shape = MaterialTheme.shapes.medium,
+        colors = MaterialCardDefaults.cardColors(
+            containerColor = containerColor
         )
     ) {
         Column(
