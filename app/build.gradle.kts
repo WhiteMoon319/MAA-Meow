@@ -211,3 +211,6 @@ dependencies {
 
 // Apply asset manifest generation script
 apply(from = "asset-manifest.gradle.kts")
+
+// Apply i18n strings consistency gate (verifyI18nStrings hooked to preBuild)
+apply(from = "i18n-verify.gradle.kts")
