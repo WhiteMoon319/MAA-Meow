@@ -167,6 +167,7 @@ val LocalMaaUseMiuixTheme = staticCompositionLocalOf { false }
 fun MaaMeowTheme(
     themeMode: AppSettingsManager.ThemeMode = AppSettingsManager.ThemeMode.SYSTEM,
     useMiuixTheme: Boolean = true,
+    useMiuixDynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val isDark = when (themeMode) {
@@ -183,15 +184,15 @@ fun MaaMeowTheme(
         AppSettingsManager.ThemeMode.PURE_DARK -> BluePureDark
     }
 
-    val miuixController = remember(themeMode, isDark) {
+    val miuixController = remember(themeMode, isDark, useMiuixDynamicColor) {
         ThemeController(
             colorSchemeMode = when (themeMode) {
-                AppSettingsManager.ThemeMode.SYSTEM -> ColorSchemeMode.System
-                AppSettingsManager.ThemeMode.WHITE -> ColorSchemeMode.Light
+                AppSettingsManager.ThemeMode.SYSTEM -> if (useMiuixDynamicColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
+                AppSettingsManager.ThemeMode.WHITE -> if (useMiuixDynamicColor) ColorSchemeMode.MonetLight else ColorSchemeMode.Light
                 AppSettingsManager.ThemeMode.DARK,
-                AppSettingsManager.ThemeMode.PURE_DARK -> ColorSchemeMode.Dark
+                AppSettingsManager.ThemeMode.PURE_DARK -> if (useMiuixDynamicColor) ColorSchemeMode.MonetDark else ColorSchemeMode.Dark
             },
-            keyColor = colorScheme.primary,
+            keyColor = if (useMiuixDynamicColor) null else colorScheme.primary,
             isDark = isDark
         )
     }

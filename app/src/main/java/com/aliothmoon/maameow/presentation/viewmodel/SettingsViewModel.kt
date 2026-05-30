@@ -191,6 +191,15 @@ class SettingsViewModel(
         }
     }
 
+    val useMiuixDynamicColor: StateFlow<Boolean> = appSettingsManager.useMiuixDynamicColor
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    fun setUseMiuixDynamicColor(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setUseMiuixDynamicColor(enabled)
+        }
+    }
+
     val backgroundResolution: StateFlow<DefaultDisplayConfig.ResolutionPreference> =
         appSettingsManager.backgroundResolution
             .stateIn(

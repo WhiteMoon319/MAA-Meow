@@ -29,7 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.presentation.components.tip.ExpandableTipContent
 import com.aliothmoon.maameow.presentation.components.tip.ExpandableTipIcon
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.theme.MaaThemeAlphas
+import top.yukonga.miuix.kmp.basic.Checkbox as MiuixCheckbox
+import androidx.compose.ui.state.ToggleableState
 
 /**
  * 带可展开提示的复选框
@@ -103,12 +106,21 @@ fun CheckBoxWithLabel(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            enabled = enabled,
-            modifier = Modifier.size(20.dp)
-        )
+        if (LocalMaaUseMiuixTheme.current) {
+            MiuixCheckbox(
+                state = if (checked) ToggleableState.On else ToggleableState.Off,
+                onClick = { onCheckedChange(!checked) },
+                enabled = enabled,
+                modifier = Modifier.size(24.dp)
+            )
+        } else {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                enabled = enabled,
+                modifier = Modifier.size(20.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Column {
             Text(

@@ -23,6 +23,10 @@ import com.aliothmoon.maameow.R
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.aliothmoon.maameow.domain.state.ResourceInitState
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.LinearProgressIndicator as MiuixLinearProgressIndicator
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * 资源初始化弹窗
@@ -45,57 +49,17 @@ fun ResourceInitDialog(
                     dismissOnClickOutside = false
                 )
             ) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                if (LocalMaaUseMiuixTheme.current) {
+                    MiuixCard {
+                        ResourceExtractingContent(state = state, useMiuixTheme = true)
+                    }
+                } else {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 6.dp
                     ) {
-                        Text(
-                            text = stringResource(R.string.resource_init_in_progress_title),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // 进度条
-                        LinearProgressIndicator(
-                            progress = { state.progress / 100f },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // 进度文本
-                        Text(
-                            text = "${state.extractedCount} / ${state.totalCount} (${state.progress}%)",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        if (state.currentFile.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = state.currentFile,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                maxLines = 1
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = stringResource(R.string.resource_init_in_progress_message),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
+                        ResourceExtractingContent(state = state, useMiuixTheme = false)
                     }
                 }
             }
@@ -119,6 +83,65 @@ fun ResourceInitDialog(
         else -> {
             // 其他状态不显示弹窗
         }
+    }
+}
+
+@Composable
+private fun ResourceExtractingContent(
+    state: ResourceInitState.Extracting,
+    useMiuixTheme: Boolean
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(R.string.resource_init_in_progress_title),
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (useMiuixTheme) {
+            MiuixLinearProgressIndicator(
+                progress = state.progress / 100f,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            LinearProgressIndicator(
+                progress = { state.progress / 100f },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "${state.extractedCount} / ${state.totalCount} (${state.progress}%)",
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (useMiuixTheme) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        if (state.currentFile.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = state.currentFile,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (useMiuixTheme) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                maxLines = 1
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = stringResource(R.string.resource_init_in_progress_message),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (useMiuixTheme) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

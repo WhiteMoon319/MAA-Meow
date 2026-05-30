@@ -22,14 +22,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Scaffold as MaterialScaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -53,7 +52,12 @@ import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.presentation.components.AdaptiveTaskPromptDialog
 import com.aliothmoon.maameow.presentation.components.TopAppBar
 import com.aliothmoon.maameow.presentation.viewmodel.ErrorLogViewModel
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import org.koin.androidx.compose.koinViewModel
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -133,7 +137,7 @@ private fun ErrorLogFileListView(
         )
     }
 
-    Scaffold(
+    ErrorLogScaffold(
         topBar = {
             TopAppBar(
                 title = stringResource(R.string.settings_log_error_title),
@@ -161,9 +165,7 @@ private fun ErrorLogFileListView(
         ) {
             if (isLoading && logFiles.isEmpty()) {
                 // 仅在列表为空且加载中时显示全屏 loading
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                ErrorLogLoadingIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (logFiles.isEmpty()) {
                 Text(
                     text = stringResource(R.string.log_empty_error),
@@ -196,6 +198,17 @@ private fun ErrorLogFileItem(
     logFile: ErrorLogViewModel.ErrorLogFile,
     onClick: () -> Unit
 ) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+        ) {
+            ErrorLogFileItemContent(logFile = logFile)
+        }
+        return
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -204,39 +217,48 @@ private fun ErrorLogFileItem(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
+        ErrorLogFileItemContent(logFile = logFile)
+    }
+}
+
+@Composable
+private fun ErrorLogFileItemContent(logFile: ErrorLogViewModel.ErrorLogFile) {
+    val secondaryColor = if (LocalMaaUseMiuixTheme.current) {
+        MiuixTheme.colorScheme.onSurfaceVariantSummary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = logFile.name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = logFile.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
+                    text = formatFileSize(logFile.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = secondaryColor
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = formatFileSize(logFile.size),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "•",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = formatTime(logFile.lastModified),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = "•",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = secondaryColor
+                )
+                Text(
+                    text = formatTime(logFile.lastModified),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = secondaryColor
+                )
             }
         }
     }
@@ -248,7 +270,7 @@ private fun ErrorLogDetailView(
     content: String,
     onBack: () -> Unit
 ) {
-    Scaffold(
+    ErrorLogScaffold(
         topBar = {
             TopAppBar(
                 title = stringResource(R.string.log_detail_title),
@@ -292,6 +314,27 @@ private fun getErrorLogLineColor(line: String): Color {
         line.contains("[WARN]") -> Color(0xFFFF9800)
         line.contains("[ASSERT]") -> Color(0xFFB71C1C)
         else -> Color.Unspecified
+    }
+}
+
+@Composable
+private fun ErrorLogScaffold(
+    topBar: @Composable () -> Unit,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixScaffold(topBar = topBar, content = content)
+    } else {
+        MaterialScaffold(topBar = topBar, content = content)
+    }
+}
+
+@Composable
+private fun ErrorLogLoadingIndicator(modifier: Modifier = Modifier) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixCircularProgressIndicator(modifier = modifier)
+    } else {
+        CircularProgressIndicator(modifier = modifier)
     }
 }
 

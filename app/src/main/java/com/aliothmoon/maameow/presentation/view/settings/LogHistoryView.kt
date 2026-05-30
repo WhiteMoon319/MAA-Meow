@@ -19,10 +19,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material3.AlertDialog
 import com.aliothmoon.maameow.presentation.components.AdaptiveTaskPromptDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,7 +28,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Scaffold as MaterialScaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -56,9 +54,14 @@ import com.aliothmoon.maameow.data.log.LogFileInfo
 import com.aliothmoon.maameow.domain.service.LogExportService
 import com.aliothmoon.maameow.presentation.components.TopAppBar
 import com.aliothmoon.maameow.presentation.viewmodel.LogHistoryViewModel
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -145,7 +148,7 @@ private fun LogFileListView(
         )
     }
 
-    Scaffold(
+    LogScaffold(
         topBar = {
             TopAppBar(
                 title = stringResource(R.string.settings_log_history_title),
@@ -173,9 +176,7 @@ private fun LogFileListView(
         ) {
             if (isLoading && logFiles.isEmpty()) {
                 // 仅在列表为空且加载中时显示全屏 loading
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                LogLoadingIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (logFiles.isEmpty()) {
                 Text(
                     text = stringResource(R.string.log_empty_history),
@@ -210,6 +211,17 @@ private fun LogFileItem(
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixCard(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+        ) {
+            LogFileItemContent(logFile = logFile, onDelete = onDelete)
+        }
+        return
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -218,37 +230,45 @@ private fun LogFileItem(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = logFile.displayTime,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(
-                        R.string.log_list_meta,
-                        logFile.taskCount,
-                        formatFileSize(logFile.fileSize)
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.common_delete),
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
+        LogFileItemContent(logFile = logFile, onDelete = onDelete)
+    }
+}
+
+@Composable
+private fun LogFileItemContent(
+    logFile: LogFileInfo,
+    onDelete: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = logFile.displayTime,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(
+                    R.string.log_list_meta,
+                    logFile.taskCount,
+                    formatFileSize(logFile.fileSize)
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (LocalMaaUseMiuixTheme.current) MiuixTheme.colorScheme.onSurfaceVariantSummary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(R.string.common_delete),
+                tint = MaterialTheme.colorScheme.error
+            )
         }
     }
 }
@@ -259,7 +279,7 @@ private fun LogDetailView(
     entries: List<LogEntry>,
     onBack: () -> Unit
 ) {
-    Scaffold(
+    LogScaffold(
         topBar = {
             TopAppBar(
                 title = stringResource(R.string.log_detail_title),
@@ -363,6 +383,27 @@ private fun LogDetailView(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LogScaffold(
+    topBar: @Composable () -> Unit,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixScaffold(topBar = topBar, content = content)
+    } else {
+        MaterialScaffold(topBar = topBar, content = content)
+    }
+}
+
+@Composable
+private fun LogLoadingIndicator(modifier: Modifier = Modifier) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixCircularProgressIndicator(modifier = modifier)
+    } else {
+        CircularProgressIndicator(modifier = modifier)
     }
 }
 

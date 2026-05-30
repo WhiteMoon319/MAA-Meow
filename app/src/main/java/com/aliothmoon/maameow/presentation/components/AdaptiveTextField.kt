@@ -2,6 +2,7 @@ package com.aliothmoon.maameow.presentation.components
 
 import android.text.InputType
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.presentation.LocalFloatingWindowContext
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
+import top.yukonga.miuix.kmp.basic.TextField as MiuixTextField
 
 
 /**
@@ -74,6 +77,7 @@ fun ITextField(
     onImeAction: (() -> Unit)? = null
 ) {
     val isInFloatingWindow = LocalFloatingWindowContext.current
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
     val (bufferedValue, bufferedOnChange) = rememberBufferedTextState(value, onValueChange)
 
     if (isInFloatingWindow) {
@@ -92,6 +96,28 @@ fun ITextField(
             inputType = if (singleLine) InputType.TYPE_CLASS_TEXT else
                 InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
         )
+    } else if (useMiuixTheme) {
+        Column(modifier = modifier.fillMaxWidth()) {
+            MiuixTextField(
+                value = bufferedValue,
+                onValueChange = bufferedOnChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = label ?: placeholder,
+                singleLine = singleLine,
+                enabled = enabled,
+                keyboardOptions = if (onImeAction != null) {
+                    KeyboardOptions(imeAction = ImeAction.Done)
+                } else {
+                    KeyboardOptions.Default
+                },
+                keyboardActions = if (onImeAction != null) {
+                    KeyboardActions(onDone = { onImeAction() })
+                } else {
+                    KeyboardActions.Default
+                }
+            )
+            supportingText?.invoke()
+        }
     } else {
         // 普通环境：使用 OutlinedTextField
         OutlinedTextField(
@@ -142,8 +168,28 @@ fun ITextFieldWithFocus(
     inputType: Int? = null,
 ) {
     val isInFloatingWindow = LocalFloatingWindowContext.current
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
     val filteredOnChange: (String) -> Unit = if (inputFilter != null) {
         { text -> if (inputFilter(text)) onValueChange(text) }
+    } else if (useMiuixTheme) {
+        Column(modifier = modifier.fillMaxWidth()) {
+            MiuixTextField(
+                value = bufferedValue,
+                onValueChange = bufferedOnChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        if (!focusState.isFocused) {
+                            onFocusLost()
+                        }
+                    },
+                label = label ?: placeholder,
+                singleLine = singleLine,
+                enabled = enabled,
+                keyboardOptions = keyboardOptions
+            )
+            supportingText?.invoke()
+        }
     } else {
         onValueChange
     }

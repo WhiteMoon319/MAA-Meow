@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +48,12 @@ import com.aliothmoon.maameow.R
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.aliothmoon.maameow.presentation.LocalFloatingWindowContext
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 enum class TaskPromptButtonLayout {
     HORIZONTAL,
@@ -260,6 +267,28 @@ private fun TaskPromptCard(
     modifier: Modifier = Modifier,
     content: @Composable (() -> Unit)?
 ) {
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    if (useMiuixTheme) {
+        MiuixTaskPromptCard(
+            title = title,
+            message = message,
+            onDismissRequest = onDismissRequest,
+            onConfirm = onConfirm,
+            confirmText = confirmText,
+            dismissText = dismissText,
+            neutralText = neutralText,
+            onNeutralClick = onNeutralClick,
+            icon = icon,
+            iconTint = iconTint,
+            confirmColor = confirmColor,
+            buttonLayout = buttonLayout,
+            maxWidth = maxWidth,
+            modifier = modifier,
+            content = content
+        )
+        return
+    }
+
     Surface(
         modifier = modifier
             .widthIn(max = maxWidth)
@@ -352,6 +381,107 @@ private fun TaskPromptCard(
 }
 
 @Composable
+private fun MiuixTaskPromptCard(
+    title: String,
+    message: Any?,
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+    confirmText: String,
+    dismissText: String?,
+    neutralText: String?,
+    onNeutralClick: () -> Unit,
+    icon: ImageVector?,
+    iconTint: Color,
+    confirmColor: Color,
+    buttonLayout: TaskPromptButtonLayout,
+    maxWidth: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable (() -> Unit)?
+) {
+    MiuixCard(
+        modifier = modifier
+            .widthIn(max = maxWidth)
+            .wrapContentHeight(),
+        cornerRadius = 24.dp,
+        insideMargin = PaddingValues(0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(22.dp),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                icon?.let {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(
+                                color = iconTint.copy(alpha = 0.12f),
+                                shape = CircleShape,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        MiuixIcon(
+                            imageVector = it,
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MiuixTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            if (message != null || content != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (content != null) {
+                content()
+            } else if (message != null) {
+                when (message) {
+                    is AnnotatedString -> Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    )
+
+                    else -> Text(
+                        text = message.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            MiuixTaskPromptButtons(
+                onDismissRequest = onDismissRequest,
+                onConfirm = onConfirm,
+                confirmText = confirmText,
+                dismissText = dismissText,
+                neutralText = neutralText,
+                onNeutralClick = onNeutralClick,
+                confirmColor = confirmColor,
+                buttonLayout = buttonLayout,
+            )
+        }
+    }
+}
+
+@Composable
 private fun TaskPromptButtons(
     onDismissRequest: () -> Unit,
     onConfirm: () -> Unit,
@@ -362,6 +492,20 @@ private fun TaskPromptButtons(
     confirmColor: Color,
     buttonLayout: TaskPromptButtonLayout,
 ) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixTaskPromptButtons(
+            onDismissRequest = onDismissRequest,
+            onConfirm = onConfirm,
+            confirmText = confirmText,
+            dismissText = dismissText,
+            neutralText = neutralText,
+            onNeutralClick = onNeutralClick,
+            confirmColor = confirmColor,
+            buttonLayout = buttonLayout,
+        )
+        return
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -398,6 +542,58 @@ private fun TaskPromptButtons(
                 shape = MaterialTheme.shapes.large
             ) {
                 Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MiuixTaskPromptButtons(
+    onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+    confirmText: String,
+    dismissText: String?,
+    neutralText: String?,
+    onNeutralClick: () -> Unit,
+    confirmColor: Color,
+    buttonLayout: TaskPromptButtonLayout,
+) {
+    val spacing = if (buttonLayout == TaskPromptButtonLayout.VERTICAL) 8.dp else 10.dp
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        MiuixButton(
+            onClick = onConfirm,
+            modifier = Modifier.fillMaxWidth().height(44.dp),
+            colors = MiuixButtonDefaults.buttonColorsPrimary(color = confirmColor),
+            insideMargin = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+        ) {
+            Text(confirmText)
+        }
+
+        neutralText?.let {
+            MiuixButton(
+                onClick = onNeutralClick,
+                modifier = Modifier.fillMaxWidth().height(44.dp),
+                insideMargin = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            ) {
+                Text(it)
+            }
+        }
+
+        dismissText?.let {
+            MiuixButton(
+                onClick = onDismissRequest,
+                modifier = Modifier.fillMaxWidth().height(40.dp),
+                colors = MiuixButtonDefaults.buttonColors(
+                    color = Color.Transparent,
+                    contentColor = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                ),
+                insideMargin = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            ) {
+                Text(it)
             }
         }
     }

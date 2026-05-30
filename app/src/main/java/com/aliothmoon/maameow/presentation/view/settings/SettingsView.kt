@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,7 +25,7 @@ import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Scaffold as MaterialScaffold
 import androidx.compose.material3.Switch as MaterialSwitch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,7 +69,11 @@ import com.aliothmoon.maameow.utils.i18n.resolve
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
+import top.yukonga.miuix.kmp.preference.ArrowPreference
+import top.yukonga.miuix.kmp.preference.RadioButtonPreference
+import top.yukonga.miuix.kmp.preference.SwitchPreference
+import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun SettingsView(
@@ -88,6 +93,7 @@ fun SettingsView(
     val updateChannel by viewModel.updateChannel.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val useMiuixTheme by viewModel.useMiuixTheme.collectAsStateWithLifecycle()
+    val useMiuixDynamicColor by viewModel.useMiuixDynamicColor.collectAsStateWithLifecycle()
     val backgroundResolution by viewModel.backgroundResolution.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
@@ -165,277 +171,369 @@ fun SettingsView(
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = stringResource(R.string.settings_title),
-                navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
-                onNavigationClick = { navController.navigateUp() }
+    val useMiuixLayout = LocalMaaUseMiuixTheme.current
+    val topBar: @Composable () -> Unit = {
+        TopAppBar(
+            title = stringResource(R.string.settings_title),
+            navigationIcon = Icons.AutoMirrored.Filled.ArrowBack,
+            onNavigationClick = { navController.navigateUp() }
+        )
+    }
+    val content: @Composable (PaddingValues) -> Unit = { paddingValues ->
+        SettingsContent(
+            paddingValues = paddingValues,
+            viewModel = viewModel,
+            logExportService = logExportService,
+            navController = navController,
+            contextActions = SettingsContextActions(
+                launchExport = { exportLauncher.launch("maameow_config.json") },
+                launchImport = { importLauncher.launch(arrayOf("application/json")) },
+                showReInitConfirm = { showReInitConfirm = true },
+                showDebugModeConfirm = { showDebugModeConfirm = true }
+            )
+        )
+    }
+
+    if (useMiuixLayout) {
+        MiuixScaffold(topBar = topBar, content = content)
+    } else {
+        MaterialScaffold(topBar = topBar, content = content)
+    }
+}
+
+@Composable
+private fun SettingsContent(
+    paddingValues: PaddingValues,
+    viewModel: SettingsViewModel,
+    logExportService: LogExportService,
+    navController: NavController,
+    contextActions: SettingsContextActions
+) {
+    val debugMode by viewModel.debugMode.collectAsStateWithLifecycle()
+    val autoCheckUpdate by viewModel.autoCheckUpdate.collectAsStateWithLifecycle()
+    val autoDownloadUpdate by viewModel.autoDownloadUpdate.collectAsStateWithLifecycle()
+    val startupBackend by viewModel.startupBackend.collectAsStateWithLifecycle()
+    val skipShizukuCheck by viewModel.skipShizukuCheck.collectAsStateWithLifecycle()
+    val deploymentWithPause by viewModel.deploymentWithPause.collectAsStateWithLifecycle()
+    val forceFullscreenOnVirtualDisplay by viewModel.forceFullscreenOnVirtualDisplay.collectAsStateWithLifecycle()
+    val updateChannel by viewModel.updateChannel.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val useMiuixTheme by viewModel.useMiuixTheme.collectAsStateWithLifecycle()
+    val useMiuixDynamicColor by viewModel.useMiuixDynamicColor.collectAsStateWithLifecycle()
+    val backgroundResolution by viewModel.backgroundResolution.collectAsStateWithLifecycle()
+    val language by viewModel.language.collectAsStateWithLifecycle()
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val contentColor = MaterialTheme.colorScheme.onSurface
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        contentPadding = PaddingValues(vertical = 8.dp)
+    ) {
+        // 更新管理
+        item {
+            SectionHeader(stringResource(R.string.settings_section_update))
+            InfoCard(
+                title = "",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                contentColor = contentColor,
+                contentPadding = PaddingValues(
+                    horizontal = MaaDesignTokens.Card.innerPadding,
+                    vertical = MaaDesignTokens.Spacing.listItemVertical
+                )
+            ) {
+                SettingClickItem(
+                    title = stringResource(R.string.settings_reinit_resource_title),
+                    description = stringResource(R.string.settings_reinit_resource_desc),
+                    contentColor = contentColor
+                ) {
+                    contextActions.showReInitConfirm()
+                }
+                SettingsDivider(contentColor)
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_auto_check_update_title),
+                    description = stringResource(R.string.settings_auto_check_update_desc),
+                    contentColor = contentColor,
+                    checked = autoCheckUpdate,
+                    onCheckedChange = { viewModel.setAutoCheckUpdate(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_auto_download_update_title),
+                    description = stringResource(R.string.settings_auto_download_update_desc),
+                    contentColor = contentColor,
+                    checked = autoDownloadUpdate,
+                    enabled = autoCheckUpdate,
+                    onCheckedChange = { viewModel.setAutoDownloadUpdate(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingChannelItem(
+                    contentColor = contentColor,
+                    selectedChannel = updateChannel,
+                    onChannelSelected = { viewModel.setUpdateChannel(it) }
+                )
+            }
+        }
+
+        // 日志
+        item {
+            SectionHeader(stringResource(R.string.settings_section_log))
+            InfoCard(
+                title = "",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                contentColor = contentColor,
+                contentPadding = PaddingValues(
+                    horizontal = MaaDesignTokens.Card.innerPadding,
+                    vertical = MaaDesignTokens.Spacing.listItemVertical
+                )
+            ) {
+                SettingClickItem(
+                    title = stringResource(R.string.settings_log_history_title),
+                    description = stringResource(R.string.settings_log_history_desc),
+                    contentColor = contentColor
+                ) {
+                    navController.navigate("log_history")
+                }
+                SettingsDivider(contentColor)
+                SettingClickItem(
+                    title = stringResource(R.string.settings_log_error_title),
+                    description = stringResource(R.string.settings_log_error_desc),
+                    contentColor = contentColor
+                ) {
+                    navController.navigate("error_log")
+                }
+                SettingsDivider(contentColor)
+                val logExportChooserTitle = stringResource(R.string.settings_log_export_chooser_title)
+                SettingClickItem(
+                    title = stringResource(R.string.settings_log_export_title),
+                    description = stringResource(R.string.settings_log_export_desc),
+                    contentColor = contentColor
+                ) {
+                    coroutineScope.launch {
+                        val intent = logExportService.exportAllLogs()
+                        if (intent != null) {
+                            context.startActivity(Intent.createChooser(intent, logExportChooserTitle))
+                        }
+                    }
+                }
+                SettingsDivider(contentColor)
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_debug_mode_title),
+                    description = stringResource(R.string.settings_debug_mode_desc),
+                    contentColor = contentColor,
+                    checked = debugMode,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            contextActions.showDebugModeConfirm()
+                        } else {
+                            viewModel.setDebugMode(false)
+                        }
+                    }
+                )
+            }
+        }
+
+        // 其他设置
+        item {
+            SectionHeader(stringResource(R.string.settings_section_other))
+            InfoCard(
+                title = "",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                contentColor = contentColor,
+                contentPadding = PaddingValues(
+                    horizontal = MaaDesignTokens.Card.innerPadding,
+                    vertical = MaaDesignTokens.Spacing.listItemVertical
+                )
+            ) {
+                SettingRemoteBackendItem(
+                    contentColor = contentColor,
+                    selectedBackend = startupBackend,
+                    onBackendSelected = { viewModel.setStartupBackend(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingThemeModeItem(
+                    contentColor = contentColor,
+                    selectedMode = themeMode,
+                    onModeSelected = { viewModel.setThemeMode(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_use_miuix_theme_title),
+                    description = stringResource(R.string.settings_use_miuix_theme_desc),
+                    contentColor = contentColor,
+                    checked = useMiuixTheme,
+                    onCheckedChange = { viewModel.setUseMiuixTheme(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_use_miuix_dynamic_color_title),
+                    description = stringResource(R.string.settings_use_miuix_dynamic_color_desc),
+                    contentColor = contentColor,
+                    checked = useMiuixDynamicColor,
+                    enabled = useMiuixTheme,
+                    onCheckedChange = { viewModel.setUseMiuixDynamicColor(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingLanguageItem(
+                    contentColor = contentColor,
+                    selectedLanguage = language,
+                    onLanguageSelected = { viewModel.setLanguage(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingBackgroundResolutionItem(
+                    contentColor = contentColor,
+                    selectedPreference = backgroundResolution,
+                    onPreferenceSelected = { viewModel.setBackgroundResolution(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_skip_shizuku_check),
+                    contentColor = contentColor,
+                    checked = skipShizukuCheck,
+                    enabled = startupBackend == RemoteBackend.SHIZUKU,
+                    onCheckedChange = { viewModel.setSkipShizukuCheck(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_deployment_with_pause),
+                    description = stringResource(R.string.settings_deployment_with_pause_tip),
+                    contentColor = contentColor,
+                    checked = deploymentWithPause,
+                    onCheckedChange = { viewModel.setDeploymentWithPause(it) }
+                )
+                SettingsDivider(contentColor)
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_force_fullscreen_on_virtual_display),
+                    contentColor = contentColor,
+                    checked = forceFullscreenOnVirtualDisplay,
+                    onCheckedChange = { viewModel.setForceFullscreenOnVirtualDisplay(it) }
+                )
+            }
+        }
+
+        // 数据管理
+        item {
+            SectionHeader(stringResource(R.string.settings_section_data))
+            InfoCard(
+                title = "",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                contentColor = contentColor,
+                contentPadding = PaddingValues(
+                    horizontal = MaaDesignTokens.Card.innerPadding,
+                    vertical = MaaDesignTokens.Spacing.listItemVertical
+                )
+            ) {
+                SettingClickItem(
+                    title = stringResource(R.string.settings_export_config_title),
+                    description = stringResource(R.string.settings_export_config_desc),
+                    contentColor = contentColor
+                ) {
+                    contextActions.launchExport()
+                }
+                SettingsDivider(contentColor)
+                SettingClickItem(
+                    title = stringResource(R.string.settings_import_config_title),
+                    description = stringResource(R.string.settings_import_config_desc),
+                    contentColor = contentColor
+                ) {
+                    contextActions.launchImport()
+                }
+            }
+        }
+
+        // 关于
+        item {
+            SectionHeader(stringResource(R.string.settings_section_about))
+            InfoCard(
+                title = "",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                contentColor = contentColor,
+                contentPadding = PaddingValues(
+                    horizontal = MaaDesignTokens.Card.innerPadding,
+                    vertical = MaaDesignTokens.Spacing.listItemVertical
+                )
+            ) {
+                SettingInfoRow(
+                    label = stringResource(R.string.settings_about_version),
+                    value = BuildConfig.VERSION_NAME,
+                    contentColor = contentColor
+                )
+                SettingsDivider(contentColor)
+                SettingInfoRow(
+                    label = stringResource(R.string.settings_about_developer),
+                    value = "Aliothmoon",
+                    contentColor = contentColor
+                )
+                SettingsDivider(contentColor)
+                SettingClickItem(
+                    title = stringResource(R.string.settings_about_qq_group_title),
+                    description = stringResource(R.string.settings_about_qq_group_desc),
+                    contentColor = contentColor
+                ) {
+                    Misc.openUriSafely(context, "https://qm.qq.com/q/j4CFbeDQXu")
+                }
+                SettingsDivider(contentColor)
+                Text(
+                    text = stringResource(R.string.settings_about_star),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = contentColor,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            Misc.openUriSafely(context, "https://github.com/Aliothmoon/MAA-Meow")
+                        }
+                        .padding(vertical = MaaDesignTokens.Spacing.listItemVertical),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+private data class SettingsContextActions(
+    val launchExport: () -> Unit,
+    val launchImport: () -> Unit,
+    val showReInitConfirm: () -> Unit,
+    val showDebugModeConfirm: () -> Unit
+)
+
+@Composable
+private fun MiuixSettingChoiceGroup(
+    title: String,
+    summary: String? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        top.yukonga.miuix.kmp.basic.Text(
+            text = title,
+            style = MiuixTheme.textStyles.body1,
+            color = MiuixTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(
+                horizontal = MaaDesignTokens.Card.innerPadding,
+                vertical = MaaDesignTokens.Spacing.sm
+            )
+        )
+        if (summary != null) {
+            top.yukonga.miuix.kmp.basic.Text(
+                text = summary,
+                style = MiuixTheme.textStyles.footnote1,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                modifier = Modifier.padding(
+                    start = MaaDesignTokens.Card.innerPadding,
+                    end = MaaDesignTokens.Card.innerPadding,
+                    bottom = MaaDesignTokens.Spacing.sm
+                )
             )
         }
-    ) { paddingValues ->
-        val contentColor = MaterialTheme.colorScheme.onSurface
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(vertical = 8.dp)
-        ) {
-            // 更新管理
-            item {
-                SectionHeader(stringResource(R.string.settings_section_update))
-                InfoCard(
-                    title = "",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    contentColor = contentColor,
-                    contentPadding = PaddingValues(
-                        horizontal = MaaDesignTokens.Card.innerPadding,
-                        vertical = MaaDesignTokens.Spacing.listItemVertical
-                    )
-                ) {
-                    SettingClickItem(
-                        title = stringResource(R.string.settings_reinit_resource_title),
-                        description = stringResource(R.string.settings_reinit_resource_desc),
-                        contentColor = contentColor
-                    ) {
-                        showReInitConfirm = true
-                    }
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_auto_check_update_title),
-                        description = stringResource(R.string.settings_auto_check_update_desc),
-                        contentColor = contentColor,
-                        checked = autoCheckUpdate,
-                        onCheckedChange = { viewModel.setAutoCheckUpdate(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_auto_download_update_title),
-                        description = stringResource(R.string.settings_auto_download_update_desc),
-                        contentColor = contentColor,
-                        checked = autoDownloadUpdate,
-                        enabled = autoCheckUpdate,
-                        onCheckedChange = { viewModel.setAutoDownloadUpdate(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingChannelItem(
-                        contentColor = contentColor,
-                        selectedChannel = updateChannel,
-                        onChannelSelected = { viewModel.setUpdateChannel(it) }
-                    )
-                }
-            }
-
-            // 日志
-            item {
-                SectionHeader(stringResource(R.string.settings_section_log))
-                InfoCard(
-                    title = "",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    contentColor = contentColor,
-                    contentPadding = PaddingValues(
-                        horizontal = MaaDesignTokens.Card.innerPadding,
-                        vertical = MaaDesignTokens.Spacing.listItemVertical
-                    )
-                ) {
-                    SettingClickItem(
-                        title = stringResource(R.string.settings_log_history_title),
-                        description = stringResource(R.string.settings_log_history_desc),
-                        contentColor = contentColor
-                    ) {
-                        navController.navigate("log_history")
-                    }
-                    SettingsDivider(contentColor)
-                    SettingClickItem(
-                        title = stringResource(R.string.settings_log_error_title),
-                        description = stringResource(R.string.settings_log_error_desc),
-                        contentColor = contentColor
-                    ) {
-                        navController.navigate("error_log")
-                    }
-                    SettingsDivider(contentColor)
-                    val logExportChooserTitle = stringResource(R.string.settings_log_export_chooser_title)
-                    SettingClickItem(
-                        title = stringResource(R.string.settings_log_export_title),
-                        description = stringResource(R.string.settings_log_export_desc),
-                        contentColor = contentColor
-                    ) {
-                        coroutineScope.launch {
-                            val intent = logExportService.exportAllLogs()
-                            if (intent != null) {
-                                context.startActivity(Intent.createChooser(intent, logExportChooserTitle))
-                            }
-                        }
-                    }
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_debug_mode_title),
-                        description = stringResource(R.string.settings_debug_mode_desc),
-                        contentColor = contentColor,
-                        checked = debugMode,
-                        onCheckedChange = { enabled ->
-                            if (enabled) {
-                                showDebugModeConfirm = true
-                            } else {
-                                viewModel.setDebugMode(false)
-                            }
-                        }
-                    )
-                }
-            }
-
-            // 其他设置
-            item {
-                SectionHeader(stringResource(R.string.settings_section_other))
-                InfoCard(
-                    title = "",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    contentColor = contentColor,
-                    contentPadding = PaddingValues(
-                        horizontal = MaaDesignTokens.Card.innerPadding,
-                        vertical = MaaDesignTokens.Spacing.listItemVertical
-                    )
-                ) {
-                    SettingRemoteBackendItem(
-                        contentColor = contentColor,
-                        selectedBackend = startupBackend,
-                        onBackendSelected = { viewModel.setStartupBackend(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingThemeModeItem(
-                        contentColor = contentColor,
-                        selectedMode = themeMode,
-                        onModeSelected = { viewModel.setThemeMode(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_use_miuix_theme_title),
-                        description = stringResource(R.string.settings_use_miuix_theme_desc),
-                        contentColor = contentColor,
-                        checked = useMiuixTheme,
-                        onCheckedChange = { viewModel.setUseMiuixTheme(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingLanguageItem(
-                        contentColor = contentColor,
-                        selectedLanguage = language,
-                        onLanguageSelected = { viewModel.setLanguage(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingBackgroundResolutionItem(
-                        contentColor = contentColor,
-                        selectedPreference = backgroundResolution,
-                        onPreferenceSelected = { viewModel.setBackgroundResolution(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_skip_shizuku_check),
-                        contentColor = contentColor,
-                        checked = skipShizukuCheck,
-                        enabled = startupBackend == RemoteBackend.SHIZUKU,
-                        onCheckedChange = { viewModel.setSkipShizukuCheck(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_deployment_with_pause),
-                        description = stringResource(R.string.settings_deployment_with_pause_tip),
-                        contentColor = contentColor,
-                        checked = deploymentWithPause,
-                        onCheckedChange = { viewModel.setDeploymentWithPause(it) }
-                    )
-                    SettingsDivider(contentColor)
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_force_fullscreen_on_virtual_display),
-                        contentColor = contentColor,
-                        checked = forceFullscreenOnVirtualDisplay,
-                        onCheckedChange = { viewModel.setForceFullscreenOnVirtualDisplay(it) }
-                    )
-                }
-            }
-
-            // 数据管理
-            item {
-                SectionHeader(stringResource(R.string.settings_section_data))
-                InfoCard(
-                    title = "",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    contentColor = contentColor,
-                    contentPadding = PaddingValues(
-                        horizontal = MaaDesignTokens.Card.innerPadding,
-                        vertical = MaaDesignTokens.Spacing.listItemVertical
-                    )
-                ) {
-                    SettingClickItem(
-                        title = stringResource(R.string.settings_export_config_title),
-                        description = stringResource(R.string.settings_export_config_desc),
-                        contentColor = contentColor
-                    ) {
-                        exportLauncher.launch("maameow_config.json")
-                    }
-                    SettingsDivider(contentColor)
-                    SettingClickItem(
-                        title = stringResource(R.string.settings_import_config_title),
-                        description = stringResource(R.string.settings_import_config_desc),
-                        contentColor = contentColor
-                    ) {
-                        importLauncher.launch(arrayOf("application/json"))
-                    }
-                }
-            }
-
-            // 关于
-            item {
-                SectionHeader(stringResource(R.string.settings_section_about))
-                InfoCard(
-                    title = "",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    contentColor = contentColor,
-                    contentPadding = PaddingValues(
-                        horizontal = MaaDesignTokens.Card.innerPadding,
-                        vertical = MaaDesignTokens.Spacing.listItemVertical
-                    )
-                ) {
-                    SettingInfoRow(
-                        label = stringResource(R.string.settings_about_version),
-                        value = BuildConfig.VERSION_NAME,
-                        contentColor = contentColor
-                    )
-                    SettingsDivider(contentColor)
-                    SettingInfoRow(
-                        label = stringResource(R.string.settings_about_developer),
-                        value = "Aliothmoon",
-                        contentColor = contentColor
-                    )
-                    SettingsDivider(contentColor)
-                    SettingClickItem(
-                        title = stringResource(R.string.settings_about_qq_group_title),
-                        description = stringResource(R.string.settings_about_qq_group_desc),
-                        contentColor = contentColor
-                    ) {
-                        Misc.openUriSafely(context, "https://qm.qq.com/q/j4CFbeDQXu")
-                    }
-                    SettingsDivider(contentColor)
-                    Text(
-                        text = stringResource(R.string.settings_about_star),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = contentColor,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                Misc.openUriSafely(context, "https://github.com/Aliothmoon/MAA-Meow")
-                            }
-                            .padding(vertical = MaaDesignTokens.Spacing.listItemVertical),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
+        content()
     }
 }
 
@@ -445,6 +543,26 @@ private fun SettingThemeModeItem(
     selectedMode: AppSettingsManager.ThemeMode,
     onModeSelected: (AppSettingsManager.ThemeMode) -> Unit
 ) {
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    if (useMiuixTheme) {
+        MiuixSettingChoiceGroup(title = stringResource(R.string.settings_theme_title)) {
+            val modes = listOf(
+                AppSettingsManager.ThemeMode.SYSTEM to stringResource(R.string.settings_theme_system),
+                AppSettingsManager.ThemeMode.WHITE to stringResource(R.string.settings_theme_white),
+                AppSettingsManager.ThemeMode.DARK to stringResource(R.string.settings_theme_dark),
+                AppSettingsManager.ThemeMode.PURE_DARK to stringResource(R.string.settings_theme_pure_dark)
+            )
+            modes.forEach { (mode, label) ->
+                RadioButtonPreference(
+                    title = label,
+                    selected = mode == selectedMode,
+                    onClick = { onModeSelected(mode) }
+                )
+            }
+        }
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -500,6 +618,16 @@ private fun SettingClickItem(
     contentColor: Color,
     onClick: () -> Unit
 ) {
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    if (useMiuixTheme) {
+        ArrowPreference(
+            title = title,
+            summary = description,
+            onClick = onClick
+        )
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -532,6 +660,17 @@ private fun SettingSwitchItem(
     onCheckedChange: (Boolean) -> Unit
 ) {
     val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    if (useMiuixTheme) {
+        SwitchPreference(
+            title = title,
+            summary = description,
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = onCheckedChange
+        )
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -557,19 +696,11 @@ private fun SettingSwitchItem(
             }
 
         }
-        if (useMiuixTheme) {
-            MiuixSwitch(
-                checked = checked,
-                enabled = enabled,
-                onCheckedChange = onCheckedChange
-            )
-        } else {
-            MaterialSwitch(
-                checked = checked,
-                enabled = enabled,
-                onCheckedChange = onCheckedChange
-            )
-        }
+        MaterialSwitch(
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = onCheckedChange
+        )
     }
 }
 
@@ -600,6 +731,8 @@ private fun SettingInfoRow(
 
 @Composable
 private fun SettingsDivider(contentColor: Color) {
+    if (LocalMaaUseMiuixTheme.current) return
+
     HorizontalDivider(
         modifier = Modifier.padding(start = MaaDesignTokens.Separator.inset),
         thickness = MaaDesignTokens.Separator.thickness,
@@ -609,6 +742,20 @@ private fun SettingsDivider(contentColor: Color) {
 
 @Composable
 private fun SectionHeader(title: String) {
+    if (LocalMaaUseMiuixTheme.current) {
+        top.yukonga.miuix.kmp.basic.Text(
+            text = title,
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onBackgroundVariant,
+            modifier = Modifier.padding(
+                start = 28.dp,
+                top = MaaDesignTokens.Spacing.xl,
+                bottom = MaaDesignTokens.Spacing.sm
+            )
+        )
+        return
+    }
+
     Text(
         text = title,
         style = MaterialTheme.typography.bodySmall,
@@ -627,6 +774,23 @@ private fun SettingChannelItem(
     selectedChannel: UpdateChannel,
     onChannelSelected: (UpdateChannel) -> Unit
 ) {
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    if (useMiuixTheme) {
+        MiuixSettingChoiceGroup(
+            title = stringResource(R.string.settings_update_channel_title),
+            summary = stringResource(R.string.settings_update_channel_desc)
+        ) {
+            UpdateChannel.entries.forEach { channel ->
+                RadioButtonPreference(
+                    title = stringResource(channel.resId),
+                    selected = channel == selectedChannel,
+                    onClick = { onChannelSelected(channel) }
+                )
+            }
+        }
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -684,6 +848,27 @@ private fun SettingBackgroundResolutionItem(
     selectedPreference: DefaultDisplayConfig.ResolutionPreference,
     onPreferenceSelected: (DefaultDisplayConfig.ResolutionPreference) -> Unit
 ) {
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    if (useMiuixTheme) {
+        MiuixSettingChoiceGroup(
+            title = stringResource(R.string.settings_background_resolution_title),
+            summary = stringResource(R.string.settings_background_resolution_desc)
+        ) {
+            val options = listOf(
+                DefaultDisplayConfig.ResolutionPreference.P720 to "720p",
+                DefaultDisplayConfig.ResolutionPreference.P1080 to "1080p"
+            )
+            options.forEach { (pref, label) ->
+                RadioButtonPreference(
+                    title = label,
+                    selected = pref == selectedPreference,
+                    onClick = { onPreferenceSelected(pref) }
+                )
+            }
+        }
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -740,6 +925,24 @@ private fun SettingLanguageItem(
     onLanguageSelected: (AppSettingsManager.AppLanguage) -> Unit
 ) {
     val effectiveSelectedLanguage = resolveSelectedLanguage(selectedLanguage)
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
+
+    if (useMiuixTheme) {
+        MiuixSettingChoiceGroup(title = stringResource(R.string.settings_language_title)) {
+            val options = listOf(
+                AppSettingsManager.AppLanguage.ZH to stringResource(R.string.settings_language_zh),
+                AppSettingsManager.AppLanguage.EN to stringResource(R.string.settings_language_en)
+            )
+            options.forEach { (lang, label) ->
+                RadioButtonPreference(
+                    title = label,
+                    selected = lang == effectiveSelectedLanguage,
+                    onClick = { onLanguageSelected(lang) }
+                )
+            }
+        }
+        return
+    }
 
     Row(
         modifier = Modifier
@@ -796,6 +999,20 @@ private fun SettingRemoteBackendItem(
     selectedBackend: RemoteBackend,
     onBackendSelected: (RemoteBackend) -> Unit
 ) {
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    if (useMiuixTheme) {
+        MiuixSettingChoiceGroup(title = stringResource(R.string.settings_startup_backend_title)) {
+            RemoteBackend.entries.forEach { backend ->
+                RadioButtonPreference(
+                    title = backend.display,
+                    selected = backend == selectedBackend,
+                    onClick = { onBackendSelected(backend) }
+                )
+            }
+        }
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()

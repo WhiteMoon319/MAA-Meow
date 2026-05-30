@@ -53,6 +53,8 @@
     <string name="settings_theme_pure_dark">Pure Black</string>
     <string name="settings_use_miuix_theme_title">Use Miuix Style</string>
     <string name="settings_use_miuix_theme_desc">Turn off to restore the original app theme</string>
+    <string name="settings_use_miuix_dynamic_color_title">Miuix Dynamic Color</string>
+    <string name="settings_use_miuix_dynamic_color_desc">Generate Miuix colors from the system wallpaper</string>
     <string name="settings_language_title">Language</string>
     <string name="settings_language_system">Follow System</string>
     <string name="settings_language_zh">中文</string>

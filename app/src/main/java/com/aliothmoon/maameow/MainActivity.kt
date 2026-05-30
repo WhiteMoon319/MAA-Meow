@@ -60,8 +60,13 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val themeMode by appSettingsManager.themeMode.collectAsStateWithLifecycle()
             val useMiuixTheme by appSettingsManager.useMiuixTheme.collectAsStateWithLifecycle()
+            val useMiuixDynamicColor by appSettingsManager.useMiuixDynamicColor.collectAsStateWithLifecycle()
 
-            MaaMeowTheme(themeMode = themeMode, useMiuixTheme = useMiuixTheme) {
+            MaaMeowTheme(
+                themeMode = themeMode,
+                useMiuixTheme = useMiuixTheme,
+                useMiuixDynamicColor = useMiuixDynamicColor
+            ) {
                 AppNavigation(backgroundTaskViewModel = backgroundTaskViewModel)
             }
         }

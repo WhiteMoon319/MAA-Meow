@@ -31,13 +31,9 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -76,8 +72,14 @@ import com.aliothmoon.maameow.data.model.update.UpdateInfo
 import com.aliothmoon.maameow.data.model.update.UpdateProcessState
 import com.aliothmoon.maameow.data.model.update.UpdateSource
 import com.aliothmoon.maameow.presentation.viewmodel.UpdateViewModel
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.utils.Misc
 import dev.jeziellago.compose.markdowntext.MarkdownText
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.LinearProgressIndicator as MiuixLinearProgressIndicator
+import top.yukonga.miuix.kmp.basic.RadioButton as MiuixRadioButton
 
 /**
  * 更新管理卡片
@@ -261,14 +263,7 @@ fun UpdateCard(
 
     // ==================== UI ====================
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
+    UpdateCardSurface {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -302,21 +297,12 @@ fun UpdateCard(
                     )
 
                     if (!appIsUpdating) {
-                        TextButton(
+                        UpdateCheckButton(
                             onClick = { viewModel.checkAppUpdate() },
                             enabled = !appIsChecking,
-                            modifier = Modifier.defaultMinSize(minHeight = 1.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            if (appIsChecking) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text(stringResource(R.string.update_card_check_button), fontSize = 14.sp)
-                            }
-                        }
+                            loading = appIsChecking,
+                            text = stringResource(R.string.update_card_check_button)
+                        )
                     }
                 }
 
@@ -345,21 +331,12 @@ fun UpdateCard(
                     )
 
                     if (!resIsUpdating) {
-                        TextButton(
+                        UpdateCheckButton(
                             onClick = { viewModel.checkResourceUpdate() },
                             enabled = !resIsChecking,
-                            modifier = Modifier.defaultMinSize(minHeight = 1.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            if (resIsChecking) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Text(stringResource(R.string.update_card_check_button), fontSize = 14.sp)
-                            }
-                        }
+                            loading = resIsChecking,
+                            text = stringResource(R.string.update_card_check_button)
+                        )
                     }
                 }
 
@@ -468,6 +445,98 @@ fun UpdateCard(
     }
 }
 
+@Composable
+private fun UpdateCardSurface(content: @Composable () -> Unit) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixCard(
+            modifier = Modifier.fillMaxWidth(),
+            insideMargin = PaddingValues(0.dp)
+        ) {
+            content()
+        }
+        return
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun UpdateCheckButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    loading: Boolean,
+    text: String
+) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier.height(32.dp),
+            insideMargin = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+        ) {
+            if (loading) {
+                MiuixCircularProgressIndicator(modifier = Modifier.size(16.dp))
+            } else {
+                Text(text, fontSize = 14.sp)
+            }
+        }
+        return
+    }
+
+    TextButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.defaultMinSize(minHeight = 1.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+    ) {
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                strokeWidth = 2.dp
+            )
+        } else {
+            Text(text, fontSize = 14.sp)
+        }
+    }
+}
+
+@Composable
+private fun UpdateCircularProgress(modifier: Modifier = Modifier) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixCircularProgressIndicator(modifier = modifier)
+    } else {
+        CircularProgressIndicator(
+            modifier = modifier,
+            strokeWidth = 2.dp
+        )
+    }
+}
+
+@Composable
+private fun UpdateLinearProgress(progress: Float, color: Color = MaterialTheme.colorScheme.primary) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixLinearProgressIndicator(
+            progress = progress,
+            modifier = Modifier.fillMaxWidth()
+        )
+    } else {
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier.fillMaxWidth(),
+            color = color
+        )
+    }
+}
+
 /**
  * CDK 输入框
  */
@@ -563,11 +632,7 @@ private fun AppUpdateProgress(appUpdateState: UpdateProcessState) {
                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                     )
                 }
-                LinearProgressIndicator(
-                    progress = { appUpdateState.progress / 100f },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                UpdateLinearProgress(progress = appUpdateState.progress / 100f)
             }
         }
 
@@ -577,10 +642,7 @@ private fun AppUpdateProgress(appUpdateState: UpdateProcessState) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp
-                )
+                UpdateCircularProgress(modifier = Modifier.size(16.dp))
                 Text(
                     text = stringResource(R.string.update_progress_app_installing),
                     style = MaterialTheme.typography.bodySmall,
@@ -616,11 +678,7 @@ private fun ResourceUpdateProgress(resourceUpdateState: UpdateProcessState) {
                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                     )
                 }
-                LinearProgressIndicator(
-                    progress = { resourceUpdateState.progress / 100f },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary
-                )
+                UpdateLinearProgress(progress = resourceUpdateState.progress / 100f)
             }
         }
 
@@ -641,9 +699,8 @@ private fun ResourceUpdateProgress(resourceUpdateState: UpdateProcessState) {
                         color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                     )
                 }
-                LinearProgressIndicator(
-                    progress = { resourceUpdateState.progress / 100f },
-                    modifier = Modifier.fillMaxWidth(),
+                UpdateLinearProgress(
+                    progress = resourceUpdateState.progress / 100f,
                     color = MaterialTheme.colorScheme.secondary
                 )
             }
@@ -680,10 +737,17 @@ private fun UpdateSourceButtonGroup(
                         role = Role.RadioButton
                     )
             ) {
-                RadioButton(
-                    selected = source == selectedSource,
-                    onClick = null
-                )
+                if (LocalMaaUseMiuixTheme.current) {
+                    MiuixRadioButton(
+                        selected = source == selectedSource,
+                        onClick = null
+                    )
+                } else {
+                    RadioButton(
+                        selected = source == selectedSource,
+                        onClick = null
+                    )
+                }
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = sourceName,

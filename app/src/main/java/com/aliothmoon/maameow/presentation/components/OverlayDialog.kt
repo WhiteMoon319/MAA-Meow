@@ -44,6 +44,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.R
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * 悬浮窗专用对话框组件
@@ -63,6 +69,7 @@ fun OverlayDialog(
 ) {
     val resolvedConfirmText = confirmText ?: stringResource(R.string.common_confirm)
     val resolvedDismissText = dismissText ?: stringResource(R.string.common_cancel)
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
 
     AnimatedVisibility(
         visible = visible,
@@ -86,6 +93,91 @@ fun OverlayDialog(
                 enter = scaleIn(initialScale = 0.85f, animationSpec = tween(200)),
                 exit = scaleOut(targetScale = 0.85f, animationSpec = tween(150))
             ) {
+                if (useMiuixTheme) {
+                    MiuixCard(
+                        modifier = Modifier
+                            .widthIn(max = 300.dp)
+                            .wrapContentHeight()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { },
+                        cornerRadius = 24.dp,
+                        insideMargin = PaddingValues(0.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(22.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            icon?.let {
+                                Box(
+                                    modifier = Modifier
+                                        .size(44.dp)
+                                        .background(
+                                            color = iconTint.copy(alpha = 0.12f),
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    MiuixIcon(
+                                        imageVector = it,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = iconTint
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(14.dp))
+                            }
+
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                color = MiuixTheme.colorScheme.onSurface
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(modifier = Modifier.height(22.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                MiuixButton(
+                                    onClick = onDismissRequest,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(42.dp),
+                                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                                ) {
+                                    Text(text = resolvedDismissText)
+                                }
+
+                                MiuixButton(
+                                    onClick = onConfirm,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(42.dp),
+                                    colors = MiuixButtonDefaults.buttonColorsPrimary(color = confirmColor),
+                                    insideMargin = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                                ) {
+                                    Text(text = resolvedConfirmText)
+                                }
+                            }
+                        }
+                    }
+                    return@AnimatedVisibility
+                }
+
                 Card(
                     modifier = Modifier
                         .widthIn(max = 280.dp)

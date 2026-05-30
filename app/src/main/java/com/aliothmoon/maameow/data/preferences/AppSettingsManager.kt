@@ -331,6 +331,20 @@ class AppSettingsManager(private val context: Context) {
         }
     }
 
+    val useMiuixDynamicColor: StateFlow<Boolean> = settings
+        .map { it.useMiuixDynamicColor.toBooleanStrictOrNull() ?: true }
+        .distinctUntilChanged()
+        .stateIn(
+            scope, SharingStarted.Eagerly,
+            initialSettings.useMiuixDynamicColor.toBooleanStrictOrNull() ?: true
+        )
+
+    suspend fun setUseMiuixDynamicColor(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[useMiuixDynamicColor] = enabled.toString() }
+        }
+    }
+
     // 内部通知级别
     enum class EventNotificationLevel(@param:androidx.annotation.StringRes val labelRes: Int) {
         OFF(R.string.notification_level_off),

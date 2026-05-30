@@ -84,6 +84,7 @@ import com.aliothmoon.maameow.presentation.components.UpdateCard
 import com.aliothmoon.maameow.presentation.state.StatusColorType
 import com.aliothmoon.maameow.presentation.viewmodel.HomeViewModel
 import com.aliothmoon.maameow.presentation.viewmodel.UpdateViewModel
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.utils.Misc
 import com.aliothmoon.maameow.utils.i18n.UiText
 import com.aliothmoon.maameow.utils.i18n.asString
@@ -94,6 +95,15 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.ButtonDefaults as MiuixButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card as MiuixCard
+import top.yukonga.miuix.kmp.basic.CircularProgressIndicator as MiuixCircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
+import top.yukonga.miuix.kmp.basic.SmallTopAppBar as MiuixSmallTopAppBar
+import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 
 @Composable
@@ -113,6 +123,7 @@ fun HomeView(
     val state by RemoteServiceManager.state.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
+    val useMiuixTheme = LocalMaaUseMiuixTheme.current
     val (width, height) = Misc.getScreenSize(context)
 
     val startupDialog by updateViewModel.startupUpdateDialog.collectAsStateWithLifecycle()
@@ -216,30 +227,45 @@ fun HomeView(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.home_app_title),
-                        fontWeight = FontWeight.SemiBold,
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                },
-                actions = {
-                    IconButton(onClick = {
-                        navController.navigate(Routes.SETTINGS)
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.home_cd_open_settings)
-                        )
+            if (useMiuixTheme) {
+                MiuixSmallTopAppBar(
+                    title = stringResource(R.string.home_app_title),
+                    actions = {
+                        MiuixIconButton(onClick = { navController.navigate(Routes.SETTINGS) }) {
+                            MiuixIcon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.home_cd_open_settings),
+                                tint = MiuixTheme.colorScheme.primary
+                            )
+                        }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    actionIconContentColor = MaterialTheme.colorScheme.primary
                 )
-            )
+            } else {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = stringResource(R.string.home_app_title),
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            navController.navigate(Routes.SETTINGS)
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.home_cd_open_settings)
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
+                        actionIconContentColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+            }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -319,48 +345,24 @@ fun HomeView(
                     && permissionState.remoteAccessGranted
                 ) {
                     item {
-                        OutlinedButton(
+                        HomeActionButton(
+                            text = stringResource(R.string.home_btn_reload_services),
                             onClick = { viewModel.onReloadServices() },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp),
-                            shape = MaterialTheme.shapes.large,
                             enabled = !uiState.isLoading
-                        ) {
-                            Text(
-                                text = stringResource(R.string.home_btn_reload_services),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        )
                     }
                 }
 
                 item {
-                    OutlinedButton(
+                    HomeActionButton(
+                        text = stringResource(R.string.home_btn_stop_all_services),
                         onClick = {
                             Timber.d("关闭所有服务")
                             viewModel.onStopAllServices()
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        ),
-                        border = BorderStroke(
-                            1.dp,
-                            MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
-                        ),
-                        shape = MaterialTheme.shapes.large,
-                        enabled = !uiState.isLoading
-                    ) {
-                        Text(
-                            text = stringResource(R.string.home_btn_stop_all_services),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                        enabled = !uiState.isLoading,
+                        destructive = true
+                    )
                 }
             }
         }
@@ -450,6 +452,88 @@ fun HomeView(
 }
 
 @Composable
+private fun HomeActionButton(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    destructive: Boolean = false
+) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixButton(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            enabled = enabled,
+            colors = if (destructive) {
+                MiuixButtonDefaults.buttonColorsPrimary(color = MiuixTheme.colorScheme.error)
+            } else {
+                MiuixButtonDefaults.buttonColors()
+            },
+            insideMargin = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        return
+    }
+
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        colors = if (destructive) {
+            ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+        } else {
+            ButtonDefaults.outlinedButtonColors()
+        },
+        border = if (destructive) {
+            BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
+        } else {
+            null
+        },
+        shape = MaterialTheme.shapes.large,
+        enabled = enabled
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+private fun HomeCard(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixCard(
+            modifier = modifier.fillMaxWidth(),
+            insideMargin = PaddingValues(0.dp)
+        ) {
+            content()
+        }
+    } else {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
 private fun ScreenInfoCard(
     screenWidth: Int,
     screenHeight: Int,
@@ -460,14 +544,7 @@ private fun ScreenInfoCard(
     serviceStatusLoading: Boolean
 ) {
     val serviceStatusLabel = serviceStatusText.asString()
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
+    HomeCard {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -564,11 +641,15 @@ private fun ScreenInfoCard(
                         color = statusColor
                     )
                     if (serviceStatusLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(12.dp),
-                            strokeWidth = 1.5.dp,
-                            color = statusColor
-                        )
+                        if (LocalMaaUseMiuixTheme.current) {
+                            MiuixCircularProgressIndicator(modifier = Modifier.size(12.dp))
+                        } else {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(12.dp),
+                                strokeWidth = 1.5.dp,
+                                color = statusColor
+                            )
+                        }
                     }
                 }
             }
@@ -583,14 +664,7 @@ private fun RunModeCard(
     changeEnabled: Boolean
 ) {
     val context = LocalContext.current
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
+    HomeCard {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -615,11 +689,19 @@ private fun RunModeCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Switch(
-                    checked = runMode == RunMode.BACKGROUND,
-                    enabled = changeEnabled,
-                    onCheckedChange = onRunModeChange
-                )
+                if (LocalMaaUseMiuixTheme.current) {
+                    MiuixSwitch(
+                        checked = runMode == RunMode.BACKGROUND,
+                        enabled = changeEnabled,
+                        onCheckedChange = onRunModeChange
+                    )
+                } else {
+                    Switch(
+                        checked = runMode == RunMode.BACKGROUND,
+                        enabled = changeEnabled,
+                        onCheckedChange = onRunModeChange
+                    )
+                }
             }
         }
     }
@@ -653,10 +735,14 @@ private fun PermissionRow(
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
         ) {
             if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp
-                )
+                if (LocalMaaUseMiuixTheme.current) {
+                    MiuixCircularProgressIndicator(modifier = Modifier.size(16.dp))
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                }
             } else {
                 Text(text = if (granted) grantedText else ungrantedText)
             }
@@ -680,14 +766,7 @@ private fun PermissionCard(
     var expandedPermissions by remember { mutableStateOf(false) }
     val contentColor = MaterialTheme.colorScheme.onSurface
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
+    HomeCard {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -793,14 +872,7 @@ private fun ForegroundModeSection(
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        ) {
+        HomeCard {
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
                     text = stringResource(R.string.home_resolution_title),
@@ -815,52 +887,77 @@ private fun ForegroundModeSection(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     maxItemsInEachRow = 2
                 ) {
-                    Button(
-                        onClick = onChangeTo16x9Resolution,
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.home_resolution_apply_16_9),
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1
-                        )
+                    if (LocalMaaUseMiuixTheme.current) {
+                        MiuixButton(
+                            onClick = onChangeTo16x9Resolution,
+                            modifier = Modifier.weight(1f),
+                            colors = MiuixButtonDefaults.buttonColorsPrimary(),
+                            insideMargin = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.home_resolution_apply_16_9),
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
+                        }
+                    } else {
+                        Button(
+                            onClick = onChangeTo16x9Resolution,
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.home_resolution_apply_16_9),
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
+                        }
                     }
 
-                    Button(
-                        onClick = onResetResolution,
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.home_resolution_reset),
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1
-                        )
+                    if (LocalMaaUseMiuixTheme.current) {
+                        MiuixButton(
+                            onClick = onResetResolution,
+                            modifier = Modifier.weight(1f),
+                            colors = MiuixButtonDefaults.buttonColorsPrimary(),
+                            insideMargin = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.home_resolution_reset),
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
+                        }
+                    } else {
+                        Button(
+                            onClick = onResetResolution,
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.home_resolution_reset),
+                                style = MaterialTheme.typography.bodyMedium,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
         }
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            shape = MaterialTheme.shapes.medium,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        ) {
+        HomeCard {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -893,19 +990,54 @@ private fun ForegroundModeSection(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Switch(
-                        checked = overlayControlMode == OverlayControlMode.ACCESSIBILITY,
-                        onCheckedChange = { isAccessibility ->
-                            onControlOverlayModeChanged(
-                                if (isAccessibility) OverlayControlMode.ACCESSIBILITY
-                                else OverlayControlMode.FLOAT_BALL
-                            )
-                        }
-                    )
+                    val onOverlaySwitchChange: (Boolean) -> Unit = { isAccessibility ->
+                        onControlOverlayModeChanged(
+                            if (isAccessibility) OverlayControlMode.ACCESSIBILITY
+                            else OverlayControlMode.FLOAT_BALL
+                        )
+                    }
+                    if (LocalMaaUseMiuixTheme.current) {
+                        MiuixSwitch(
+                            checked = overlayControlMode == OverlayControlMode.ACCESSIBILITY,
+                            onCheckedChange = onOverlaySwitchChange
+                        )
+                    } else {
+                        Switch(
+                            checked = overlayControlMode == OverlayControlMode.ACCESSIBILITY,
+                            onCheckedChange = onOverlaySwitchChange
+                        )
+                    }
                 }
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
+        if (LocalMaaUseMiuixTheme.current) {
+            MiuixButton(
+                onClick = onToggleOverlay,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                colors = MiuixButtonDefaults.buttonColorsPrimary(
+                    color = if (isShowControlOverlay) MiuixTheme.colorScheme.error else MiuixTheme.colorScheme.primary
+                ),
+                insideMargin = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            ) {
+                if (isLoading) {
+                    MiuixCircularProgressIndicator(modifier = Modifier.size(20.dp))
+                } else {
+                    Text(
+                        text = if (isShowControlOverlay)
+                            stringResource(R.string.home_overlay_close)
+                        else
+                            stringResource(R.string.home_overlay_open),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            return
+        }
+
         Button(
             onClick = onToggleOverlay,
             modifier = Modifier

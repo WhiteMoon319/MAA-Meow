@@ -39,6 +39,8 @@ data class AppSettings(
 
     @PrefKey(default = "true") val useMiuixTheme: String = "true",
 
+    @PrefKey(default = "true") val useMiuixDynamicColor: String = "true",
+
     @PrefKey(default = "DEFAULT") val eventNotificationLevel: String = "DEFAULT",
 
     @PrefKey(default = "P720") val backgroundResolution: String = "P720",

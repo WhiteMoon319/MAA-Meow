@@ -10,16 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Scaffold as MaterialScaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,10 +37,15 @@ import com.aliothmoon.maameow.presentation.components.ITextField
 import com.aliothmoon.maameow.presentation.components.InfoCard
 import com.aliothmoon.maameow.presentation.components.TopAppBar
 import com.aliothmoon.maameow.presentation.viewmodel.NotificationSettingsViewModel
+import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
 import com.aliothmoon.maameow.theme.MaaDesignTokens
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import top.yukonga.miuix.kmp.basic.Button as MiuixButton
+import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
+import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private val PROVIDERS: List<Pair<String, Int>> = listOf(
     "ServerChan" to R.string.notification_provider_server_chan,
@@ -75,19 +76,18 @@ fun NotificationSettingsView(
     val coroutineScope = rememberCoroutineScope()
     val testMessage = stringResource(R.string.notification_test_message)
 
-    Scaffold(
-        topBar = {
-            TopAppBar(title = stringResource(R.string.notification_settings_title))
-        }
-    ) { paddingValues ->
-    val contentColor = MaterialTheme.colorScheme.onSurface
+    val topBar: @Composable () -> Unit = {
+        TopAppBar(title = stringResource(R.string.notification_settings_title))
+    }
+    val content: @Composable (PaddingValues) -> Unit = { paddingValues ->
+        val contentColor = MaterialTheme.colorScheme.onSurface
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = paddingValues.calculateTopPadding()),
-        contentPadding = PaddingValues(MaaDesignTokens.Spacing.lg)
-    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = paddingValues.calculateTopPadding()),
+            contentPadding = PaddingValues(MaaDesignTokens.Spacing.lg)
+        ) {
         // 内部通知
         item {
             val isEnabled = eventNotificationLevel != EventNotificationLevel.OFF
@@ -120,15 +120,13 @@ fun NotificationSettingsView(
                         }
                         SettingsDivider(contentColor)
                         val eventNotifier: MaaEventNotifier = koinInject()
-                        Button(
+                        NotificationButton(
                             onClick = {
                                 eventNotifier.notifyAllTasksCompleted(testMessage)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = MaaDesignTokens.Spacing.sm),
-                            shape = MaterialTheme.shapes.small,
-                            contentPadding = ButtonDefaults.ContentPadding
                         ) {
                             Text(stringResource(R.string.notification_send_test))
                         }
@@ -186,7 +184,7 @@ fun NotificationSettingsView(
                             color = contentColor,
                             modifier = Modifier.weight(1f)
                         )
-                        Switch(
+                        NotificationSwitch(
                             checked = enabled,
                             onCheckedChange = {
                                 viewModel.toggleProvider(id, it)
@@ -209,12 +207,10 @@ fun NotificationSettingsView(
             Spacer(Modifier.height(MaaDesignTokens.Spacing.sectionGap))
             SectionHeader(stringResource(R.string.notification_section_test))
             InfoCard(title = "") {
-                Button(
+                NotificationButton(
                     onClick = { viewModel.sendTest() },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = enabledProviders.isNotEmpty(),
-                    shape = MaterialTheme.shapes.small,
-                    contentPadding = ButtonDefaults.ContentPadding
                 ) {
                     Text(stringResource(R.string.notification_send_test))
                 }
@@ -224,6 +220,11 @@ fun NotificationSettingsView(
         // 底部留白
         item { Spacer(Modifier.height(MaaDesignTokens.Spacing.xxl)) }
     }
+}
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixScaffold(topBar = topBar, content = content)
+    } else {
+        MaterialScaffold(topBar = topBar, content = content)
     }
 }
 
@@ -447,6 +448,19 @@ private fun ProviderConfig(
 
 @Composable
 private fun SectionHeader(title: String) {
+    if (LocalMaaUseMiuixTheme.current) {
+        top.yukonga.miuix.kmp.basic.Text(
+            text = title,
+            style = MiuixTheme.textStyles.footnote1,
+            color = MiuixTheme.colorScheme.onBackgroundVariant,
+            modifier = Modifier.padding(
+                start = MaaDesignTokens.Spacing.xs,
+                bottom = MaaDesignTokens.Spacing.sm
+            )
+        )
+        return
+    }
+
     Text(
         text = title,
         style = MaterialTheme.typography.bodySmall,
@@ -477,15 +491,58 @@ private fun SwitchItem(
             color = contentColor,
             modifier = Modifier.weight(1f)
         )
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        NotificationSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
 @Composable
 private fun SettingsDivider(contentColor: Color) {
+    if (LocalMaaUseMiuixTheme.current) return
+
     HorizontalDivider(
         modifier = Modifier.padding(start = MaaDesignTokens.Separator.inset),
         thickness = MaaDesignTokens.Separator.thickness,
         color = contentColor.copy(alpha = 0.12f)
     )
+}
+
+@Composable
+private fun NotificationSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixSwitch(checked = checked, onCheckedChange = onCheckedChange)
+    } else {
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun NotificationButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    if (LocalMaaUseMiuixTheme.current) {
+        MiuixButton(
+            onClick = onClick,
+            modifier = modifier.height(44.dp),
+            enabled = enabled,
+            insideMargin = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+        ) {
+            content()
+        }
+    } else {
+        Button(
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+            shape = MaterialTheme.shapes.small,
+            contentPadding = ButtonDefaults.ContentPadding
+        ) {
+            content()
+        }
+    }
 }
