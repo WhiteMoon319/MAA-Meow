@@ -171,25 +171,6 @@ fun ITextFieldWithFocus(
     val useMiuixTheme = LocalMaaUseMiuixTheme.current
     val filteredOnChange: (String) -> Unit = if (inputFilter != null) {
         { text -> if (inputFilter(text)) onValueChange(text) }
-    } else if (useMiuixTheme) {
-        Column(modifier = modifier.fillMaxWidth()) {
-            MiuixTextField(
-                value = bufferedValue,
-                onValueChange = bufferedOnChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { focusState ->
-                        if (!focusState.isFocused) {
-                            onFocusLost()
-                        }
-                    },
-                label = label ?: placeholder,
-                singleLine = singleLine,
-                enabled = enabled,
-                keyboardOptions = keyboardOptions
-            )
-            supportingText?.invoke()
-        }
     } else {
         onValueChange
     }
@@ -214,6 +195,25 @@ fun ITextFieldWithFocus(
                 }
             }
         )
+    } else if (useMiuixTheme) {
+        Column(modifier = modifier.fillMaxWidth()) {
+            MiuixTextField(
+                value = bufferedValue,
+                onValueChange = bufferedOnChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        if (!focusState.isFocused) {
+                            onFocusLost()
+                        }
+                    },
+                label = label ?: placeholder,
+                singleLine = singleLine,
+                enabled = enabled,
+                keyboardOptions = keyboardOptions
+            )
+            supportingText?.invoke()
+        }
     } else {
         // 普通环境：使用 OutlinedTextField + onFocusChanged
         OutlinedTextField(
