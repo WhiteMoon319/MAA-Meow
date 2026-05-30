@@ -642,7 +642,7 @@ private fun ScreenInfoCard(
                     )
                     if (serviceStatusLoading) {
                         if (LocalMaaUseMiuixTheme.current) {
-                            MiuixCircularProgressIndicator(modifier = Modifier.size(12.dp))
+                            MiuixCircularProgressIndicator(size = 12.dp)
                         } else {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(12.dp),
@@ -736,7 +736,7 @@ private fun PermissionRow(
         ) {
             if (isLoading) {
                 if (LocalMaaUseMiuixTheme.current) {
-                    MiuixCircularProgressIndicator(modifier = Modifier.size(16.dp))
+                    MiuixCircularProgressIndicator(size = 16.dp)
                 } else {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
@@ -1023,7 +1023,7 @@ private fun ForegroundModeSection(
                 insideMargin = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
                 if (isLoading) {
-                    MiuixCircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    MiuixCircularProgressIndicator(size = 20.dp)
                 } else {
                     Text(
                         text = if (isShowControlOverlay)

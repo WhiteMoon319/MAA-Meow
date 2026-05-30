@@ -484,7 +484,7 @@ private fun UpdateCheckButton(
             insideMargin = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
         ) {
             if (loading) {
-                MiuixCircularProgressIndicator(modifier = Modifier.size(16.dp))
+                MiuixCircularProgressIndicator(size = 16.dp)
             } else {
                 Text(text, fontSize = 14.sp)
             }
@@ -510,9 +510,12 @@ private fun UpdateCheckButton(
 }
 
 @Composable
-private fun UpdateCircularProgress(modifier: Modifier = Modifier) {
+private fun UpdateCircularProgress(
+    modifier: Modifier = Modifier,
+    size: androidx.compose.ui.unit.Dp = 16.dp
+) {
     if (LocalMaaUseMiuixTheme.current) {
-        MiuixCircularProgressIndicator(modifier = modifier)
+        MiuixCircularProgressIndicator(modifier = modifier, size = size)
     } else {
         CircularProgressIndicator(
             modifier = modifier,
@@ -642,7 +645,7 @@ private fun AppUpdateProgress(appUpdateState: UpdateProcessState) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                UpdateCircularProgress(modifier = Modifier.size(16.dp))
+                UpdateCircularProgress(size = 16.dp)
                 Text(
                     text = stringResource(R.string.update_progress_app_installing),
                     style = MaterialTheme.typography.bodySmall,

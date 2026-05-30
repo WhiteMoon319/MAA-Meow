@@ -55,6 +55,15 @@
     <string name="settings_use_miuix_theme_desc">Turn off to restore the original app theme</string>
     <string name="settings_use_miuix_dynamic_color_title">Miuix Dynamic Color</string>
     <string name="settings_use_miuix_dynamic_color_desc">Generate Miuix colors from the system wallpaper</string>
+    <string name="settings_miuix_key_color_title">Miuix Custom Color</string>
+    <string name="settings_miuix_key_color_desc">Use this color when dynamic color is disabled</string>
+    <string name="settings_miuix_key_color_preview">Theme Color Preview</string>
+    <string name="settings_miuix_key_color_dynamic_notice">Kept as preview while dynamic color is enabled</string>
+    <string name="settings_miuix_key_color_preview_hint">Drag the sliders to apply the Miuix theme color immediately</string>
+    <string name="settings_miuix_floating_bottom_bar_title">Floating Bottom Bar</string>
+    <string name="settings_miuix_floating_bottom_bar_desc">Use a SukiSU-style floating option bar</string>
+    <string name="settings_miuix_liquid_glass_title">Liquid Glass Bottom Bar</string>
+    <string name="settings_miuix_liquid_glass_desc">Enable translucent glass styling on the floating bar</string>
     <string name="settings_language_title">Language</string>
     <string name="settings_language_system">Follow System</string>
     <string name="settings_language_zh">中文</string>

@@ -162,12 +162,15 @@ object MaaThemeAlphas {
 }
 
 val LocalMaaUseMiuixTheme = staticCompositionLocalOf { false }
+val LocalMaaMiuixLiquidGlass = staticCompositionLocalOf { false }
 
 @Composable
 fun MaaMeowTheme(
     themeMode: AppSettingsManager.ThemeMode = AppSettingsManager.ThemeMode.SYSTEM,
     useMiuixTheme: Boolean = true,
     useMiuixDynamicColor: Boolean = true,
+    miuixKeyColor: String = "",
+    enableMiuixLiquidGlass: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val isDark = when (themeMode) {
@@ -184,7 +187,11 @@ fun MaaMeowTheme(
         AppSettingsManager.ThemeMode.PURE_DARK -> BluePureDark
     }
 
-    val miuixController = remember(themeMode, isDark, useMiuixDynamicColor) {
+    val customMiuixKeyColor = remember(miuixKeyColor) {
+        miuixKeyColor.toLongOrNull(16)?.let { Color(it.toInt()) }
+    }
+
+    val miuixController = remember(themeMode, isDark, useMiuixDynamicColor, customMiuixKeyColor) {
         ThemeController(
             colorSchemeMode = when (themeMode) {
                 AppSettingsManager.ThemeMode.SYSTEM -> if (useMiuixDynamicColor) ColorSchemeMode.MonetSystem else ColorSchemeMode.System
@@ -192,14 +199,15 @@ fun MaaMeowTheme(
                 AppSettingsManager.ThemeMode.DARK,
                 AppSettingsManager.ThemeMode.PURE_DARK -> if (useMiuixDynamicColor) ColorSchemeMode.MonetDark else ColorSchemeMode.Dark
             },
-            keyColor = if (useMiuixDynamicColor) null else colorScheme.primary,
+            keyColor = if (useMiuixDynamicColor) null else customMiuixKeyColor ?: colorScheme.primary,
             isDark = isDark
         )
     }
 
     CompositionLocalProvider(
         LocalIndication provides NoIndication,
-        LocalMaaUseMiuixTheme provides useMiuixTheme
+        LocalMaaUseMiuixTheme provides useMiuixTheme,
+        LocalMaaMiuixLiquidGlass provides enableMiuixLiquidGlass
     ) {
         if (useMiuixTheme) {
             MiuixThemeProvider(controller = miuixController) {

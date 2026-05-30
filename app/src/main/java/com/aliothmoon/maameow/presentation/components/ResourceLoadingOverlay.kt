@@ -71,7 +71,7 @@ fun ResourceLoadingOverlay(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        MiuixCircularProgressIndicator(modifier = Modifier.size(48.dp))
+                        MiuixCircularProgressIndicator(size = 48.dp)
                         Text(
                             text = context.resourceLoaderMessage(state),
                             style = MaterialTheme.typography.titleMedium,

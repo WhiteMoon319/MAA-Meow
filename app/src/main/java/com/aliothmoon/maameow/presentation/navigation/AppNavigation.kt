@@ -20,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,6 +71,7 @@ fun AppNavigation(
     val runMode by appSettings.runMode.collectAsStateWithLifecycle()
     val announcementReadVersion by appSettings.announcementReadVersion.collectAsStateWithLifecycle()
     val language by appSettings.language.collectAsStateWithLifecycle()
+    val enableMiuixFloatingBottomBar by appSettings.enableMiuixFloatingBottomBar.collectAsStateWithLifecycle()
     val pendingScheduledExecution by backgroundTaskViewModel.coordinator.pendingExecution.collectAsStateWithLifecycle()
     val scheduledCountdownState by backgroundTaskViewModel.coordinator.countdownState.collectAsStateWithLifecycle()
 
@@ -113,7 +116,7 @@ fun AppNavigation(
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             bottomBar = {
-                if (showBottomBar) {
+                if (showBottomBar && !enableMiuixFloatingBottomBar) {
                     AppBottomNavigation(
                         currentRoute = currentNavRoute ?: Routes.HOME,
                         onTabSelected = { tab ->
@@ -143,7 +146,7 @@ fun AppNavigation(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding())
+                    .padding(bottom = if (enableMiuixFloatingBottomBar) 0.dp else paddingValues.calculateBottomPadding())
             ) {
                 NavHost(
                     navController = navController,
@@ -291,6 +294,29 @@ fun AppNavigation(
         }
 
         ResourceLoadingOverlay()
+
+        if (showBottomBar && enableMiuixFloatingBottomBar) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                AppBottomNavigation(
+                    currentRoute = currentNavRoute ?: Routes.HOME,
+                    onTabSelected = { tab ->
+                        if (tab.route == currentNavRoute) return@AppBottomNavigation
+                        if (tab.route == Routes.BACKGROUND_TASK && runMode == RunMode.FOREGROUND) {
+                            Toast.makeText(context, switchBackgroundModeMessage, Toast.LENGTH_SHORT).show()
+                            return@AppBottomNavigation
+                        }
+                        navController.navigate(tab.route) {
+                            popUpTo(Routes.HOME) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+        }
 
         // 全局定时任务倒计时弹窗
         val countdown = scheduledCountdownState

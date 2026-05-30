@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -73,6 +74,7 @@ import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.preference.RadioButtonPreference
 import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
+import top.yukonga.miuix.kmp.basic.ColorPicker as MiuixColorPicker
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -94,6 +96,9 @@ fun SettingsView(
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val useMiuixTheme by viewModel.useMiuixTheme.collectAsStateWithLifecycle()
     val useMiuixDynamicColor by viewModel.useMiuixDynamicColor.collectAsStateWithLifecycle()
+    val miuixKeyColor by viewModel.miuixKeyColor.collectAsStateWithLifecycle()
+    val enableMiuixFloatingBottomBar by viewModel.enableMiuixFloatingBottomBar.collectAsStateWithLifecycle()
+    val enableMiuixLiquidGlass by viewModel.enableMiuixLiquidGlass.collectAsStateWithLifecycle()
     val backgroundResolution by viewModel.backgroundResolution.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val backupMessage by viewModel.backupMessage.collectAsStateWithLifecycle()
@@ -377,6 +382,31 @@ private fun SettingsContent(
                     onCheckedChange = { viewModel.setUseMiuixDynamicColor(it) }
                 )
                 SettingsDivider(contentColor)
+                if (useMiuixTheme) {
+                    MiuixColorSettingsItem(
+                        keyColor = miuixKeyColor,
+                        dynamicColorEnabled = useMiuixDynamicColor,
+                        onColorChanged = { viewModel.setMiuixKeyColor(it) }
+                    )
+                    SettingsDivider(contentColor)
+                    SettingSwitchItem(
+                        title = stringResource(R.string.settings_miuix_floating_bottom_bar_title),
+                        description = stringResource(R.string.settings_miuix_floating_bottom_bar_desc),
+                        contentColor = contentColor,
+                        checked = enableMiuixFloatingBottomBar,
+                        onCheckedChange = { viewModel.setEnableMiuixFloatingBottomBar(it) }
+                    )
+                    SettingsDivider(contentColor)
+                    SettingSwitchItem(
+                        title = stringResource(R.string.settings_miuix_liquid_glass_title),
+                        description = stringResource(R.string.settings_miuix_liquid_glass_desc),
+                        contentColor = contentColor,
+                        checked = enableMiuixLiquidGlass,
+                        enabled = enableMiuixFloatingBottomBar,
+                        onCheckedChange = { viewModel.setEnableMiuixLiquidGlass(it) }
+                    )
+                    SettingsDivider(contentColor)
+                }
                 SettingLanguageItem(
                     contentColor = contentColor,
                     selectedLanguage = language,
@@ -506,6 +536,53 @@ private data class SettingsContextActions(
 )
 
 @Composable
+private fun MiuixColorSettingsItem(
+    keyColor: String,
+    dynamicColorEnabled: Boolean,
+    onColorChanged: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedColor = remember(keyColor) {
+        keyColor.toLongOrNull(16)?.let { Color(it.toInt()) } ?: MiuixTheme.colorScheme.primary
+    }
+
+    MiuixSettingChoiceGroup(
+        title = stringResource(R.string.settings_miuix_key_color_title),
+        summary = stringResource(R.string.settings_miuix_key_color_desc)
+    ) {
+        ArrowPreference(
+            title = stringResource(R.string.settings_miuix_key_color_preview),
+            summary = if (dynamicColorEnabled) {
+                stringResource(R.string.settings_miuix_key_color_dynamic_notice)
+            } else {
+                "#${selectedColor.toArgb().toUInt().toString(16).uppercase()}"
+            },
+            onClick = { expanded = !expanded }
+        )
+        if (expanded) {
+            Column(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                MiuixColorPicker(
+                    color = selectedColor,
+                    onColorChanged = { color ->
+                        onColorChanged(color.toArgb().toUInt().toString(16).uppercase())
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    showPreview = true
+                )
+                top.yukonga.miuix.kmp.basic.Text(
+                    text = stringResource(R.string.settings_miuix_key_color_preview_hint),
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun MiuixSettingChoiceGroup(
     title: String,
     summary: String? = null,
@@ -514,11 +591,11 @@ private fun MiuixSettingChoiceGroup(
     Column(modifier = Modifier.fillMaxWidth()) {
         top.yukonga.miuix.kmp.basic.Text(
             text = title,
-            style = MiuixTheme.textStyles.body1,
+            style = MiuixTheme.textStyles.footnote1,
             color = MiuixTheme.colorScheme.onSurface,
             modifier = Modifier.padding(
-                horizontal = MaaDesignTokens.Card.innerPadding,
-                vertical = MaaDesignTokens.Spacing.sm
+                horizontal = 20.dp,
+                vertical = 4.dp
             )
         )
         if (summary != null) {
@@ -527,9 +604,9 @@ private fun MiuixSettingChoiceGroup(
                 style = MiuixTheme.textStyles.footnote1,
                 color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 modifier = Modifier.padding(
-                    start = MaaDesignTokens.Card.innerPadding,
-                    end = MaaDesignTokens.Card.innerPadding,
-                    bottom = MaaDesignTokens.Spacing.sm
+                    start = 20.dp,
+                    end = 20.dp,
+                    bottom = 4.dp
                 )
             )
         }

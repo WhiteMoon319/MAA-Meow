@@ -2,17 +2,21 @@ package com.aliothmoon.maameow.presentation.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -33,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.constant.Routes
 import com.aliothmoon.maameow.theme.LocalMaaUseMiuixTheme
+import com.aliothmoon.maameow.theme.LocalMaaMiuixLiquidGlass
 import com.aliothmoon.maameow.theme.MaaDesignTokens
 import top.yukonga.miuix.kmp.basic.NavigationBar as MiuixNavigationBar
 import top.yukonga.miuix.kmp.basic.NavigationBarItem as MiuixNavigationBarItem
@@ -78,8 +83,42 @@ fun AppBottomNavigation(
     onTabSelected: (BottomNavTab) -> Unit
 ) {
     val useMiuixTheme = LocalMaaUseMiuixTheme.current
+    val useLiquidGlass = LocalMaaMiuixLiquidGlass.current
 
     if (useMiuixTheme) {
+        if (useLiquidGlass) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 18.dp,
+                        end = 18.dp,
+                        bottom = 12.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                    )
+                    .background(
+                        color = MiuixTheme.colorScheme.surface.copy(alpha = 0.82f),
+                        shape = RoundedCornerShape(28.dp)
+                    )
+            ) {
+                MiuixNavigationBar(
+                    color = MiuixTheme.colorScheme.surface.copy(alpha = 0.36f),
+                    showDivider = false,
+                    defaultWindowInsetsPadding = false
+                ) {
+                    BottomNavTab.all.forEach { tab ->
+                        val label = stringResource(tab.labelRes)
+                        MiuixNavigationBarItem(
+                            selected = currentRoute == tab.route,
+                            onClick = { onTabSelected(tab) },
+                            icon = tab.icon,
+                            label = label
+                        )
+                    }
+                }
+            }
+            return
+        }
+
         MiuixNavigationBar(
             color = MiuixTheme.colorScheme.surface,
             showDivider = false

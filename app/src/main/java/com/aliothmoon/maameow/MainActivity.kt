@@ -61,11 +61,15 @@ class MainActivity : AppCompatActivity() {
             val themeMode by appSettingsManager.themeMode.collectAsStateWithLifecycle()
             val useMiuixTheme by appSettingsManager.useMiuixTheme.collectAsStateWithLifecycle()
             val useMiuixDynamicColor by appSettingsManager.useMiuixDynamicColor.collectAsStateWithLifecycle()
+            val miuixKeyColor by appSettingsManager.miuixKeyColor.collectAsStateWithLifecycle()
+            val enableMiuixLiquidGlass by appSettingsManager.enableMiuixLiquidGlass.collectAsStateWithLifecycle()
 
             MaaMeowTheme(
                 themeMode = themeMode,
                 useMiuixTheme = useMiuixTheme,
-                useMiuixDynamicColor = useMiuixDynamicColor
+                useMiuixDynamicColor = useMiuixDynamicColor,
+                miuixKeyColor = miuixKeyColor,
+                enableMiuixLiquidGlass = enableMiuixLiquidGlass
             ) {
                 AppNavigation(backgroundTaskViewModel = backgroundTaskViewModel)
             }

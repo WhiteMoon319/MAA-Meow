@@ -345,6 +345,47 @@ class AppSettingsManager(private val context: Context) {
         }
     }
 
+    val miuixKeyColor: StateFlow<String> = settings
+        .map { it.miuixKeyColor }
+        .distinctUntilChanged()
+        .stateIn(scope, SharingStarted.Eagerly, initialSettings.miuixKeyColor)
+
+    suspend fun setMiuixKeyColor(color: String) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[miuixKeyColor] = color }
+        }
+    }
+
+    val enableMiuixFloatingBottomBar: StateFlow<Boolean> = settings
+        .map { it.enableMiuixFloatingBottomBar.toBooleanStrictOrNull() ?: false }
+        .distinctUntilChanged()
+        .stateIn(
+            scope,
+            SharingStarted.Eagerly,
+            initialSettings.enableMiuixFloatingBottomBar.toBooleanStrictOrNull() ?: false
+        )
+
+    suspend fun setEnableMiuixFloatingBottomBar(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[enableMiuixFloatingBottomBar] = enabled.toString() }
+        }
+    }
+
+    val enableMiuixLiquidGlass: StateFlow<Boolean> = settings
+        .map { it.enableMiuixLiquidGlass.toBooleanStrictOrNull() ?: false }
+        .distinctUntilChanged()
+        .stateIn(
+            scope,
+            SharingStarted.Eagerly,
+            initialSettings.enableMiuixLiquidGlass.toBooleanStrictOrNull() ?: false
+        )
+
+    suspend fun setEnableMiuixLiquidGlass(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[enableMiuixLiquidGlass] = enabled.toString() }
+        }
+    }
+
     // 内部通知级别
     enum class EventNotificationLevel(@param:androidx.annotation.StringRes val labelRes: Int) {
         OFF(R.string.notification_level_off),

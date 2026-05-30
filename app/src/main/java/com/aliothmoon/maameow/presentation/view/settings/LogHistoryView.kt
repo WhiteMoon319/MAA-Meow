@@ -401,7 +401,7 @@ private fun LogScaffold(
 @Composable
 private fun LogLoadingIndicator(modifier: Modifier = Modifier) {
     if (LocalMaaUseMiuixTheme.current) {
-        MiuixCircularProgressIndicator(modifier = modifier)
+        MiuixCircularProgressIndicator(modifier = modifier, size = 32.dp)
     } else {
         CircularProgressIndicator(modifier = modifier)
     }

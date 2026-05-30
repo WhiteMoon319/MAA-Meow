@@ -41,6 +41,12 @@ data class AppSettings(
 
     @PrefKey(default = "true") val useMiuixDynamicColor: String = "true",
 
+    @PrefKey(default = "") val miuixKeyColor: String = "",
+
+    @PrefKey(default = "false") val enableMiuixFloatingBottomBar: String = "false",
+
+    @PrefKey(default = "false") val enableMiuixLiquidGlass: String = "false",
+
     @PrefKey(default = "DEFAULT") val eventNotificationLevel: String = "DEFAULT",
 
     @PrefKey(default = "P720") val backgroundResolution: String = "P720",

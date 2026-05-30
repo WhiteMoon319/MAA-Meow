@@ -200,6 +200,33 @@ class SettingsViewModel(
         }
     }
 
+    val miuixKeyColor: StateFlow<String> = appSettingsManager.miuixKeyColor
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+
+    fun setMiuixKeyColor(color: String) {
+        viewModelScope.launch {
+            appSettingsManager.setMiuixKeyColor(color)
+        }
+    }
+
+    val enableMiuixFloatingBottomBar: StateFlow<Boolean> = appSettingsManager.enableMiuixFloatingBottomBar
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setEnableMiuixFloatingBottomBar(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setEnableMiuixFloatingBottomBar(enabled)
+        }
+    }
+
+    val enableMiuixLiquidGlass: StateFlow<Boolean> = appSettingsManager.enableMiuixLiquidGlass
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setEnableMiuixLiquidGlass(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setEnableMiuixLiquidGlass(enabled)
+        }
+    }
+
     val backgroundResolution: StateFlow<DefaultDisplayConfig.ResolutionPreference> =
         appSettingsManager.backgroundResolution
             .stateIn(
