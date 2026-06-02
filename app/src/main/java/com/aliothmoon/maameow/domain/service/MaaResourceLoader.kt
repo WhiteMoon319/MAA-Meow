@@ -69,6 +69,7 @@ class MaaResourceLoader(
                 useRemoteService { srv ->
                     srv.setup(pathConfig.rootDir, appSettings.debugMode.value)
                     srv.setForceFullscreenOnVirtualDisplay(appSettings.forceFullscreenOnVirtualDisplay.value)
+                    srv.setExcludeFromRecentsOnBackground(appSettings.excludeFromRecentsOnBackground.value)
 
                     if (appSettings.debugMode.value) {
                         val appPid = Process.myPid()

@@ -24,7 +24,8 @@ public final class DriverClass {
         if (displayId == PrimaryDisplayManager.DISPLAY_ID) {
             return ActivityUtils.startApp(packageName, displayId, forceStop);
         }
-        boolean ret = ActivityUtils.startApp(packageName, displayId, forceStop, true);
+        boolean ret = ActivityUtils.startApp(packageName, displayId, forceStop,
+                ActivityUtils.excludeFromRecentsOnBackground);
         if (ret) {
             awaitFirstFrame();
         }

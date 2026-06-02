@@ -288,6 +288,11 @@ class RemoteServiceImpl : RemoteService.Stub() {
         ActivityUtils.forceFullscreenOnVirtualDisplay = enabled
     }
 
+    override fun setExcludeFromRecentsOnBackground(enabled: Boolean) {
+        Ln.i("$TAG: setExcludeFromRecentsOnBackground($enabled)")
+        ActivityUtils.excludeFromRecentsOnBackground = enabled
+    }
+
     override fun setVirtualDisplayResolution(width: Int, height: Int, dpi: Int) {
         Ln.i("$TAG: setVirtualDisplayResolution(${width}x${height}, dpi=$dpi)")
         VirtualDisplayManager.setResolution(width, height, dpi)

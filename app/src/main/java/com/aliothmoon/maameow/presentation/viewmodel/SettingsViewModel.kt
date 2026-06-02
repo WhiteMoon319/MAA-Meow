@@ -162,6 +162,15 @@ class SettingsViewModel(
         }
     }
 
+    val excludeFromRecentsOnBackground: StateFlow<Boolean> = appSettingsManager.excludeFromRecentsOnBackground
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun setExcludeFromRecentsOnBackground(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setExcludeFromRecentsOnBackground(enabled)
+        }
+    }
+
     val updateChannel: StateFlow<UpdateChannel> = appSettingsManager.updateChannel
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UpdateChannel.STABLE)
 

@@ -62,4 +62,10 @@ data class AppSettings(
      * 启用后该目录作为最高优先级覆盖层，在加载链末位加载
      */
     @PrefKey(default = "false") val tasksOverrideEnabled: String = "false",
+
+    /**
+     * 后台模式启动游戏时是否设置 FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS。
+     * 注意：受游戏自身 FLAG_ACTIVITY_MULTIPLE_TASK 影响，实际效果有限，默认 false。
+     */
+    @PrefKey(default = "false") val excludeFromRecentsOnBackground: String = "false",
 )

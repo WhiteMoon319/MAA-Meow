@@ -64,4 +64,6 @@ interface RemoteService {
     boolean isAppOnVirtualDisplay(String packageName) = 29;
 
     oneway void setForceFullscreenOnVirtualDisplay(boolean enabled) = 30;
+
+    oneway void setExcludeFromRecentsOnBackground(boolean enabled) = 31;
 }
