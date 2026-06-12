@@ -267,6 +267,9 @@
     <string name="bg_action_close_game">Close Game</string>
     <string name="bg_action_game_muted">Game Muted</string>
     <string name="bg_action_mute_game">Mute Game</string>
+    <string name="bg_action_screenshot">Screenshot</string>
+    <string name="bg_toast_screenshot_saved">Screenshot saved: %1$s</string>
+    <string name="bg_toast_screenshot_failed">Screenshot failed</string>
     <string name="bg_auto_settings_title">Automation</string>
     <string name="bg_auto_mute_on_launch">Mute game audio on launch</string>
     <string name="bg_auto_close_on_end">Close game when task ends</string>

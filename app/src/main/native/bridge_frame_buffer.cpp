@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <cstring>
 #include <thread>
 
 #if defined(__ARM_NEON)
@@ -296,49 +297,89 @@ BRIDGE_API int UnlockPixels(FrameInfo info) {
     return 0;
 }
 
-jobject CreateFrameBufferBitmap(JNIEnv *env) {
-    const FrameBuffer *frame = LockCurrentFrame();
-    if (!frame) {
-        return nullptr;
-    }
-
-    if (!frame->bgr_data) {
-        UnlockFrame(frame);
-        return nullptr;
-    }
-
+static jobject BuildArgb8888BitmapFromBgr(JNIEnv *env, const uint8_t *bgr, int width, int height) {
     jclass bitmapClass = env->FindClass("android/graphics/Bitmap");
     jclass configClass = env->FindClass("android/graphics/Bitmap$Config");
+    if (!bitmapClass || !configClass) {
+        env->ExceptionClear();
+        return nullptr;
+    }
+
     jfieldID argb8888Field = env->GetStaticFieldID(
             configClass, "ARGB_8888", "Landroid/graphics/Bitmap$Config;");
-    jobject argb8888Config = env->GetStaticObjectField(configClass, argb8888Field);
     jmethodID createBitmapMethod = env->GetStaticMethodID(
             bitmapClass, "createBitmap",
             "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
-    jobject bitmap = env->CallStaticObjectMethod(bitmapClass, createBitmapMethod, frame->width,
-                                                 frame->height, argb8888Config);
-
-    void *pixels = nullptr;
-    if (bitmap &&
-        AndroidBitmap_lockPixels(env, bitmap, &pixels) == ANDROID_BITMAP_RESULT_SUCCESS) {
-        AndroidBitmapInfo info;
-        AndroidBitmap_getInfo(env, bitmap, &info);
-
-        uint8_t *dst = static_cast<uint8_t *>(pixels);
-        uint8_t *src = frame->bgr_data;
-        for (int y = 0; y < frame->height; ++y) {
-            for (int x = 0; x < frame->width; ++x) {
-                dst[x * 4 + 0] = src[x * 3 + 2];
-                dst[x * 4 + 1] = src[x * 3 + 1];
-                dst[x * 4 + 2] = src[x * 3 + 0];
-                dst[x * 4 + 3] = 255;
-            }
-            dst += info.stride;
-            src += frame->width * 3;
-        }
-        AndroidBitmap_unlockPixels(env, bitmap);
+    if (!argb8888Field || !createBitmapMethod) {
+        env->ExceptionClear();
+        return nullptr;
     }
 
-    UnlockFrame(frame);
+    jobject argb8888Config = env->GetStaticObjectField(configClass, argb8888Field);
+    if (!argb8888Config) {
+        env->ExceptionClear();
+        return nullptr;
+    }
+
+    jobject bitmap = env->CallStaticObjectMethod(bitmapClass, createBitmapMethod, width, height,
+                                                 argb8888Config);
+    if (env->ExceptionCheck()) {
+        // createBitmap 可能因 OOM 抛异常，清除后按失败处理
+        env->ExceptionClear();
+        return nullptr;
+    }
+    if (!bitmap) {
+        return nullptr;
+    }
+
+    void *pixels = nullptr;
+    if (AndroidBitmap_lockPixels(env, bitmap, &pixels) != ANDROID_BITMAP_RESULT_SUCCESS ||
+        !pixels) {
+        return nullptr;
+    }
+
+    AndroidBitmapInfo info;
+    if (AndroidBitmap_getInfo(env, bitmap, &info) != ANDROID_BITMAP_RESULT_SUCCESS) {
+        AndroidBitmap_unlockPixels(env, bitmap);
+        return nullptr;
+    }
+
+    uint8_t *dst = static_cast<uint8_t *>(pixels);
+    const uint8_t *src = bgr;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            dst[x * 4 + 0] = src[x * 3 + 2];
+            dst[x * 4 + 1] = src[x * 3 + 1];
+            dst[x * 4 + 2] = src[x * 3 + 0];
+            dst[x * 4 + 3] = 255;
+        }
+        dst += info.stride;
+        src += static_cast<size_t>(width) * 3;
+    }
+    AndroidBitmap_unlockPixels(env, bitmap);
+    return bitmap;
+}
+
+jobject CreateFrameBufferBitmap(JNIEnv *env) {
+    FrameInfo frame = GetLockedPixels();
+    if (!frame.data || frame.width == 0 || frame.height == 0 || frame.length == 0) {
+        UnlockPixels(frame);
+        return nullptr;
+    }
+
+    // 拷出 BGR 数据后立即解锁，把持锁时间压到一次 memcpy，避免和采集 / MAA core 抢缓冲区
+    auto *bgrCopy = static_cast<uint8_t *>(malloc(frame.length));
+    if (!bgrCopy) {
+        UnlockPixels(frame);
+        return nullptr;
+    }
+    memcpy(bgrCopy, frame.data, frame.length);
+    const int width = static_cast<int>(frame.width);
+    const int height = static_cast<int>(frame.height);
+    UnlockPixels(frame);
+
+    // 此时已不持有帧锁，bitmap 分配/转换不再阻塞采集
+    jobject bitmap = BuildArgb8888BitmapFromBgr(env, bgrCopy, width, height);
+    free(bgrCopy);
     return bitmap;
 }

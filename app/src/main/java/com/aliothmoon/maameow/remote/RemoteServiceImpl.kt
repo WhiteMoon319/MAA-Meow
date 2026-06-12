@@ -1,5 +1,6 @@
 package com.aliothmoon.maameow.remote
 
+import android.graphics.Bitmap
 import android.os.Process
 import android.view.Surface
 import com.aliothmoon.maameow.ITouchEventCallback
@@ -22,6 +23,10 @@ import com.aliothmoon.maameow.third.FakeContext
 import com.aliothmoon.maameow.third.Ln
 import com.aliothmoon.maameow.third.Workarounds
 import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -127,6 +132,37 @@ class RemoteServiceImpl : RemoteService.Stub() {
     }
 
     override fun screencap(width: Int, height: Int) {
+    }
+
+    override fun captureFramePng(dirPath: String?): String? {
+        if (dirPath.isNullOrBlank()) {
+            Ln.w("$TAG: captureFramePng - blank dirPath")
+            return null
+        }
+        val bitmap = NativeBridgeLib.getFrameBufferBitmap() ?: run {
+            Ln.w("$TAG: captureFramePng - no frame available")
+            return null
+        }
+        return try {
+            val dir = File(dirPath).apply { mkdirs() }
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(Date())
+            val file = File(dir, "screenshot_$timestamp.png")
+            val ok = FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            }
+            if (!ok) {
+                Ln.e("$TAG: captureFramePng - PNG compress failed")
+                file.delete()
+                return null
+            }
+            Ln.i("$TAG: captureFramePng saved ${file.absolutePath}")
+            file.absolutePath
+        } catch (e: Exception) {
+            Ln.e("$TAG: captureFramePng error: ${e.message}")
+            null
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     override fun setForcedDisplaySize(width: Int, height: Int): Boolean {

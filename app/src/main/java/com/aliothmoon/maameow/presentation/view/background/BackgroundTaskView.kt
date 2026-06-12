@@ -113,6 +113,7 @@ import timber.log.Timber
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.NotificationsPaused
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Screenshot
 import androidx.compose.material.icons.filled.StayCurrentPortrait
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -247,6 +248,12 @@ fun BackgroundTaskView(
                 appDiedMessage,
                 Toast.LENGTH_SHORT
             ).show()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.screenshotMessage.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -573,6 +580,7 @@ fun BackgroundTaskView(
                 onToggleGameSound = viewModel::onToggleGameSound,
                 onScreenOff = viewModel::onScreenOff,
                 onShowScreenSaver = { screenSaverManager.show(context as? Activity) },
+                onCaptureScreenshot = viewModel::onCaptureDebugScreenshot,
                 onCloseApp = {
                     if (maaState == MaaExecutionState.RUNNING) {
                         showCloseConfirm = true
@@ -759,6 +767,7 @@ private fun BackgroundMoreActionsOverlay(
     onToggleGameSound: () -> Unit,
     onScreenOff: () -> Unit,
     onShowScreenSaver: () -> Unit,
+    onCaptureScreenshot: () -> Unit,
     onCloseApp: () -> Unit,
     appSettingsManager: AppSettingsManager = koinInject(),
 ) {
@@ -767,6 +776,7 @@ private fun BackgroundMoreActionsOverlay(
     val closeAppOnTaskEnd by appSettingsManager.closeAppOnTaskEnd.collectAsStateWithLifecycle()
     val useHardwareScreenOff by appSettingsManager.useHardwareScreenOff.collectAsStateWithLifecycle()
     val showTouchPreview by appSettingsManager.showTouchPreview.collectAsStateWithLifecycle()
+    val debugMode by appSettingsManager.debugMode.collectAsStateWithLifecycle()
     var showHardwareScreenOffConfirm by remember { mutableStateOf(false) }
 
     val overlayInteractionSource = remember { MutableInteractionSource() }
@@ -850,6 +860,24 @@ private fun BackgroundMoreActionsOverlay(
                         containerColor = if (isGameMuted) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary,
                         contentColor = if (isGameMuted) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface
                     )
+                }
+
+                // 调试模式：截图按钮，保存到 {rootDir}/debug/screenshots
+                if (debugMode) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        ActionTile(
+                            icon = Icons.Filled.Screenshot,
+                            label = stringResource(R.string.bg_action_screenshot),
+                            onClick = onCaptureScreenshot,
+                            modifier = Modifier.weight(1f),
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

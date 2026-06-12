@@ -9,6 +9,7 @@ import com.aliothmoon.maameow.constant.MaaFiles.DEBUG
 import com.aliothmoon.maameow.constant.MaaFiles.MAA
 import com.aliothmoon.maameow.constant.MaaFiles.OVERRIDES
 import com.aliothmoon.maameow.constant.MaaFiles.RESOURCE
+import com.aliothmoon.maameow.constant.MaaFiles.SCREENSHOTS
 import com.aliothmoon.maameow.constant.MaaFiles.VERSION_FILE
 import timber.log.Timber
 import java.io.File
@@ -55,6 +56,11 @@ class MaaPathConfig(private val context: Context) {
     /** 调试日志目录 */
     val debugDir: String by lazy {
         File(rootDir, DEBUG).absolutePath
+    }
+
+    /** 调试截图目录（debug/screenshots/） */
+    val debugScreenshotsDir: String by lazy {
+        File(debugDir, SCREENSHOTS).absolutePath
     }
 
     /**

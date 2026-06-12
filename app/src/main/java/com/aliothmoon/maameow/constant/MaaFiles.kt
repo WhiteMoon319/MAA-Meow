@@ -5,6 +5,7 @@ object MaaFiles {
     const val RESOURCE = "resource"
     const val CACHE = "cache"
     const val DEBUG = "debug"
+    const val SCREENSHOTS = "screenshots"
     const val ASSET_DIR_NAME = "MaaSync/MaaResource"
     const val VERSION_FILE = "version.json"
     const val APP_VERSION_FILE = ".version"

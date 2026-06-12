@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.RemoteService
 import com.aliothmoon.maameow.constant.Packages
+import com.aliothmoon.maameow.data.config.MaaPathConfig
 import com.aliothmoon.maameow.data.model.LogItem
 import com.aliothmoon.maameow.data.model.TaskTypeInfo
 import com.aliothmoon.maameow.data.model.TaskParamProvider
@@ -30,8 +31,12 @@ import com.aliothmoon.maameow.presentation.view.panel.PanelDialogUiState
 import com.aliothmoon.maameow.presentation.view.panel.PanelTab
 import com.aliothmoon.maameow.utils.i18n.UiText
 import com.aliothmoon.maameow.utils.i18n.resolve
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,6 +46,7 @@ import com.aliothmoon.maameow.schedule.service.ScheduledLaunchCoordinator
 import com.aliothmoon.maameow.schedule.service.ScheduleTriggerLogger
 import kotlinx.coroutines.flow.drop
 import timber.log.Timber
+import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 
 class BackgroundTaskViewModel(
@@ -50,6 +56,7 @@ class BackgroundTaskViewModel(
     private val sessionLogger: MaaSessionLogger,
     private val appSettingsManager: AppSettingsManager,
     private val hardwareScreenOffManager: HardwareScreenOffManager,
+    private val pathConfig: MaaPathConfig,
     scheduleRepository: ScheduleStrategyRepository,
     triggerLogger: ScheduleTriggerLogger,
     private val application: Context,
@@ -72,6 +79,10 @@ class BackgroundTaskViewModel(
 
     private val _isGameMuted = MutableStateFlow(false)
     val isGameMuted: StateFlow<Boolean> = _isGameMuted.asStateFlow()
+
+    // 调试截图结果（已本地化的提示文案），供 UI 以 Toast 展示
+    private val _screenshotMessage = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val screenshotMessage: SharedFlow<String> = _screenshotMessage.asSharedFlow()
 
     private val touchPreviewController = TouchPreviewController(viewModelScope)
     val markers: StateFlow<List<PreviewTouchMarker>> = touchPreviewController.markers
@@ -499,6 +510,28 @@ class BackgroundTaskViewModel(
             RemoteServiceManager.getInstanceOrNull()
                 ?.setPlayAudioOpAllowed(pkg, true)
             _isGameMuted.value = false
+        }
+    }
+
+    /**
+     * 调试用：请求远端进程抓取当前帧缓冲并保存 PNG 到 {rootDir}/debug/screenshots，
+     * 结果通过 [screenshotMessage] 反馈给 UI。
+     *
+     * 由远端（shell 进程）直接落盘——它对 userDir/debug 有写权限（同 logcat 抓取），
+     * 避免跨进程读取 ashmem 被 SELinux 拒绝。
+     */
+    fun onCaptureDebugScreenshot() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val savedName = runCatching {
+                RemoteServiceManager.getInstanceOrNull()
+                    ?.captureFramePng(pathConfig.debugScreenshotsDir)
+                    ?.let { File(it).name }
+            }.onFailure { Timber.e(it, "captureDebugScreenshot failed") }
+                .getOrNull()
+            val message = savedName
+                ?.let { application.getString(R.string.bg_toast_screenshot_saved, it) }
+                ?: application.getString(R.string.bg_toast_screenshot_failed)
+            _screenshotMessage.tryEmit(message)
         }
     }
 
