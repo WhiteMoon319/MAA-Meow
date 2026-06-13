@@ -1,0 +1,30 @@
+plugins {
+    id('com.android.library')
+}
+
+android {
+    namespace 'rikka.shizuku.shared'
+    compileSdk 36
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation project(':shizuku-aidl')
+
+    implementation libs.androidx.annotation
+}
+
+ext {
+    publishLibrary = true
+    POM_NAME = "Shizuku API - shared"
+    POM_DESCRIPTION = "Shared parts for the API of Shizuku and Sui."
+}
+

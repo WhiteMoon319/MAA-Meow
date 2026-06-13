@@ -1,0 +1,33 @@
+plugins {
+    id('com.android.library')
+    id('dev.rikka.tools.refine')
+}
+
+android {
+    namespace 'rikka.shizuku.server'
+    compileSdk 36
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation libs.androidx.annotation
+    implementation 'androidx.core:core:1.16.0'
+    implementation libs.parcelablelist
+
+    api project(':shizuku-aidl')
+    api project(':shizuku-shared')
+    api project(':shizuku-rish')
+
+    implementation libs.refine.runtime
+    implementation libs.hidden.compat
+    compileOnly libs.hidden.stub
+}
+

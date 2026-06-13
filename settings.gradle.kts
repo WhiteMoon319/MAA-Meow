@@ -41,38 +41,37 @@ include(":annotation-api")
 include(":ksp-processor")
 
 // Shizuku embedded modules
-val shizukuRoot = "others${File.separator}Shizuku"
-val shizukuApiRoot = "$shizukuRoot${File.separator}api"
+val shizukuRoot = "shizuku"
 
 // Shizuku API modules
 include(":shizuku-aidl")
-project(":shizuku-aidl").projectDir = file("$shizukuApiRoot${File.separator}aidl")
+project(":shizuku-aidl").projectDir = file("$shizukuRoot/aidl")
 
 include(":shizuku-shared")
-project(":shizuku-shared").projectDir = file("$shizukuApiRoot${File.separator}shared")
+project(":shizuku-shared").projectDir = file("$shizukuRoot/shared")
 
 include(":shizuku-api")
-project(":shizuku-api").projectDir = file("$shizukuApiRoot${File.separator}api")
+project(":shizuku-api").projectDir = file("$shizukuRoot/api")
 
 include(":shizuku-provider")
-project(":shizuku-provider").projectDir = file("$shizukuApiRoot${File.separator}provider")
+project(":shizuku-provider").projectDir = file("$shizukuRoot/provider")
 
 include(":shizuku-server-shared")
-project(":shizuku-server-shared").projectDir = file("$shizukuApiRoot${File.separator}server-shared")
+project(":shizuku-server-shared").projectDir = file("$shizukuRoot/server-shared")
 
 include(":shizuku-rish")
-project(":shizuku-rish").projectDir = file("$shizukuApiRoot${File.separator}rish")
+project(":shizuku-rish").projectDir = file("$shizukuRoot/rish")
 
 // Shizuku core modules
 include(":shizuku-common")
-project(":shizuku-common").projectDir = file("$shizukuRoot${File.separator}common")
+project(":shizuku-common").projectDir = file("$shizukuRoot/common")
 
 include(":shizuku-starter")
-project(":shizuku-starter").projectDir = file("$shizukuRoot${File.separator}starter")
+project(":shizuku-starter").projectDir = file("$shizukuRoot/starter")
 
 include(":shizuku-server")
-project(":shizuku-server").projectDir = file("$shizukuRoot${File.separator}server")
+project(":shizuku-server").projectDir = file("$shizukuRoot/server")
 
 include(":shizuku-shell")
-project(":shizuku-shell").projectDir = file("$shizukuRoot${File.separator}shell")
+project(":shizuku-shell").projectDir = file("$shizukuRoot/shell")
  

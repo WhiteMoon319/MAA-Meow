@@ -1,0 +1,32 @@
+plugins {
+    id 'com.android.library'
+    id 'dev.rikka.tools.refine'
+}
+
+android {
+    namespace 'moe.shizuku.server'
+    compileSdk 36
+    buildFeatures {
+        buildConfig = false
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation libs.androidx.annotation
+    implementation libs.gson
+    implementation libs.parcelablelist
+
+    implementation project(':shizuku-aidl')
+    implementation project(':shizuku-common')
+    implementation project(':shizuku-shared')
+    compileOnly project(':shizuku-provider')
+    implementation project(':shizuku-starter')
+    implementation project(':shizuku-rish')
+    implementation project(':shizuku-server-shared')
+    implementation libs.hidden.compat
+    compileOnly libs.hidden.stub
+}
