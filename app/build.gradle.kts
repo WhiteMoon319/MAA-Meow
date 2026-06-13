@@ -205,6 +205,11 @@ dependencies {
     implementation(libs.reorderable)
     implementation(libs.compose.markdown)
 
+    // ADB client for Shizuku embedded startup
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.80")
+    implementation("io.github.vvb2060.ndk:boringssl:20250114")
+    implementation("org.lsposed.libcxx:libcxx:27.0.12077973")
+
     // sora-editor：JSON 语法高亮编辑器（TextMate + darcula 主题）
     implementation(platform(libs.bom))
     implementation(libs.editor)

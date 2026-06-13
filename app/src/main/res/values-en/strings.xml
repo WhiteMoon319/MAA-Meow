@@ -327,14 +327,14 @@
 
     <!-- dialog: Shizuku / Sui -->
     <string name="dialog_shizuku_setup_title">Shizuku Setup</string>
-    <string name="dialog_shizuku_enable_wireless_debug">This app requires Shizuku service. Please enable wireless debugging in Developer Options, then return to this page.</string>
-    <string name="dialog_shizuku_start_setup">Wireless debugging is enabled. Tap the button below to start setting up Shizuku service.</string>
-    <string name="dialog_shizuku_start_setup_btn">Start Setup</string>
-    <string name="dialog_shizuku_setting_up">Setting Up Shizuku</string>
-    <string name="dialog_shizuku_pairing_title">Pairing Required</string>
-    <string name="dialog_shizuku_pairing_message">Please check the pairing code in wireless debugging settings and enter it in the notification. Shizuku will start automatically after pairing.</string>
+    <string name="dialog_shizuku_start_setup">This app requires Shizuku service. With Root it starts automatically; without Root, enable wireless debugging for auto-connection.</string>
+    <string name="dialog_shizuku_start_setup_btn">Start Shizuku</string>
+    <string name="dialog_shizuku_setting_up">Starting Shizuku</string>
+    <string name="dialog_shizuku_enable_wireless_debug">Wireless debugging is required to start Shizuku. Please enable \"Wireless debugging\" in Developer Options, then return.</string>
+    <string name="dialog_shizuku_open_wireless_debug">Open Developer Options</string>
+    <string name="dialog_shizuku_need_pair">First-time use requires ADB pairing. Please tap \"Pair device with pairing code\" in wireless debugging settings, then return.</string>
+    <string name="dialog_shizuku_open_pairing">Open Wireless Debug Settings</string>
     <string name="dialog_shizuku_setup_error">Setup failed: %1$s\n\nPlease retry or switch to Root mode.</string>
-    <string name="dialog_shizuku_open_wireless_debug">Open Wireless Debug</string>
     <string name="dialog_shizuku_switch_to_root">Switch to Root</string>
     <string name="dialog_shizuku_skip_check">Skip Check (not recommended)</string>
     <string name="dialog_sui_detected_title">Sui Detected</string>
@@ -346,6 +346,21 @@
     <string name="notification_pairing_title">Shizuku Pairing Request</string>
     <string name="notification_pairing_message">Pairing code: %1$s</string>
     <string name="notification_pairing_detail">Find pairing code %1$s in wireless debugging settings, or tap this notification to enter the code.\nPairing port: %2$d</string>
+
+    <!-- notification: ADB pairing service -->
+    <string name="notification_channel_adb_pairing">ADB Pairing</string>
+    <string name="notification_adb_pairing_searching">Searching for pairing service…</string>
+    <string name="notification_adb_pairing_found">Pairing service found</string>
+    <string name="notification_adb_pairing_found_detail">Tap notification to enter pairing code</string>
+    <string name="notification_adb_pairing_input_code">Enter pairing code</string>
+    <string name="notification_adb_pairing_working">Pairing…</string>
+    <string name="notification_adb_pairing_succeed_title">Pairing succeeded</string>
+    <string name="notification_adb_pairing_succeed_text">ADB pairing completed, Shizuku is starting</string>
+    <string name="notification_adb_pairing_failed_title">Pairing failed</string>
+    <string name="notification_adb_pairing_wrong_code">Wrong pairing code, please retry</string>
+    <string name="notification_adb_pairing_connect_error">Cannot connect to pairing service</string>
+    <string name="notification_adb_pairing_key_error">ADB key error</string>
+    <string name="notification_adb_pairing_stop">Stop searching</string>
 
     <string name="settings_section_about">About</string>
     <string name="settings_about_version">Version</string>

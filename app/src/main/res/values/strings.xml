@@ -527,14 +527,14 @@
 
     <!-- dialog: Shizuku / Sui -->
     <string name="dialog_shizuku_setup_title">Shizuku 设置</string>
-    <string name="dialog_shizuku_enable_wireless_debug">本应用需要 Shizuku 服务。请在开发者选项中启用无线调试，然后返回此页面。</string>
-    <string name="dialog_shizuku_start_setup">检测到无线调试已启用。点击下方按钮开始设置 Shizuku 服务。</string>
-    <string name="dialog_shizuku_start_setup_btn">开始设置</string>
-    <string name="dialog_shizuku_setting_up">正在设置 Shizuku</string>
-    <string name="dialog_shizuku_pairing_title">需要配对</string>
-    <string name="dialog_shizuku_pairing_message">请在无线调试设置中查看配对码，并在通知中输入。配对完成后 Shizuku 将自动启动。</string>
-    <string name="dialog_shizuku_setup_error">设置失败: %1$s\n\n请点击重试或切换到 Root 模式。</string>
-    <string name="dialog_shizuku_open_wireless_debug">打开无线调试</string>
+    <string name="dialog_shizuku_start_setup">本应用需要 Shizuku 服务。有 Root 将自动启动，无 Root 需开启无线调试后自动连接。</string>
+    <string name="dialog_shizuku_start_setup_btn">启动 Shizuku</string>
+    <string name="dialog_shizuku_setting_up">正在启动 Shizuku</string>
+    <string name="dialog_shizuku_enable_wireless_debug">需要开启无线调试才能启动 Shizuku。请在开发者选项中启用「无线调试」，然后返回。</string>
+    <string name="dialog_shizuku_open_wireless_debug">打开开发者选项</string>
+    <string name="dialog_shizuku_need_pair">首次使用需要配对 ADB。请在无线调试设置中点击「使用配对码配对设备」，然后返回。</string>
+    <string name="dialog_shizuku_open_pairing">打开无线调试设置</string>
+    <string name="dialog_shizuku_setup_error">启动失败: %1$s\n\n请重试或切换到 Root 模式。</string>
     <string name="dialog_shizuku_switch_to_root">切换至 Root 模式</string>
     <string name="dialog_shizuku_skip_check">跳过检查 (不推荐)</string>
     <string name="dialog_sui_detected_title">检测到 Sui</string>
@@ -546,6 +546,21 @@
     <string name="notification_pairing_title">Shizuku 配对请求</string>
     <string name="notification_pairing_message">配对码: %1$s</string>
     <string name="notification_pairing_detail">请在无线调试设置中找到配对码 %1$s，或点击此通知输入配对码。\n配对端口: %2$d</string>
+
+    <!-- notification: ADB pairing service -->
+    <string name="notification_channel_adb_pairing">ADB 配对</string>
+    <string name="notification_adb_pairing_searching">正在搜索配对服务…</string>
+    <string name="notification_adb_pairing_found">发现配对服务</string>
+    <string name="notification_adb_pairing_found_detail">请点击通知输入配对码</string>
+    <string name="notification_adb_pairing_input_code">输入配对码</string>
+    <string name="notification_adb_pairing_working">正在配对…</string>
+    <string name="notification_adb_pairing_succeed_title">配对成功</string>
+    <string name="notification_adb_pairing_succeed_text">ADB 配对完成，Shizuku 正在启动</string>
+    <string name="notification_adb_pairing_failed_title">配对失败</string>
+    <string name="notification_adb_pairing_wrong_code">配对码错误，请重试</string>
+    <string name="notification_adb_pairing_connect_error">无法连接配对服务</string>
+    <string name="notification_adb_pairing_key_error">ADB 密钥错误</string>
+    <string name="notification_adb_pairing_stop">停止搜索</string>
 
     <!-- settings: about section -->
     <string name="settings_section_about">关于</string>

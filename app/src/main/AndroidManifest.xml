@@ -152,6 +152,17 @@
                 android:value="Shizuku wireless debugging pairing notification" />
         </service>
 
+        <!-- ADB pairing service for Shizuku -->
+        <service
+            android:name=".adb.AdbPairingService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="ADB wireless debugging pairing for Shizuku" />
+        </service>
+
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

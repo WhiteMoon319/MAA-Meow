@@ -74,6 +74,7 @@ import com.aliothmoon.maameow.domain.state.ResourceInitState
 import com.aliothmoon.maameow.manager.PermissionManager
 import com.aliothmoon.maameow.manager.RemoteServiceManager
 import com.aliothmoon.maameow.manager.ShizukuInstallHelper
+import com.aliothmoon.maameow.manager.ShizukuSetupManager
 import com.aliothmoon.maameow.presentation.components.AdaptiveTaskPromptDialog
 import com.aliothmoon.maameow.presentation.components.ChangelogDialog
 import com.aliothmoon.maameow.presentation.components.ResourceInitDialog
@@ -369,6 +370,9 @@ fun HomeView(
 
         LifecycleResumeEffect(Unit) {
             shizukuStatus = ShizukuInstallHelper.checkStatus(context)
+            if (shizukuStatus == ShizukuInstallHelper.ShizukuStatus.READY) {
+                ShizukuSetupManager.reset()
+            }
             onPauseOrDispose {}
         }
 
@@ -376,43 +380,16 @@ fun HomeView(
             val skipScope = rememberCoroutineScope()
 
             when (shizukuStatus) {
-                ShizukuInstallHelper.ShizukuStatus.WIRELESS_DEBUG_OFF -> {
-                    AdaptiveTaskPromptDialog(
-                        visible = true,
-                        title = stringResource(R.string.dialog_shizuku_setup_title),
-                        message = stringResource(R.string.dialog_shizuku_enable_wireless_debug),
-                        icon = Icons.Rounded.Build,
-                        confirmText = stringResource(R.string.dialog_shizuku_open_wireless_debug),
-                        onConfirm = { ShizukuInstallHelper.openWirelessDebugSettings(context) },
-                        neutralText = if (permissionState.rootAvailable)
-                            stringResource(R.string.dialog_shizuku_switch_to_root)
-                        else null,
-                        onNeutralClick = {
-                            skipScope.launch { permissionManager.setStartupBackend(RemoteBackend.ROOT) }
-                        },
-                        dismissText = stringResource(R.string.dialog_shizuku_skip_check),
-                        onDismissRequest = {
-                            skipScope.launch { appSettingsManager.setSkipShizukuCheck(true) }
-                        },
-                        dismissOnOutsideClick = false
-                    )
-                }
-
-                ShizukuInstallHelper.ShizukuStatus.SHIZUKU_NOT_RUNNING -> {
+                ShizukuInstallHelper.ShizukuStatus.NOT_RUNNING -> {
                     when (setupState.state) {
-                        ShizukuSetupManager.SetupState.IDLE,
-                        ShizukuSetupManager.SetupState.ERROR -> {
+                        ShizukuSetupManager.SetupState.IDLE -> {
                             AdaptiveTaskPromptDialog(
                                 visible = true,
                                 title = stringResource(R.string.dialog_shizuku_setup_title),
-                                message = if (setupState.error != null) {
-                                    stringResource(R.string.dialog_shizuku_setup_error, setupState.error!!)
-                                } else {
-                                    stringResource(R.string.dialog_shizuku_start_setup)
-                                },
+                                message = stringResource(R.string.dialog_shizuku_start_setup),
                                 icon = Icons.Rounded.Build,
                                 confirmText = stringResource(R.string.dialog_shizuku_start_setup_btn),
-                                onConfirm = { ShizukuInstallHelper.startShizukuSetup(context) },
+                                onConfirm = { ShizukuInstallHelper.startSetup(context) },
                                 neutralText = if (permissionState.rootAvailable)
                                     stringResource(R.string.dialog_shizuku_switch_to_root)
                                 else null,
@@ -427,13 +404,11 @@ fun HomeView(
                             )
                         }
 
-                        ShizukuSetupManager.SetupState.CHECKING_WIRELESS_DEBUG,
-                        ShizukuSetupManager.SetupState.CONNECTING_ADB,
-                        ShizukuSetupManager.SetupState.STARTING_SHIZUKU -> {
+                        ShizukuSetupManager.SetupState.STARTING -> {
                             AdaptiveTaskPromptDialog(
                                 visible = true,
                                 title = stringResource(R.string.dialog_shizuku_setting_up),
-                                message = setupState.message,
+                                message = stringResource(R.string.dialog_shizuku_starting_message),
                                 icon = Icons.Rounded.Build,
                                 confirmText = stringResource(R.string.common_waiting),
                                 onConfirm = {},
@@ -443,24 +418,57 @@ fun HomeView(
                             )
                         }
 
-                        ShizukuSetupManager.SetupState.WAITING_FOR_PAIRING -> {
+                        ShizukuSetupManager.SetupState.WAITING_FOR_SHIZUKU -> {
                             AdaptiveTaskPromptDialog(
                                 visible = true,
-                                title = stringResource(R.string.dialog_shizuku_pairing_title),
-                                message = stringResource(R.string.dialog_shizuku_pairing_message),
+                                title = stringResource(R.string.dialog_shizuku_setup_title),
+                                message = stringResource(R.string.dialog_shizuku_adb_command_hint),
                                 icon = Icons.Rounded.Build,
-                                confirmText = stringResource(R.string.common_waiting),
-                                onConfirm = {},
-                                dismissText = null,
-                                onDismissRequest = {},
+                                confirmText = stringResource(R.string.dialog_shizuku_start_setup_btn),
+                                onConfirm = { ShizukuInstallHelper.startSetup(context) },
+                                neutralText = if (permissionState.rootAvailable)
+                                    stringResource(R.string.dialog_shizuku_switch_to_root)
+                                else null,
+                                onNeutralClick = {
+                                    skipScope.launch { permissionManager.setStartupBackend(RemoteBackend.ROOT) }
+                                },
+                                dismissText = stringResource(R.string.dialog_shizuku_skip_check),
+                                onDismissRequest = {
+                                    skipScope.launch {
+                                        ShizukuSetupManager.reset()
+                                        appSettingsManager.setSkipShizukuCheck(true)
+                                    }
+                                },
                                 dismissOnOutsideClick = false
                             )
                         }
 
-                        ShizukuSetupManager.SetupState.SHIZUKU_RUNNING -> {
-                            // Shizuku is now running, refresh status
-                            shizukuStatus = ShizukuInstallHelper.checkStatus(context)
+                        ShizukuSetupManager.SetupState.ERROR -> {
+                            AdaptiveTaskPromptDialog(
+                                visible = true,
+                                title = stringResource(R.string.dialog_shizuku_setup_title),
+                                message = stringResource(R.string.dialog_shizuku_setup_error, setupState.error ?: ""),
+                                icon = Icons.Rounded.Warning,
+                                confirmText = stringResource(R.string.dialog_shizuku_start_setup_btn),
+                                onConfirm = { ShizukuInstallHelper.startSetup(context) },
+                                neutralText = if (permissionState.rootAvailable)
+                                    stringResource(R.string.dialog_shizuku_switch_to_root)
+                                else null,
+                                onNeutralClick = {
+                                    skipScope.launch { permissionManager.setStartupBackend(RemoteBackend.ROOT) }
+                                },
+                                dismissText = stringResource(R.string.dialog_shizuku_skip_check),
+                                onDismissRequest = {
+                                    skipScope.launch {
+                                        ShizukuSetupManager.reset()
+                                        appSettingsManager.setSkipShizukuCheck(true)
+                                    }
+                                },
+                                dismissOnOutsideClick = false
+                            )
                         }
+
+                        ShizukuSetupManager.SetupState.RUNNING -> {}
                     }
                 }
 

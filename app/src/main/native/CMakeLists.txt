@@ -40,3 +40,16 @@ set_target_properties(launcher PROPERTIES
 
 target_link_libraries(bridge log android jnigraphics mediandk EGL GLESv2)
 target_link_libraries(launcher log)
+
+# ADB pairing for Shizuku embedded startup
+find_package(boringssl REQUIRED CONFIG)
+find_package(cxx REQUIRED CONFIG)
+
+set(SHIZUKU_JNI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../jni_shizuku")
+
+add_library(adb SHARED
+        ${SHIZUKU_JNI_DIR}/adb_pairing.cpp
+        ${SHIZUKU_JNI_DIR}/misc.cpp)
+
+target_include_directories(adb PRIVATE ${SHIZUKU_JNI_DIR})
+target_link_libraries(adb log boringssl::crypto_static cxx::cxx)
