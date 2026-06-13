@@ -66,6 +66,7 @@
     <string name="settings_tasks_override_desc">Do not modify unless you know what you are doing — incorrect values will break MAA</string>
     <string name="settings_tasks_override_edit_title">Edit Config JSON</string>
     <string name="common_save">Save</string>
+    <string name="common_waiting">Please wait</string>
     <string name="editor_json_valid">JSON valid</string>
     <string name="editor_json_invalid">JSON invalid</string>
     <string name="editor_save_success">Saved. Changes take effect on next task start.</string>
@@ -330,6 +331,7 @@
     <string name="dialog_shizuku_start_setup">This app requires Shizuku service. With Root it starts automatically; without Root, enable wireless debugging for auto-connection.</string>
     <string name="dialog_shizuku_start_setup_btn">Start Shizuku</string>
     <string name="dialog_shizuku_setting_up">Starting Shizuku</string>
+    <string name="dialog_shizuku_starting_message">Connecting to ADB and starting Shizuku service, please wait…</string>
     <string name="dialog_shizuku_enable_wireless_debug">Wireless debugging is required to start Shizuku. Please enable \"Wireless debugging\" in Developer Options, then return.</string>
     <string name="dialog_shizuku_open_wireless_debug">Open Developer Options</string>
     <string name="dialog_shizuku_need_pair">First-time use requires ADB pairing. Please tap \"Pair device with pairing code\" in wireless debugging settings, then return.</string>

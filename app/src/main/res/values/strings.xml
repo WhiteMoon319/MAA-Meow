@@ -202,6 +202,7 @@
     <string name="common_select_all">全选</string>
     <string name="common_delete">删除</string>
     <string name="common_save">保存</string>
+    <string name="common_waiting">请稍候</string>
 
     <!-- dialog -->
     <string name="dialog_import_success_title">导入成功</string>
@@ -530,6 +531,7 @@
     <string name="dialog_shizuku_start_setup">本应用需要 Shizuku 服务。有 Root 将自动启动，无 Root 需开启无线调试后自动连接。</string>
     <string name="dialog_shizuku_start_setup_btn">启动 Shizuku</string>
     <string name="dialog_shizuku_setting_up">正在启动 Shizuku</string>
+    <string name="dialog_shizuku_starting_message">正在连接 ADB 并启动 Shizuku 服务，请稍候…</string>
     <string name="dialog_shizuku_enable_wireless_debug">需要开启无线调试才能启动 Shizuku。请在开发者选项中启用「无线调试」，然后返回。</string>
     <string name="dialog_shizuku_open_wireless_debug">打开开发者选项</string>
     <string name="dialog_shizuku_need_pair">首次使用需要配对 ADB。请在无线调试设置中点击「使用配对码配对设备」，然后返回。</string>

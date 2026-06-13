@@ -404,11 +404,12 @@ fun HomeView(
                             )
                         }
 
-                        ShizukuSetupManager.SetupState.STARTING -> {
+                        ShizukuSetupManager.SetupState.STARTING,
+                        ShizukuSetupManager.SetupState.SEARCHING_ADB -> {
                             AdaptiveTaskPromptDialog(
                                 visible = true,
                                 title = stringResource(R.string.dialog_shizuku_setting_up),
-                                message = stringResource(R.string.dialog_shizuku_starting_message),
+                                message = setupState.message.ifEmpty { stringResource(R.string.common_waiting) },
                                 icon = Icons.Rounded.Build,
                                 confirmText = stringResource(R.string.common_waiting),
                                 onConfirm = {},
@@ -418,19 +419,50 @@ fun HomeView(
                             )
                         }
 
-                        ShizukuSetupManager.SetupState.WAITING_FOR_SHIZUKU -> {
+                        ShizukuSetupManager.SetupState.WAITING_FOR_WADB -> {
                             AdaptiveTaskPromptDialog(
                                 visible = true,
                                 title = stringResource(R.string.dialog_shizuku_setup_title),
-                                message = stringResource(R.string.dialog_shizuku_adb_command_hint),
+                                message = stringResource(R.string.dialog_shizuku_enable_wireless_debug),
                                 icon = Icons.Rounded.Build,
-                                confirmText = stringResource(R.string.dialog_shizuku_start_setup_btn),
-                                onConfirm = { ShizukuInstallHelper.startSetup(context) },
+                                confirmText = stringResource(R.string.dialog_shizuku_open_wireless_debug),
+                                onConfirm = {
+                                    try {
+                                        context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).apply {
+                                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        })
+                                    } catch (_: Exception) {}
+                                },
                                 neutralText = if (permissionState.rootAvailable)
                                     stringResource(R.string.dialog_shizuku_switch_to_root)
                                 else null,
                                 onNeutralClick = {
                                     skipScope.launch { permissionManager.setStartupBackend(RemoteBackend.ROOT) }
+                                },
+                                dismissText = stringResource(R.string.dialog_shizuku_skip_check),
+                                onDismissRequest = {
+                                    skipScope.launch {
+                                        ShizukuSetupManager.reset()
+                                        appSettingsManager.setSkipShizukuCheck(true)
+                                    }
+                                },
+                                dismissOnOutsideClick = false
+                            )
+                        }
+
+                        ShizukuSetupManager.SetupState.WAITING_FOR_PAIR -> {
+                            AdaptiveTaskPromptDialog(
+                                visible = true,
+                                title = stringResource(R.string.dialog_shizuku_setup_title),
+                                message = stringResource(R.string.dialog_shizuku_need_pair),
+                                icon = Icons.Rounded.Build,
+                                confirmText = stringResource(R.string.dialog_shizuku_open_pairing),
+                                onConfirm = {
+                                    try {
+                                        context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).apply {
+                                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        })
+                                    } catch (_: Exception) {}
                                 },
                                 dismissText = stringResource(R.string.dialog_shizuku_skip_check),
                                 onDismissRequest = {
