@@ -159,6 +159,15 @@ dependencies {
     implementation(project(":annotation-api"))
     ksp(project(":ksp-processor"))
 
+    // Shizuku embedded modules
+    implementation(project(":shizuku-api"))
+    implementation(project(":shizuku-provider"))
+    implementation(project(":shizuku-server"))
+    implementation(project(":shizuku-starter"))
+    implementation(project(":shizuku-common"))
+    implementation(project(":shizuku-shell"))
+    compileOnly(project(":shizuku-server-shared"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -184,8 +193,6 @@ dependencies {
     // Third-party
     implementation(libs.jna) { artifact { type = "aar" } }
     implementation(libs.fastjson2)
-    implementation(libs.shizuku.api)
-    implementation(libs.shizuku.provider)
     implementation(libs.libsu)
     implementation(libs.device.compat)
     implementation(libs.xx.permissions)

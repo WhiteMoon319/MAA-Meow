@@ -526,16 +526,26 @@
     <string name="dialog_changelog_title">更新公告</string>
 
     <!-- dialog: Shizuku / Sui -->
-    <string name="dialog_shizuku_not_installed_title">未检测到 Shizuku</string>
-    <string name="dialog_shizuku_not_installed_message">本应用依赖 Shizuku 服务运行，检测到设备未安装 Shizuku，请先安装。</string>
-    <string name="dialog_shizuku_install_confirm">快捷安装 Shizuku</string>
+    <string name="dialog_shizuku_setup_title">Shizuku 设置</string>
+    <string name="dialog_shizuku_enable_wireless_debug">本应用需要 Shizuku 服务。请在开发者选项中启用无线调试，然后返回此页面。</string>
+    <string name="dialog_shizuku_start_setup">检测到无线调试已启用。点击下方按钮开始设置 Shizuku 服务。</string>
+    <string name="dialog_shizuku_start_setup_btn">开始设置</string>
+    <string name="dialog_shizuku_setting_up">正在设置 Shizuku</string>
+    <string name="dialog_shizuku_pairing_title">需要配对</string>
+    <string name="dialog_shizuku_pairing_message">请在无线调试设置中查看配对码，并在通知中输入。配对完成后 Shizuku 将自动启动。</string>
+    <string name="dialog_shizuku_setup_error">设置失败: %1$s\n\n请点击重试或切换到 Root 模式。</string>
+    <string name="dialog_shizuku_open_wireless_debug">打开无线调试</string>
     <string name="dialog_shizuku_switch_to_root">切换至 Root 模式</string>
     <string name="dialog_shizuku_skip_check">跳过检查 (不推荐)</string>
-    <string name="dialog_shizuku_not_running_title">Shizuku 未启动</string>
-    <string name="dialog_shizuku_not_running_message">检测到 Shizuku 已安装但服务未启动，请打开 Shizuku 应用并启动服务。</string>
-    <string name="dialog_shizuku_open_app">打开 Shizuku</string>
     <string name="dialog_sui_detected_title">检测到 Sui</string>
     <string name="dialog_sui_detected_message">当前使用 Sui 提供 Shizuku 服务，Sui 以 Root 权限运行，MaaMeow 可能无法正常工作，请以实际测试为主</string>
+
+    <!-- notification: Shizuku pairing -->
+    <string name="notification_channel_pairing">Shizuku 配对</string>
+    <string name="notification_channel_pairing_desc">用于 Shizuku 无线调试配对通知</string>
+    <string name="notification_pairing_title">Shizuku 配对请求</string>
+    <string name="notification_pairing_message">配对码: %1$s</string>
+    <string name="notification_pairing_detail">请在无线调试设置中找到配对码 %1$s，或点击此通知输入配对码。\n配对端口: %2$d</string>
 
     <!-- settings: about section -->
     <string name="settings_section_about">关于</string>

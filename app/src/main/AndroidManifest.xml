@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 
     <!-- Shizuku (requires Shizuku Manager) -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
@@ -137,6 +139,17 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Background MAA task execution progress notification" />
+        </service>
+
+        <!-- Shizuku pairing notification service -->
+        <service
+            android:name=".service.PairingNotificationService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Shizuku wireless debugging pairing notification" />
         </service>
 
         <provider

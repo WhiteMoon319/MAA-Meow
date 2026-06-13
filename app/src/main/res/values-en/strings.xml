@@ -326,16 +326,26 @@
     <string name="dialog_changelog_title">What\'s New</string>
 
     <!-- dialog: Shizuku / Sui -->
-    <string name="dialog_shizuku_not_installed_title">Shizuku Not Installed</string>
-    <string name="dialog_shizuku_not_installed_message">This app depends on the Shizuku service. Shizuku was not detected on your device; please install it first.</string>
-    <string name="dialog_shizuku_install_confirm">Install Shizuku</string>
+    <string name="dialog_shizuku_setup_title">Shizuku Setup</string>
+    <string name="dialog_shizuku_enable_wireless_debug">This app requires Shizuku service. Please enable wireless debugging in Developer Options, then return to this page.</string>
+    <string name="dialog_shizuku_start_setup">Wireless debugging is enabled. Tap the button below to start setting up Shizuku service.</string>
+    <string name="dialog_shizuku_start_setup_btn">Start Setup</string>
+    <string name="dialog_shizuku_setting_up">Setting Up Shizuku</string>
+    <string name="dialog_shizuku_pairing_title">Pairing Required</string>
+    <string name="dialog_shizuku_pairing_message">Please check the pairing code in wireless debugging settings and enter it in the notification. Shizuku will start automatically after pairing.</string>
+    <string name="dialog_shizuku_setup_error">Setup failed: %1$s\n\nPlease retry or switch to Root mode.</string>
+    <string name="dialog_shizuku_open_wireless_debug">Open Wireless Debug</string>
     <string name="dialog_shizuku_switch_to_root">Switch to Root</string>
     <string name="dialog_shizuku_skip_check">Skip Check (not recommended)</string>
-    <string name="dialog_shizuku_not_running_title">Shizuku Not Running</string>
-    <string name="dialog_shizuku_not_running_message">Shizuku is installed but the service is not running. Please open Shizuku and start the service.</string>
-    <string name="dialog_shizuku_open_app">Open Shizuku</string>
     <string name="dialog_sui_detected_title">Sui Detected</string>
     <string name="dialog_sui_detected_message">Sui is providing the Shizuku service with root privileges. MaaMeow may not work correctly; please verify by actual testing.</string>
+
+    <!-- notification: Shizuku pairing -->
+    <string name="notification_channel_pairing">Shizuku Pairing</string>
+    <string name="notification_channel_pairing_desc">Used for Shizuku wireless debugging pairing notifications</string>
+    <string name="notification_pairing_title">Shizuku Pairing Request</string>
+    <string name="notification_pairing_message">Pairing code: %1$s</string>
+    <string name="notification_pairing_detail">Find pairing code %1$s in wireless debugging settings, or tap this notification to enter the code.\nPairing port: %2$d</string>
 
     <string name="settings_section_about">About</string>
     <string name="settings_about_version">Version</string>
