@@ -3,7 +3,6 @@ package com.aliothmoon.maameow.schedule.service
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.domain.models.OverlayControlMode
 import com.aliothmoon.maameow.data.preferences.TaskChainState
-import com.aliothmoon.maameow.domain.service.AchievementReporter
 import com.aliothmoon.maameow.domain.service.MaaCompositionService
 import com.aliothmoon.maameow.domain.state.MaaExecutionState
 import com.aliothmoon.maameow.domain.usecase.PrepareTaskStartUseCase
@@ -29,7 +28,6 @@ class ForegroundScheduleStarter(
     private val triggerLogger: ScheduleTriggerLogger,
     private val scheduleRepository: ScheduleStrategyRepository,
     private val appSettingsManager: AppSettingsManager,
-    private val achievementReporter: AchievementReporter,
 ) {
     private val executing = AtomicBoolean(false)
 
@@ -150,7 +148,6 @@ class ForegroundScheduleStarter(
         message: String? = null
     ) {
         triggerLogger.end(result, message)
-        achievementReporter.reportScheduleResult(result)
         scheduleRepository.recordExecutionResult(
             strategyId = request.strategyId,
             result = result,

@@ -230,15 +230,6 @@ object AchievementDefinitions {
             }
         }
         achievement(
-            id = AchievementIds.TIME_MANAGEMENT_MASTER,
-            category = AchievementCategory.BASIC_USAGE,
-            hidden = true, rare = true,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_SAVED, AchievementTriggerMode.UNLOCK) {
-                condition("timerCount", AchievementConditionOp.GTE, "7")
-            }
-        }
-        achievement(
             id = AchievementIds.DOUBLE_SYNC,
             category = AchievementCategory.BASIC_USAGE,
         ) {
@@ -279,22 +270,6 @@ object AchievementDefinitions {
         // endregion
 
         // region FEATURE_EXPLORATION
-        achievement(
-            id = AchievementIds.SCHEDULE_MASTER_1,
-            category = AchievementCategory.FEATURE_EXPLORATION,
-            group = AchievementIds.SCHEDULE_MASTER_GROUP,
-            target = 1, groupIndex = 1,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_SAVED, AchievementTriggerMode.INCREMENT)
-        }
-        achievement(
-            id = AchievementIds.SCHEDULE_MASTER_2,
-            category = AchievementCategory.FEATURE_EXPLORATION,
-            group = AchievementIds.SCHEDULE_MASTER_GROUP,
-            target = 100, groupIndex = 2,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_SAVED, AchievementTriggerMode.INCREMENT)
-        }
         achievement(
             id = AchievementIds.MIRROR_CHYAN_FIRST_USE,
             category = AchievementCategory.FEATURE_EXPLORATION,
@@ -522,12 +497,6 @@ object AchievementDefinitions {
             hidden = true,
         )
         achievement(
-            id = AchievementIds.TACTICAL_RETREAT,
-            category = AchievementCategory.HUMOR,
-        ) {
-            trigger(AchievementEvents.TASK_STOPPED, AchievementTriggerMode.UNLOCK)
-        }
-        achievement(
             id = AchievementIds.MARTIAN,
             category = AchievementCategory.HUMOR,
             hidden = true,
@@ -597,15 +566,6 @@ object AchievementDefinitions {
             trigger(AchievementEvents.LOG_EXPORTED, AchievementTriggerMode.UNLOCK)
         }
         achievement(
-            id = AchievementIds.ALL_PERMISSIONS_GRANTED,
-            category = AchievementCategory.BUG_RELATED,
-            hidden = true,
-        ) {
-            trigger(AchievementEvents.PERMISSION_STATE, AchievementTriggerMode.UNLOCK) {
-                where("allGranted" to "true")
-            }
-        }
-        achievement(
             id = AchievementIds.ALL_NOTIFICATION_PROVIDERS_ENABLED,
             category = AchievementCategory.BUG_RELATED,
             hidden = true,
@@ -621,30 +581,12 @@ object AchievementDefinitions {
             trigger(AchievementEvents.FEEDBACK_GROUP_OPENED, AchievementTriggerMode.UNLOCK)
         }
         achievement(
-            id = AchievementIds.NOTIFICATION_DENIED,
-            category = AchievementCategory.BUG_RELATED,
-            hidden = true,
-        ) {
-            trigger(AchievementEvents.NOTIFICATION_PERMISSION_RESULT, AchievementTriggerMode.UNLOCK) {
-                where("granted" to "false")
-            }
-        }
-        achievement(
             id = AchievementIds.DEBUG_MODE_ENABLED,
             category = AchievementCategory.BUG_RELATED,
             hidden = true,
         ) {
             trigger(AchievementEvents.DEBUG_MODE_CHANGED, AchievementTriggerMode.UNLOCK) {
                 where("enabled" to "true")
-            }
-        }
-        achievement(
-            id = AchievementIds.SHIZUKU_LOST,
-            category = AchievementCategory.BUG_RELATED,
-            hidden = true,
-        ) {
-            trigger(AchievementEvents.REMOTE_CONNECT_FAILED, AchievementTriggerMode.UNLOCK) {
-                where("backend" to "SHIZUKU")
             }
         }
         // endregion
@@ -656,22 +598,6 @@ object AchievementDefinitions {
             target = 4,
         ) {
             trigger(AchievementEvents.MISSION_STARTED, AchievementTriggerMode.SAME_DAY_COUNT)
-        }
-        achievement(
-            id = AchievementIds.FOREGROUND_TASK_VIEWER,
-            category = AchievementCategory.BEHAVIOR,
-        ) {
-            trigger(AchievementEvents.MISSION_STARTED, AchievementTriggerMode.UNLOCK) {
-                where("runMode" to "FOREGROUND")
-            }
-        }
-        achievement(
-            id = AchievementIds.BACKGROUND_TASK_VIEWER,
-            category = AchievementCategory.BEHAVIOR,
-        ) {
-            trigger(AchievementEvents.MISSION_STARTED, AchievementTriggerMode.UNLOCK) {
-                where("runMode" to "BACKGROUND")
-            }
         }
         achievement(
             id = AchievementIds.TASK_START_WITHOUT_WAKE_UP,
@@ -717,73 +643,6 @@ object AchievementDefinitions {
             trigger(AchievementEvents.TASK_CHAIN_ERROR, AchievementTriggerMode.INCREMENT)
             trigger(AchievementEvents.SUB_TASK_ERROR, AchievementTriggerMode.INCREMENT)
             trigger(AchievementEvents.ALL_TASKS_COMPLETED, AchievementTriggerMode.RESET)
-        }
-        achievement(
-            id = AchievementIds.SCHEDULE_BUSY_RESULT,
-            category = AchievementCategory.BEHAVIOR,
-            hidden = true,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_RESULT, AchievementTriggerMode.UNLOCK) {
-                where("result" to "SKIPPED_BUSY")
-            }
-        }
-        achievement(
-            id = AchievementIds.SCHEDULE_RESULT_COLLECTOR,
-            category = AchievementCategory.BEHAVIOR,
-            hidden = true,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_RESULT, AchievementTriggerMode.UNLOCK)
-        }
-        achievement(
-            id = AchievementIds.SCHEDULE_LOCKED_MISS,
-            category = AchievementCategory.BEHAVIOR,
-            hidden = true,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_RESULT, AchievementTriggerMode.UNLOCK) {
-                where("result" to "SKIPPED_LOCKED")
-            }
-        }
-        achievement(
-            id = AchievementIds.SCHEDULE_LOCKED_SKIP_1,
-            category = AchievementCategory.BEHAVIOR,
-            group = AchievementIds.SCHEDULE_LOCKED_SKIP_GROUP,
-            target = 10, groupIndex = 1,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_RESULT, AchievementTriggerMode.INCREMENT) {
-                where("result" to "SKIPPED_LOCKED")
-            }
-        }
-        achievement(
-            id = AchievementIds.SCHEDULE_LOCKED_SKIP_2,
-            category = AchievementCategory.BEHAVIOR,
-            group = AchievementIds.SCHEDULE_LOCKED_SKIP_GROUP,
-            target = 50, groupIndex = 2,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_RESULT, AchievementTriggerMode.INCREMENT) {
-                where("result" to "SKIPPED_LOCKED")
-            }
-        }
-        achievement(
-            id = AchievementIds.SCHEDULE_LOCKED_SKIP_3,
-            category = AchievementCategory.BEHAVIOR,
-            group = AchievementIds.SCHEDULE_LOCKED_SKIP_GROUP,
-            target = 100, groupIndex = 3,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_RESULT, AchievementTriggerMode.INCREMENT) {
-                where("result" to "SKIPPED_LOCKED")
-            }
-        }
-        achievement(
-            id = AchievementIds.SCHEDULE_START_AVOIDER,
-            category = AchievementCategory.BEHAVIOR,
-            target = 3, hidden = true,
-        ) {
-            trigger(AchievementEvents.SCHEDULE_RESULT, AchievementTriggerMode.DAILY_STREAK) {
-                where("result" to "SKIPPED_LOCKED")
-            }
-            trigger(AchievementEvents.SCHEDULE_RESULT, AchievementTriggerMode.DAILY_STREAK) {
-                where("result" to "CANCELLED")
-            }
         }
         achievement(
             id = AchievementIds.LONG_TASK_TIMEOUT,
@@ -909,24 +768,6 @@ object AchievementDefinitions {
             hidden = true,
         ) {
             trigger(AchievementEvents.MINI_GAME_STARTED, AchievementTriggerMode.UNLOCK)
-        }
-        achievement(
-            id = AchievementIds.REMOTE_ROOT_CONNECTED,
-            category = AchievementCategory.EASTER_EGG,
-            hidden = true,
-        ) {
-            trigger(AchievementEvents.REMOTE_CONNECTED, AchievementTriggerMode.UNLOCK) {
-                where("backend" to "ROOT")
-            }
-        }
-        achievement(
-            id = AchievementIds.REMOTE_SHIZUKU_CONNECTED,
-            category = AchievementCategory.EASTER_EGG,
-            hidden = true,
-        ) {
-            trigger(AchievementEvents.REMOTE_CONNECTED, AchievementTriggerMode.UNLOCK) {
-                where("backend" to "SHIZUKU")
-            }
         }
         // endregion
     }

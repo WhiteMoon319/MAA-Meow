@@ -96,7 +96,6 @@ object AchievementIds {
     const val ROGUELIKE_GROUP = "Roguelike"
     const val CLUE_USE_GROUP = "ClueUse"
     const val CLUE_SEND_GROUP = "ClueSend"
-    const val SCHEDULE_MASTER_GROUP = "ScheduleMaster"
     const val MIRROR_CHYAN_GROUP = "MirrorChyan"
     const val PIONEER_GROUP = "Pioneer"
     const val UPDATE_SUCCESS_GROUP = "UpdateSuccess"
@@ -106,7 +105,6 @@ object AchievementIds {
     const val RECRUIT_GROUP = "Recruit"
     const val USE_DAILY_GROUP = "UseDaily"
     const val UPDATE_GROUP = "Update"
-    const val SCHEDULE_LOCKED_SKIP_GROUP = "ScheduleLockedSkip"
 
     // —— BASIC_USAGE ——
     const val SANITY_SPENDER_1 = "SanitySpender1"
@@ -132,7 +130,6 @@ object AchievementIds {
     const val CLUE_OBSESSION = "ClueObsession"
     const val CLUE_SHARER = "ClueSharer"
     const val CLUE_PHILANTHROPIST = "CluePhilanthropist"
-    const val TIME_MANAGEMENT_MASTER = "TimeManagementMaster"
     const val DOUBLE_SYNC = "DoubleSync"
     const val RESUME_RECORD = "ResumeRecord"
     const val QUEUE_EXPANSION = "QueueExpansion"
@@ -141,8 +138,6 @@ object AchievementIds {
     const val MAA_MEOW_FIRST_TASK_COMPLETE = "MaaMeowFirstTaskComplete"
 
     // —— FEATURE_EXPLORATION ——
-    const val SCHEDULE_MASTER_1 = "ScheduleMaster1"
-    const val SCHEDULE_MASTER_2 = "ScheduleMaster2"
     const val MIRROR_CHYAN_FIRST_USE = "MirrorChyanFirstUse"
     const val MIRROR_CHYAN_CDK_ERROR = "MirrorChyanCdkError"
     const val PIONEER_1 = "Pioneer1"
@@ -173,7 +168,6 @@ object AchievementIds {
 
     // —— HUMOR ——
     const val QUICK_CLOSER = "QuickCloser"
-    const val TACTICAL_RETREAT = "TacticalRetreat"
     const val MARTIAN = "Martian"
     const val RECRUIT_NO_SIX_STAR = "RecruitNoSixStar"
     const val RECRUIT_NO_SIX_STAR_STREAK = "RecruitNoSixStarStreak"
@@ -185,29 +179,17 @@ object AchievementIds {
     const val CDN_TORTURE = "CdnTorture"
     const val BACKSTAGE_EXPLORER = "BackstageExplorer"
     const val LOG_DIAGNOSTICIAN = "LogDiagnostician"
-    const val ALL_PERMISSIONS_GRANTED = "AllPermissionsGranted"
     const val ALL_NOTIFICATION_PROVIDERS_ENABLED = "AllNotificationProvidersEnabled"
     const val FEEDBACK_GROUP_VISITOR = "FeedbackGroupVisitor"
-    const val NOTIFICATION_DENIED = "NotificationDenied"
     const val DEBUG_MODE_ENABLED = "DebugModeEnabled"
-    const val SHIZUKU_LOST = "ShizukuLost"
 
     // —— BEHAVIOR ——
     const val MISSION_START_COUNT = "MissionStartCount"
-    const val FOREGROUND_TASK_VIEWER = "ForegroundTaskViewer"
-    const val BACKGROUND_TASK_VIEWER = "BackgroundTaskViewer"
     const val TASK_START_WITHOUT_WAKE_UP = "TaskStartWithoutWakeUp"
     const val WAKE_UP_WHILE_GAME_RUNNING = "WakeUpWhileGameRunning"
     const val WAKE_UP_AFTER_STOP = "WakeUpAfterStop"
     const val GAME_NOT_RUNNING_WITHOUT_WAKE_UP = "GameNotRunningWithoutWakeUp"
     const val TASK_FAILURE_STREAK = "TaskFailureStreak"
-    const val SCHEDULE_BUSY_RESULT = "ScheduleBusyResult"
-    const val SCHEDULE_RESULT_COLLECTOR = "ScheduleResultCollector"
-    const val SCHEDULE_LOCKED_MISS = "ScheduleLockedMiss"
-    const val SCHEDULE_LOCKED_SKIP_1 = "ScheduleLockedSkip1"
-    const val SCHEDULE_LOCKED_SKIP_2 = "ScheduleLockedSkip2"
-    const val SCHEDULE_LOCKED_SKIP_3 = "ScheduleLockedSkip3"
-    const val SCHEDULE_START_AVOIDER = "ScheduleStartAvoider"
     const val LONG_TASK_TIMEOUT = "LongTaskTimeout"
     const val PROXY_ONLINE_3_HOURS = "ProxyOnline3Hours"
     const val TASK_START_CANCEL = "TaskStartCancel"
@@ -226,8 +208,6 @@ object AchievementIds {
     const val WAREHOUSE_KEEPER = "WarehouseKeeper"
     const val PALLAS_STARTER = "PallasStarter"
     const val SLACKING_OFF = "SlackingOff"
-    const val REMOTE_ROOT_CONNECTED = "RemoteRootConnected"
-    const val REMOTE_SHIZUKU_CONNECTED = "RemoteShizukuConnected"
 }
 
 object AchievementEvents {
@@ -249,20 +229,13 @@ object AchievementEvents {
     const val MEDICINE_USED = "medicine_used"
     const val COPILOT_SUCCESS = "copilot_success"
     const val COPILOT_LIKED = "copilot_liked"
-    const val SCHEDULE_SAVED = "schedule_saved"
     const val UPDATE_COMPLETED = "update_completed"
     const val UPDATE_FAILED = "update_failed"
     const val TOOLBOX_RESULT = "toolbox_result"
     const val MINI_GAME_STARTED = "mini_game_started"
     const val LOG_EXPORTED = "log_exported"
-    const val SCHEDULE_RESULT = "schedule_result"
-    const val REMOTE_CONNECTED = "remote_connected"
-    const val PERMISSION_STATE = "permission_state"
     const val NOTIFICATION_PROVIDER_STATE = "notification_provider_state"
     const val FEEDBACK_GROUP_OPENED = "feedback_group_opened"
     const val TASK_START_BLOCKED = "task_start_blocked"
-    const val TASK_STOPPED_BEFORE_NEXT_START = "task_stopped_before_next_start"
-    const val REMOTE_CONNECT_FAILED = "remote_connect_failed"
-    const val NOTIFICATION_PERMISSION_RESULT = "notification_permission_result"
     const val DEBUG_MODE_CHANGED = "debug_mode_changed"
 }

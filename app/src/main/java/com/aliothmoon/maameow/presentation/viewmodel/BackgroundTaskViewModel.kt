@@ -70,7 +70,6 @@ class BackgroundTaskViewModel(
         appSettingsManager = appSettingsManager,
         chainState = chainState,
         triggerLogger = triggerLogger,
-        achievementReporter = achievementReporter,
     )
 
     private val _state = MutableStateFlow(BackgroundTaskState())
