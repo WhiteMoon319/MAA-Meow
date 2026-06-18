@@ -11,6 +11,7 @@ import com.aliothmoon.maameow.utils.JsonUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -21,7 +22,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.channels.BufferOverflow
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -59,10 +59,6 @@ class AchievementRepository(private val context: Context) {
                 } ?: emptyMap()
             }
         }
-    }
-
-    suspend fun recordAppLaunch() {
-        reportEvent(AchievementEvents.APP_LAUNCH)
     }
 
     suspend fun unlock(id: String) {
@@ -145,6 +141,20 @@ class AchievementRepository(private val context: Context) {
             newlyUnlocked
         }
         unlockedIds.forEach { _unlockEvents.emit(it) }
+    }
+
+    class ReportBuilder {
+        var event: String = ""
+        var amount: Int = 1
+        internal val payload = mutableMapOf<String, String>()
+
+        infix fun String.to(value: Any?) {
+            if (value != null) payload[this] = value.toString()
+        }
+
+        fun payload(map: Map<String, String>) {
+            payload.putAll(map)
+        }
     }
 
     private suspend fun mutateRecord(
@@ -302,5 +312,10 @@ class AchievementRepository(private val context: Context) {
         context.store.edit {
             it[RECORDS_KEY] = json.encodeToString(records.values.toList())
         }
+    }
+
+    suspend fun report(block: ReportBuilder.() -> Unit) {
+        val builder = ReportBuilder().apply(block)
+        reportEvent(builder.event, builder.payload.toMap(), builder.amount)
     }
 }

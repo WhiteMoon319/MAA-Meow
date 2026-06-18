@@ -1,7 +1,15 @@
 ﻿package com.aliothmoon.maameow.maa.callback
 
 import android.content.Context
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
+import com.alibaba.fastjson2.JSONArray
 import com.alibaba.fastjson2.JSONObject
+import com.aliothmoon.maameow.data.achievement.AchievementEvents
+import com.aliothmoon.maameow.data.achievement.AchievementRepository
 import com.aliothmoon.maameow.data.model.FightConfig
 import com.aliothmoon.maameow.data.model.LogItem
 import com.aliothmoon.maameow.data.model.LogLevel
@@ -12,14 +20,6 @@ import com.aliothmoon.maameow.data.resource.ResourceDataManager
 import com.aliothmoon.maameow.domain.service.MaaNotificationCenter
 import com.aliothmoon.maameow.domain.service.MaaSessionLogger
 import com.aliothmoon.maameow.maa.AsstMsg
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
-import com.alibaba.fastjson2.JSONArray
-import com.aliothmoon.maameow.data.achievement.AchievementEvents
-import com.aliothmoon.maameow.data.achievement.AchievementRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -144,19 +144,19 @@ class SubTaskHandler(
                     append(sb.trimEnd().toString(), LogLevel.ERROR)
                 }
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.SUB_TASK_ERROR,
-                        mapOf("subtask" to subtask),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.SUB_TASK_ERROR
+                        "subtask" to subtask
+                    }
                 }
             }
 
             "CopilotTask" -> {
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.SUB_TASK_ERROR,
-                        mapOf("subtask" to subtask),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.SUB_TASK_ERROR
+                        "subtask" to subtask
+                    }
                 }
                 val innerDetails = details.getJSONObject("details")
                 val what = innerDetails?.getString("what")
@@ -168,10 +168,10 @@ class SubTaskHandler(
 
             else -> {
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.SUB_TASK_ERROR,
-                        mapOf("subtask" to subtask),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.SUB_TASK_ERROR
+                        "subtask" to subtask
+                    }
                 }
                 Timber.d("SubTaskError unhandled subtask=$subtask")
             }
@@ -243,20 +243,20 @@ class SubTaskHandler(
             "RecruitRefreshConfirm" -> {
                 append(str("LabelsRefreshed"), LogLevel.INFO)
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.PROCESS_TASK_STARTED,
-                        mapOf("task" to task),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.PROCESS_TASK_STARTED
+                        "task" to task
+                    }
                 }
             }
 
             "RecruitConfirm" -> {
                 append(str("RecruitConfirm"), LogLevel.INFO)
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.PROCESS_TASK_STARTED,
-                        mapOf("task" to task),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.PROCESS_TASK_STARTED
+                        "task" to task
+                    }
                 }
             }
 
@@ -267,10 +267,10 @@ class SubTaskHandler(
             "ExitThenAbandon" -> {
                 append(str("ExplorationAbandoned"), LogLevel.ROGUELIKE_ABANDON)
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.PROCESS_TASK_STARTED,
-                        mapOf("task" to task),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.PROCESS_TASK_STARTED
+                        "task" to task
+                    }
                 }
             }
 
@@ -309,10 +309,10 @@ class SubTaskHandler(
             "StageTraderInvestSystemFull" -> {
                 append(str("UpperLimit"), LogLevel.INFO)
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.PROCESS_TASK_STARTED,
-                        mapOf("task" to task),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.PROCESS_TASK_STARTED
+                        "task" to task
+                    }
                 }
             }
 
@@ -323,13 +323,11 @@ class SubTaskHandler(
             "GamePass" -> {
                 append(str("RoguelikeGamePass"), LogLevel.RARE)
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.PROCESS_TASK_STARTED,
-                        mapOf(
-                            "task" to task,
-                            "difficulty" to currentRoguelikeConfig()?.difficulty.toString(),
-                        ),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.PROCESS_TASK_STARTED
+                        "task" to task
+                        "difficulty" to currentRoguelikeConfig()?.difficulty
+                    }
                 }
             }
 
@@ -356,13 +354,11 @@ class SubTaskHandler(
             "StageDrops-Stars-3", "StageDrops-Stars-Adverse" -> {
                 append(str("CompleteCombat"), LogLevel.INFO)
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.PROCESS_TASK_STARTED,
-                        mapOf(
-                            "task" to task,
-                            "sanityAfter" to (lastSanitySnapshot?.current ?: -1).toString(),
-                        ),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.PROCESS_TASK_STARTED
+                        "task" to task
+                        "sanityAfter" to (lastSanitySnapshot?.current ?: -1)
+                    }
                 }
                 copilotRuntimeStateStore.markTaskSuccess()
             }
@@ -387,20 +383,22 @@ class SubTaskHandler(
                 "Infrast" if task == "UnlockClues" -> {
                     append(str("ClueExchangeUnlocked"), LogLevel.TRACE)
                     achievementScope.launch {
-                        achievementRepository.reportEvent(
-                            AchievementEvents.PROCESS_TASK_COMPLETED,
-                            mapOf("taskchain" to taskchain, "task" to task),
-                        )
+                        achievementRepository.report {
+                            event = AchievementEvents.PROCESS_TASK_COMPLETED
+                            "taskchain" to taskchain
+                            "task" to task
+                        }
                     }
                 }
 
                 "Infrast" if task == "SendClues" -> {
                     append(str("CluesSent"), LogLevel.TRACE)
                     achievementScope.launch {
-                        achievementRepository.reportEvent(
-                            AchievementEvents.PROCESS_TASK_COMPLETED,
-                            mapOf("taskchain" to taskchain, "task" to task),
-                        )
+                        achievementRepository.report {
+                            event = AchievementEvents.PROCESS_TASK_COMPLETED
+                            "taskchain" to taskchain
+                            "task" to task
+                        }
                     }
                 }
 
@@ -409,14 +407,12 @@ class SubTaskHandler(
                     append("${str("BegunToExplore")} $times ${str("UnitTime")}", LogLevel.INFO)
                     achievementScope.launch {
                         val coreChar = normalizedRoguelikeCoreChar()
-                        achievementRepository.reportEvent(
-                            AchievementEvents.PROCESS_TASK_COMPLETED,
-                            mapOf(
-                                "taskchain" to taskchain,
-                                "task" to task,
-                                "coreChar" to coreChar,
-                            ),
-                        )
+                        achievementRepository.report {
+                            event = AchievementEvents.PROCESS_TASK_COMPLETED
+                            "taskchain" to taskchain
+                            "task" to task
+                            "coreChar" to coreChar
+                        }
                     }
                 }
 
@@ -425,10 +421,11 @@ class SubTaskHandler(
                 "Mall" if task == "StageDrops-Stars-3" -> {
                     append("${str("CompleteTask")}${str("CreditFight")}", LogLevel.TRACE)
                     achievementScope.launch {
-                        achievementRepository.reportEvent(
-                            AchievementEvents.PROCESS_TASK_COMPLETED,
-                            mapOf("taskchain" to taskchain, "task" to task),
-                        )
+                        achievementRepository.report {
+                            event = AchievementEvents.PROCESS_TASK_COMPLETED
+                            "taskchain" to taskchain
+                            "task" to task
+                        }
                     }
                 }
 
@@ -565,10 +562,10 @@ class SubTaskHandler(
                     notificationCenter.notifyRecruitHighRarity(level)
                 }
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.RECRUIT_RESULT,
-                        mapOf("level" to level.toString()),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.RECRUIT_RESULT
+                        "level" to level
+                    }
                 }
             }
 
@@ -670,10 +667,11 @@ class SubTaskHandler(
                 val level = subDetails?.getString("level") ?: ""
                 append("${str("UnsupportedLevel")}$level", LogLevel.ERROR)
                 achievementScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.SUB_TASK_EXTRA_INFO,
-                        mapOf("what" to what, "level" to level),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.SUB_TASK_EXTRA_INFO
+                        "what" to what
+                        "level" to level
+                    }
                 }
             }
 
@@ -773,7 +771,11 @@ class SubTaskHandler(
                 for (i in 0 until medicines.size) {
                     val m = medicines.getJSONObject(i) ?: continue
                     append("\n").append(
-                        str("UseMedicine.MedicineInfo", m.getIntValue("use"), m.getIntValue("inventory"))
+                        str(
+                            "UseMedicine.MedicineInfo",
+                            m.getIntValue("use"),
+                            m.getIntValue("inventory")
+                        )
                     )
                 }
             }
@@ -782,14 +784,12 @@ class SubTaskHandler(
         append(baseLog + suffix, LogLevel.INFO)
         if (count > 0) {
             achievementScope.launch {
-                achievementRepository.reportEvent(
-                    AchievementEvents.MEDICINE_USED,
-                    mapOf(
-                        "isExpiring" to isExpiring.toString(),
-                        "expiringTotal" to expiringMedicineUsedTotal.toString(),
-                    ),
-                    count,
-                )
+                achievementRepository.report {
+                    event = AchievementEvents.MEDICINE_USED
+                    "isExpiring" to isExpiring
+                    "expiringTotal" to expiringMedicineUsedTotal
+                    amount = count
+                }
             }
         }
     }

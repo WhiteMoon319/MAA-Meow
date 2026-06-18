@@ -10,6 +10,7 @@ import com.aliothmoon.maameow.data.achievement.AchievementRepository
 import com.aliothmoon.maameow.data.achievement.AchievementState
 import com.aliothmoon.maameow.data.achievement.achievementText
 import com.aliothmoon.maameow.data.achievement.buildAchievementStates
+
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -65,11 +66,11 @@ class AchievementViewModel(
     /** 一次性副作用流(Toast 等),配置变更不丢失。 */
     val effects = _effects.receiveAsFlow()
 
-    fun onEvent(event: AchievementEvent) {
-        when (event) {
-            is AchievementEvent.UpdateSearchText -> _query.update { event.text }
+    fun onEvent(input: AchievementEvent) {
+        when (input) {
+            is AchievementEvent.UpdateSearchText -> _query.update { input.text }
             is AchievementEvent.Unlock -> viewModelScope.launch {
-                repository.unlock(event.id)
+                repository.unlock(input.id)
                 _effects.send(AchievementEffect.Unlocked)
             }
 
@@ -84,7 +85,9 @@ class AchievementViewModel(
             }
 
             AchievementEvent.ScreenOpened -> viewModelScope.launch {
-                repository.reportEvent(AchievementEvents.ACHIEVEMENT_PAGE_OPENED)
+                repository.report {
+                    event = AchievementEvents.ACHIEVEMENT_PAGE_OPENED
+                }
             }
         }
     }

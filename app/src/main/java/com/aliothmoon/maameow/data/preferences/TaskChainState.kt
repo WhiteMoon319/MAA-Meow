@@ -11,9 +11,9 @@ import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
 import com.aliothmoon.maameow.data.model.InfrastConfig
 import com.aliothmoon.maameow.data.model.TaskChainNode
+import com.aliothmoon.maameow.data.model.TaskParamProvider
 import com.aliothmoon.maameow.data.model.TaskProfile
 import com.aliothmoon.maameow.data.model.TaskTypeInfo
-import com.aliothmoon.maameow.data.model.TaskParamProvider
 import com.aliothmoon.maameow.data.model.WakeUpConfig
 import com.aliothmoon.maameow.manager.RemoteServiceManager
 import com.aliothmoon.maameow.remote.PermissionGrantRequest
@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-
 import timber.log.Timber
 import java.util.UUID
 
@@ -122,7 +121,9 @@ class TaskChainState(
             }
             Timber.d("Added node: %s (%s)", node.name, typeInfo.name)
         }
-        achievementRepository.reportEvent(AchievementEvents.TASK_NODE_ADDED)
+        achievementRepository.report {
+            event = AchievementEvents.TASK_NODE_ADDED
+        }
         return newNodeId
     }
 
@@ -131,7 +132,9 @@ class TaskChainState(
             current.removeAll { it.id == nodeId }
             Timber.d("Removed node: %s", nodeId)
         }
-        achievementRepository.reportEvent(AchievementEvents.TASK_NODE_REMOVED)
+        achievementRepository.report {
+            event = AchievementEvents.TASK_NODE_REMOVED
+        }
     }
 
     /**

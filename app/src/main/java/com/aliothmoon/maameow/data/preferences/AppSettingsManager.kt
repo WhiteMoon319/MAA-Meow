@@ -9,6 +9,7 @@ import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.constant.DefaultDisplayConfig
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
+
 import com.aliothmoon.maameow.data.model.update.UpdateChannel
 import com.aliothmoon.maameow.data.model.update.UpdateSource
 import com.aliothmoon.maameow.domain.models.AppSettings
@@ -311,7 +312,8 @@ class AppSettingsManager(
         .stateIn(
             scope, SharingStarted.Eagerly,
             runCatching {
-                val modeStr = if (initialSettings.themeMode == "LIGHT") "WHITE" else initialSettings.themeMode
+                val modeStr =
+                    if (initialSettings.themeMode == "LIGHT") "WHITE" else initialSettings.themeMode
                 ThemeMode.valueOf(modeStr)
             }.getOrDefault(ThemeMode.SYSTEM)
         )
@@ -390,7 +392,9 @@ class AppSettingsManager(
         with(AppSettingsSchema) {
             context.dataStore.edit { it[language] = lang.name }
         }
-        achievementRepository.reportEvent(AchievementEvents.LANGUAGE_CHANGED)
+        achievementRepository.report {
+            event = AchievementEvents.LANGUAGE_CHANGED
+        }
     }
 
     // 待展示的更新公告

@@ -88,13 +88,11 @@ class ToolboxResultCollector(
         }.sortedBy { it.id }
         _depotItems.value = items
         achievementScope.launch {
-            achievementRepository.reportEvent(
-                AchievementEvents.TOOLBOX_RESULT,
-                mapOf(
-                    "tool" to "Depot",
-                    "maxCount" to (items.maxOfOrNull { it.count } ?: 0).toString(),
-                    ),
-            )
+            achievementRepository.report {
+                event = AchievementEvents.TOOLBOX_RESULT
+                "tool" to "Depot"
+                "maxCount" to (items.maxOfOrNull { it.count } ?: 0)
+            }
         }
     }
 
@@ -154,13 +152,17 @@ class ToolboxResultCollector(
             notOwned = notOwned.sortedByDescending { it.rarity },
         )
         achievementScope.launch {
-            achievementRepository.reportEvent(
-                AchievementEvents.TOOLBOX_RESULT,
-                mapOf(
-                    "tool" to "OperBox",
-                    "hasPallas" to ownOpers.any { it.name == "帕拉斯" || it.name.equals("Pallas", ignoreCase = true) }.toString(),
-                    ),
-            )
+            achievementRepository.report {
+                event = AchievementEvents.TOOLBOX_RESULT
+                "tool" to "OperBox"
+                "hasPallas" to ownOpers.any {
+                    it.name == "帕拉斯" || it.name.equals(
+                        "Pallas",
+                        ignoreCase = true
+                    )
+                }
+
+            }
         }
     }
 

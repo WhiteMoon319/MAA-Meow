@@ -49,6 +49,7 @@ import androidx.navigation.NavController
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
+
 import com.aliothmoon.maameow.presentation.components.AdaptiveTaskPromptDialog
 import com.aliothmoon.maameow.presentation.components.TopAppBar
 import com.aliothmoon.maameow.presentation.viewmodel.ErrorLogViewModel
@@ -74,7 +75,9 @@ fun ErrorLogView(
     val context = LocalContext.current
 
     LaunchedEffect(achievementRepository) {
-        achievementRepository.reportEvent(AchievementEvents.ERROR_LOG_OPENED)
+        achievementRepository.report {
+            event = AchievementEvents.ERROR_LOG_OPENED
+        }
     }
 
     // 处理导出 Intent

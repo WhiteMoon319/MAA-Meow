@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
+
 import com.aliothmoon.maameow.data.model.TaskProfile
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.schedule.data.ScheduleStrategyRepository
@@ -251,16 +252,15 @@ class ScheduleEditViewModel(
                     repository.update(strategy)
                 }
 
-                achievementRepository.reportEvent(
-                    AchievementEvents.SCHEDULE_SAVED,
-                    mapOf(
-                        "type" to strategy.scheduleType.name,
-                        "timerCount" to when (strategy.scheduleType) {
-                            ScheduleType.FIXED_TIME -> strategy.executionTimes.size.toString()
-                            ScheduleType.INTERVAL -> "1"
-                        },
-                    ),
-                )
+                val timerCount = when (strategy.scheduleType) {
+                    ScheduleType.FIXED_TIME -> strategy.executionTimes.size.toString()
+                    ScheduleType.INTERVAL -> "1"
+                }
+                achievementRepository.report {
+                    event = AchievementEvents.SCHEDULE_SAVED
+                    "type" to strategy.scheduleType.name
+                    "timerCount" to timerCount
+                }
 
                 scheduleAlarmManager.cancel(strategy.id)
                 scheduleAlarmManager.scheduleNext(strategy)

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import com.aliothmoon.maameow.BuildConfig
 import com.aliothmoon.maameow.constant.MaaFiles
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
@@ -36,7 +37,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
-import androidx.core.net.toUri
 
 /**
  * 更新服务 — 直接编排版本检查、下载链接解析、下载安装全流程
@@ -102,27 +102,23 @@ class UpdateService(
             val url = resolver.resolve(version, channel).getOrElse { e ->
                 val error = mapToUpdateError(e)
                 _appProcessState.value = UpdateProcessState.Failed(error)
-                achievementRepository.reportEvent(
-                    AchievementEvents.UPDATE_FAILED,
-                    updateAchievementPayload(
-                        kind = "app",
-                        source = source,
-                        error = error,
-                    ) + mapOf("channel" to channel.name),
-                )
+                achievementRepository.report {
+                    event = AchievementEvents.UPDATE_FAILED
+                    payload(updateAchievementPayload(kind = "app", source = source, error = error))
+                    "channel" to channel.name
+                }
                 return Result.failure(e)
             }
             Timber.i("downloadApp resolved URL: host=%s", safeHost(url))
             val result = downloadAndInstallApp(url, version)
-            achievementRepository.reportEvent(
-                if (result.isSuccess) AchievementEvents.UPDATE_COMPLETED else AchievementEvents.UPDATE_FAILED,
-                mapOf(
-                    "kind" to "app",
-                    "source" to source.name,
-                    "channel" to channel.name,
-                    "version" to version,
-                ),
-            )
+            achievementRepository.report {
+                event =
+                    if (result.isSuccess) AchievementEvents.UPDATE_COMPLETED else AchievementEvents.UPDATE_FAILED
+                "kind" to "app"
+                "source" to source.name
+                "channel" to channel.name
+                "version" to version
+            }
             return result
         } finally {
             appDownloading.set(false)
@@ -222,22 +218,26 @@ class UpdateService(
             val url = resolver.resolve(currentVersion).getOrElse { e ->
                 val error = mapToUpdateError(e)
                 _resourceProcessState.value = UpdateProcessState.Failed(error)
-                achievementRepository.reportEvent(
-                    AchievementEvents.UPDATE_FAILED,
-                    updateAchievementPayload(
-                        kind = "resource",
-                        source = source,
-                        error = error,
-                    ),
-                )
+                achievementRepository.report {
+                    event = AchievementEvents.UPDATE_FAILED
+                    payload(
+                        updateAchievementPayload(
+                            kind = "resource",
+                            source = source,
+                            error = error,
+                        ),
+                    )
+                }
                 return Result.failure(e)
             }
             Timber.i("downloadResource resolved URL: host=%s", safeHost(url))
             val result = downloadAndExtractResource(target, url)
-            achievementRepository.reportEvent(
-                if (result.isSuccess) AchievementEvents.UPDATE_COMPLETED else AchievementEvents.UPDATE_FAILED,
-                mapOf("kind" to "resource", "source" to source.name),
-            )
+            achievementRepository.report {
+                event =
+                    if (result.isSuccess) AchievementEvents.UPDATE_COMPLETED else AchievementEvents.UPDATE_FAILED
+                "kind" to "resource"
+                "source" to source.name
+            }
             return result
         } finally {
             resourceDownloading.set(false)

@@ -7,11 +7,11 @@ import androidx.lifecycle.viewModelScope
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
 import com.aliothmoon.maameow.data.model.LogItem
+import com.aliothmoon.maameow.data.model.TaskParamProvider
 import com.aliothmoon.maameow.data.model.TaskTypeInfo
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.domain.service.MaaCompositionService
 import com.aliothmoon.maameow.domain.service.MaaSessionLogger
-import com.aliothmoon.maameow.data.model.TaskParamProvider
 import com.aliothmoon.maameow.domain.usecase.PrepareTaskStartUseCase
 import com.aliothmoon.maameow.domain.usecase.TaskStartAcknowledgement
 import com.aliothmoon.maameow.domain.usecase.TaskStartContext
@@ -283,10 +283,10 @@ class ExpandedControlPanelViewModel(
             val message = application.formatStartResult(result)
             if (result is MaaCompositionService.StartResult.Success) {
                 viewModelScope.launch {
-                    achievementRepository.reportEvent(
-                        AchievementEvents.MISSION_STARTED,
-                        mapOf("taskCount" to plan.params.size.toString()),
-                    )
+                    achievementRepository.report {
+                        event = AchievementEvents.MISSION_STARTED
+                        "taskCount" to plan.params.size
+                    }
                 }
                 // 成功时用 Toast 简短提示
                 withContext(Dispatchers.Main) {

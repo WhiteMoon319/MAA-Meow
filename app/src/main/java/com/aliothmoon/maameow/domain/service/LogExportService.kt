@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.core.content.FileProvider
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
+
 import com.aliothmoon.maameow.data.config.MaaPathConfig
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import kotlinx.coroutines.Dispatchers
@@ -65,7 +66,9 @@ class LogExportService(
             createZipFile(zipFile, logFiles, dir)
 
             Timber.i("Exported ${logFiles.size} log files to ${zipFile.absolutePath}")
-            achievementRepository.reportEvent(AchievementEvents.LOG_EXPORTED)
+            achievementRepository.report {
+                event = AchievementEvents.LOG_EXPORTED
+            }
 
             createShareIntent(zipFile)
         } catch (e: Exception) {

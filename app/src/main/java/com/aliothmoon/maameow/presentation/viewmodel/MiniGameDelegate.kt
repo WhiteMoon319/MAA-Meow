@@ -4,6 +4,7 @@ import android.content.Context
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
+
 import com.aliothmoon.maameow.data.model.activity.MiniGame
 import com.aliothmoon.maameow.data.resource.ActivityManager
 import com.aliothmoon.maameow.domain.service.MaaCompositionService
@@ -95,10 +96,10 @@ class MiniGameDelegate(
             _state.update { it.copy(statusMessage = uiTextOf(R.string.toolbox_status_starting)) }
             val result = compositionService.startCopilot(listOf(task))
             if (result is MaaCompositionService.StartResult.Success) {
-                achievementRepository.reportEvent(
-                    AchievementEvents.MINI_GAME_STARTED,
-                    mapOf("task" to _state.value.selectedTaskName),
-                )
+                achievementRepository.report {
+                    event = AchievementEvents.MINI_GAME_STARTED
+                    "task" to _state.value.selectedTaskName
+                }
             }
             _state.update {
                 it.copy(

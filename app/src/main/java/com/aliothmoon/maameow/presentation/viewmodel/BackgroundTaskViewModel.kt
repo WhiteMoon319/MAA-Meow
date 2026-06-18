@@ -11,25 +11,29 @@ import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
 import com.aliothmoon.maameow.data.config.MaaPathConfig
 import com.aliothmoon.maameow.data.model.LogItem
-import com.aliothmoon.maameow.data.model.TaskTypeInfo
 import com.aliothmoon.maameow.data.model.TaskParamProvider
+import com.aliothmoon.maameow.data.model.TaskTypeInfo
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.domain.service.MaaCompositionService
 import com.aliothmoon.maameow.domain.service.MaaSessionLogger
 import com.aliothmoon.maameow.domain.state.MaaExecutionState
 import com.aliothmoon.maameow.domain.usecase.PrepareTaskStartUseCase
-import com.aliothmoon.maameow.overlay.screensaver.HardwareScreenOffManager
 import com.aliothmoon.maameow.domain.usecase.TaskStartAcknowledgement
 import com.aliothmoon.maameow.domain.usecase.TaskStartContext
 import com.aliothmoon.maameow.domain.usecase.TaskStartDecision
 import com.aliothmoon.maameow.domain.usecase.TaskStartMode
 import com.aliothmoon.maameow.manager.RemoteServiceManager
+import com.aliothmoon.maameow.overlay.screensaver.HardwareScreenOffManager
 import com.aliothmoon.maameow.presentation.state.BackgroundTaskState
 import com.aliothmoon.maameow.presentation.state.PreviewTouchMarker
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogConfirmAction
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogUiState
 import com.aliothmoon.maameow.presentation.view.panel.PanelTab
+import com.aliothmoon.maameow.schedule.data.ScheduleStrategyRepository
+import com.aliothmoon.maameow.schedule.model.ScheduledExecutionRequest
+import com.aliothmoon.maameow.schedule.service.ScheduleTriggerLogger
+import com.aliothmoon.maameow.schedule.service.ScheduledLaunchCoordinator
 import com.aliothmoon.maameow.utils.i18n.UiText
 import com.aliothmoon.maameow.utils.i18n.resolve
 import kotlinx.coroutines.Dispatchers
@@ -39,13 +43,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.aliothmoon.maameow.schedule.data.ScheduleStrategyRepository
-import com.aliothmoon.maameow.schedule.model.ScheduledExecutionRequest
-import com.aliothmoon.maameow.schedule.service.ScheduledLaunchCoordinator
-import com.aliothmoon.maameow.schedule.service.ScheduleTriggerLogger
-import kotlinx.coroutines.flow.drop
 import timber.log.Timber
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
@@ -463,10 +463,10 @@ class BackgroundTaskViewModel(
         }
         if (result is MaaCompositionService.StartResult.Success) {
             viewModelScope.launch {
-                achievementRepository.reportEvent(
-                    AchievementEvents.MISSION_STARTED,
-                    mapOf("taskCount" to plan.params.size.toString()),
-                )
+                achievementRepository.report {
+                    event = AchievementEvents.MISSION_STARTED
+                    "taskCount" to plan.params.size
+                }
             }
             if (appSettingsManager.muteOnGameLaunch.value) {
                 onMuteGameSound(plan.clientType)

@@ -4,6 +4,7 @@ import android.content.Context
 import com.alibaba.fastjson2.JSONObject
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
+
 import com.aliothmoon.maameow.data.model.LogLevel
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.domain.service.MaaNotificationCenter
@@ -82,10 +83,10 @@ class TaskChainHandler(
         sessionLogger.append("${str("TaskError")}$taskName", LogLevel.ERROR)
         notificationCenter.notifyTaskError(taskName)
         callbackScope.launch {
-            achievementRepository.reportEvent(
-                AchievementEvents.TASK_CHAIN_ERROR,
-                mapOf("taskchain" to taskchain),
-            )
+            achievementRepository.report {
+                event = AchievementEvents.TASK_CHAIN_ERROR
+                "taskchain" to taskchain
+            }
         }
     }
 
@@ -156,7 +157,11 @@ class TaskChainHandler(
      */
     private fun handleTaskChainStopped(details: JSONObject) {
         sessionLogger.append(str("TaskStopped"), LogLevel.INFO)
-        callbackScope.launch { achievementRepository.reportEvent(AchievementEvents.TASK_STOPPED) }
+        callbackScope.launch {
+            achievementRepository.report {
+                event = AchievementEvents.TASK_STOPPED
+            }
+        }
     }
 
     /**
@@ -171,10 +176,10 @@ class TaskChainHandler(
         if (startMillis > 0) {
             val elapsed = System.currentTimeMillis() - startMillis
             callbackScope.launch {
-                achievementRepository.reportEvent(
-                    AchievementEvents.ALL_TASKS_COMPLETED,
-                    mapOf("elapsedMillis" to elapsed.toString()),
-                )
+                achievementRepository.report {
+                    event = AchievementEvents.ALL_TASKS_COMPLETED
+                    "elapsedMillis" to elapsed
+                }
             }
             val h = elapsed / 3_600_000
             val m = (elapsed % 3_600_000) / 60_000
@@ -209,10 +214,13 @@ class TaskChainHandler(
                 }
 
                 sb.append("\n")
-                sb.append(str("SanityRecovery",
-                    recoveryTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                    remainStr
-                ))
+                sb.append(
+                    str(
+                        "SanityRecovery",
+                        recoveryTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                        remainStr
+                    )
+                )
                 // TODO: 延迟定时提醒（理智恢复前 6 分钟推送通知）
             }
         }
