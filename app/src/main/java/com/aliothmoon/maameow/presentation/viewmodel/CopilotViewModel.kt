@@ -1189,7 +1189,7 @@ class CopilotViewModel(
     }
 
     private suspend fun onCopilotTaskSuccess() {
-        achievementRepository.recordEvent(AchievementEvents.CopilotSuccess)
+        achievementRepository.reportEvent(AchievementEvents.COPILOT_SUCCESS)
 
         val current = _state.value
         if (!current.useCopilotList) return
@@ -1234,7 +1234,7 @@ class CopilotViewModel(
                 val success = copilotManager.rateCopilot(id, isLike)
                 if (success) {
                     recentlyRatedCopilotIds.add(id)
-                    achievementRepository.recordEvent(AchievementEvents.CopilotLiked)
+                    achievementRepository.reportEvent(AchievementEvents.COPILOT_LIKED)
                     if (updateStatusMessage) {
                         _state.update { it.copy(statusMessage = text(R.string.copilot_rate_success)) }
                     }

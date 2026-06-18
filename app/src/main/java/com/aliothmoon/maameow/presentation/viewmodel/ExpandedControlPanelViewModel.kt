@@ -11,7 +11,6 @@ import com.aliothmoon.maameow.data.model.TaskTypeInfo
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.domain.service.MaaCompositionService
 import com.aliothmoon.maameow.domain.service.MaaSessionLogger
-import com.aliothmoon.maameow.domain.state.MaaExecutionState
 import com.aliothmoon.maameow.data.model.TaskParamProvider
 import com.aliothmoon.maameow.domain.usecase.PrepareTaskStartUseCase
 import com.aliothmoon.maameow.domain.usecase.TaskStartAcknowledgement
@@ -21,7 +20,6 @@ import com.aliothmoon.maameow.domain.usecase.TaskStartMode
 import com.aliothmoon.maameow.overlay.OverlayController
 import com.aliothmoon.maameow.presentation.view.panel.FloatingPanelState
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogConfirmAction
-import com.aliothmoon.maameow.presentation.view.panel.PanelDialogType
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogUiState
 import com.aliothmoon.maameow.presentation.view.panel.PanelTab
 import com.aliothmoon.maameow.utils.i18n.resolve
@@ -285,8 +283,8 @@ class ExpandedControlPanelViewModel(
             val message = application.formatStartResult(result)
             if (result is MaaCompositionService.StartResult.Success) {
                 viewModelScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.MissionStarted,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.MISSION_STARTED,
                         mapOf("taskCount" to plan.params.size.toString()),
                     )
                 }

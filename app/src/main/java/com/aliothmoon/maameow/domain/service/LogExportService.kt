@@ -65,7 +65,7 @@ class LogExportService(
             createZipFile(zipFile, logFiles, dir)
 
             Timber.i("Exported ${logFiles.size} log files to ${zipFile.absolutePath}")
-            achievementRepository.recordEvent(AchievementEvents.LogExported)
+            achievementRepository.reportEvent(AchievementEvents.LOG_EXPORTED)
 
             createShareIntent(zipFile)
         } catch (e: Exception) {

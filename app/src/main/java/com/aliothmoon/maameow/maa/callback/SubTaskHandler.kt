@@ -144,8 +144,8 @@ class SubTaskHandler(
                     append(sb.trimEnd().toString(), LogLevel.ERROR)
                 }
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.SubTaskError,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.SUB_TASK_ERROR,
                         mapOf("subtask" to subtask),
                     )
                 }
@@ -153,8 +153,8 @@ class SubTaskHandler(
 
             "CopilotTask" -> {
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.SubTaskError,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.SUB_TASK_ERROR,
                         mapOf("subtask" to subtask),
                     )
                 }
@@ -168,8 +168,8 @@ class SubTaskHandler(
 
             else -> {
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.SubTaskError,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.SUB_TASK_ERROR,
                         mapOf("subtask" to subtask),
                     )
                 }
@@ -243,8 +243,8 @@ class SubTaskHandler(
             "RecruitRefreshConfirm" -> {
                 append(str("LabelsRefreshed"), LogLevel.INFO)
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.ProcessTaskStarted,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.PROCESS_TASK_STARTED,
                         mapOf("task" to task),
                     )
                 }
@@ -253,8 +253,8 @@ class SubTaskHandler(
             "RecruitConfirm" -> {
                 append(str("RecruitConfirm"), LogLevel.INFO)
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.ProcessTaskStarted,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.PROCESS_TASK_STARTED,
                         mapOf("task" to task),
                     )
                 }
@@ -267,8 +267,8 @@ class SubTaskHandler(
             "ExitThenAbandon" -> {
                 append(str("ExplorationAbandoned"), LogLevel.ROGUELIKE_ABANDON)
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.ProcessTaskStarted,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.PROCESS_TASK_STARTED,
                         mapOf("task" to task),
                     )
                 }
@@ -309,8 +309,8 @@ class SubTaskHandler(
             "StageTraderInvestSystemFull" -> {
                 append(str("UpperLimit"), LogLevel.INFO)
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.ProcessTaskStarted,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.PROCESS_TASK_STARTED,
                         mapOf("task" to task),
                     )
                 }
@@ -323,8 +323,8 @@ class SubTaskHandler(
             "GamePass" -> {
                 append(str("RoguelikeGamePass"), LogLevel.RARE)
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.ProcessTaskStarted,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.PROCESS_TASK_STARTED,
                         mapOf(
                             "task" to task,
                             "difficulty" to currentRoguelikeConfig()?.difficulty.toString(),
@@ -356,8 +356,8 @@ class SubTaskHandler(
             "StageDrops-Stars-3", "StageDrops-Stars-Adverse" -> {
                 append(str("CompleteCombat"), LogLevel.INFO)
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.ProcessTaskStarted,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.PROCESS_TASK_STARTED,
                         mapOf(
                             "task" to task,
                             "sanityAfter" to (lastSanitySnapshot?.current ?: -1).toString(),
@@ -387,8 +387,8 @@ class SubTaskHandler(
                 "Infrast" if task == "UnlockClues" -> {
                     append(str("ClueExchangeUnlocked"), LogLevel.TRACE)
                     achievementScope.launch {
-                        achievementRepository.recordEvent(
-                            AchievementEvents.ProcessTaskCompleted,
+                        achievementRepository.reportEvent(
+                            AchievementEvents.PROCESS_TASK_COMPLETED,
                             mapOf("taskchain" to taskchain, "task" to task),
                         )
                     }
@@ -397,8 +397,8 @@ class SubTaskHandler(
                 "Infrast" if task == "SendClues" -> {
                     append(str("CluesSent"), LogLevel.TRACE)
                     achievementScope.launch {
-                        achievementRepository.recordEvent(
-                            AchievementEvents.ProcessTaskCompleted,
+                        achievementRepository.reportEvent(
+                            AchievementEvents.PROCESS_TASK_COMPLETED,
                             mapOf("taskchain" to taskchain, "task" to task),
                         )
                     }
@@ -409,8 +409,8 @@ class SubTaskHandler(
                     append("${str("BegunToExplore")} $times ${str("UnitTime")}", LogLevel.INFO)
                     achievementScope.launch {
                         val coreChar = normalizedRoguelikeCoreChar()
-                        achievementRepository.recordEvent(
-                            AchievementEvents.ProcessTaskCompleted,
+                        achievementRepository.reportEvent(
+                            AchievementEvents.PROCESS_TASK_COMPLETED,
                             mapOf(
                                 "taskchain" to taskchain,
                                 "task" to task,
@@ -425,8 +425,8 @@ class SubTaskHandler(
                 "Mall" if task == "StageDrops-Stars-3" -> {
                     append("${str("CompleteTask")}${str("CreditFight")}", LogLevel.TRACE)
                     achievementScope.launch {
-                        achievementRepository.recordEvent(
-                            AchievementEvents.ProcessTaskCompleted,
+                        achievementRepository.reportEvent(
+                            AchievementEvents.PROCESS_TASK_COMPLETED,
                             mapOf("taskchain" to taskchain, "task" to task),
                         )
                     }
@@ -565,8 +565,8 @@ class SubTaskHandler(
                     notificationCenter.notifyRecruitHighRarity(level)
                 }
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.RecruitResult,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.RECRUIT_RESULT,
                         mapOf("level" to level.toString()),
                     )
                 }
@@ -670,8 +670,8 @@ class SubTaskHandler(
                 val level = subDetails?.getString("level") ?: ""
                 append("${str("UnsupportedLevel")}$level", LogLevel.ERROR)
                 achievementScope.launch {
-                    achievementRepository.recordEvent(
-                        AchievementEvents.SubTaskExtraInfo,
+                    achievementRepository.reportEvent(
+                        AchievementEvents.SUB_TASK_EXTRA_INFO,
                         mapOf("what" to what, "level" to level),
                     )
                 }
@@ -782,8 +782,8 @@ class SubTaskHandler(
         append(baseLog + suffix, LogLevel.INFO)
         if (count > 0) {
             achievementScope.launch {
-                achievementRepository.recordEvent(
-                    AchievementEvents.MedicineUsed,
+                achievementRepository.reportEvent(
+                    AchievementEvents.MEDICINE_USED,
                     mapOf(
                         "isExpiring" to isExpiring.toString(),
                         "expiringTotal" to expiringMedicineUsedTotal.toString(),
@@ -814,9 +814,8 @@ class SubTaskHandler(
         return maxOf(userDays, activityDays) * 24
     }
 
-    private fun currentRoguelikeConfig(): RoguelikeConfig? = chainState.chain.value
-        .mapNotNull { it.config as? RoguelikeConfig }
-        .firstOrNull()
+    private fun currentRoguelikeConfig(): RoguelikeConfig? =
+        chainState.chain.value.firstNotNullOfOrNull { it.config as? RoguelikeConfig }
 
     private fun normalizedRoguelikeCoreChar(): String {
         val coreChar = currentRoguelikeConfig()?.coreChar.orEmpty()

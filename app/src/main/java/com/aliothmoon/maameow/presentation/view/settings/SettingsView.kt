@@ -120,7 +120,6 @@ fun SettingsView(
 
     var showReInitConfirm by remember { mutableStateOf(false) }
     var showDebugModeConfirm by remember { mutableStateOf(false) }
-    var versionTapCount by remember { mutableStateOf(0) }
 
     if (showRestartDialog) {
         AdaptiveTaskPromptDialog(
@@ -315,6 +314,16 @@ fun SettingsView(
                     ) {
                         navController.navigate(Routes.ACHIEVEMENT)
                     }
+                    if (BuildConfig.DEBUG) {
+                        SettingsDivider(contentColor)
+                        SettingClickItem(
+                            title = stringResource(R.string.settings_achievement_debug_title),
+                            description = stringResource(R.string.settings_achievement_debug_desc),
+                            contentColor = contentColor
+                        ) {
+                            navController.navigate(Routes.ACHIEVEMENT_DEBUG)
+                        }
+                    }
                     SettingsDivider(contentColor)
                     SettingThemeModeItem(
                         contentColor = contentColor,
@@ -435,13 +444,6 @@ fun SettingsView(
                         label = stringResource(R.string.settings_about_version),
                         value = BuildConfig.VERSION_NAME,
                         contentColor = contentColor,
-                        onClick = {
-                            versionTapCount += 1
-                            if (versionTapCount >= 20) {
-                                versionTapCount = 0
-                                navController.navigate(Routes.ACHIEVEMENT_DEBUG)
-                            }
-                        },
                     )
                     SettingsDivider(contentColor)
                     SettingInfoRow(

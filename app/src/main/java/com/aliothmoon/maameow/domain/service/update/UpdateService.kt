@@ -36,17 +36,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
+import androidx.core.net.toUri
 
 /**
  * 更新服务 — 直接编排版本检查、下载链接解析、下载安装全流程
  */
 class UpdateService(
     private val context: Context,
+    apiClient: MirrorChyanApiClient,
+    appSettingsManager: AppSettingsManager,
+    httpClient: HttpClientHelper,
     private val appVersionChecker: AppVersionChecker,
     private val resourceVersionChecker: ResourceVersionChecker,
-    private val apiClient: MirrorChyanApiClient,
-    private val appSettingsManager: AppSettingsManager,
-    private val httpClient: HttpClientHelper,
     private val appDownloader: AppDownloader,
     private val resourceDownloader: ResourceDownloader,
     private val extractor: ZipExtractor,
@@ -87,7 +88,12 @@ class UpdateService(
             return Result.success(Unit)   // 已在进行中，幂等跳过
         }
         try {
-            Timber.i("downloadApp start: source=%s, version=%s, channel=%s", source, version, channel)
+            Timber.i(
+                "downloadApp start: source=%s, version=%s, channel=%s",
+                source,
+                version,
+                channel
+            )
             _appProcessState.value = UpdateProcessState.Downloading(0, "准备下载...", 0L, 0L)
 
             val resolver = appDownloadResolvers[source]
@@ -96,8 +102,8 @@ class UpdateService(
             val url = resolver.resolve(version, channel).getOrElse { e ->
                 val error = mapToUpdateError(e)
                 _appProcessState.value = UpdateProcessState.Failed(error)
-                achievementRepository.recordEvent(
-                    AchievementEvents.UpdateFailed,
+                achievementRepository.reportEvent(
+                    AchievementEvents.UPDATE_FAILED,
                     updateAchievementPayload(
                         kind = "app",
                         source = source,
@@ -108,8 +114,8 @@ class UpdateService(
             }
             Timber.i("downloadApp resolved URL: host=%s", safeHost(url))
             val result = downloadAndInstallApp(url, version)
-            achievementRepository.recordEvent(
-                if (result.isSuccess) AchievementEvents.UpdateCompleted else AchievementEvents.UpdateFailed,
+            achievementRepository.reportEvent(
+                if (result.isSuccess) AchievementEvents.UPDATE_COMPLETED else AchievementEvents.UPDATE_FAILED,
                 mapOf(
                     "kind" to "app",
                     "source" to source.name,
@@ -216,8 +222,8 @@ class UpdateService(
             val url = resolver.resolve(currentVersion).getOrElse { e ->
                 val error = mapToUpdateError(e)
                 _resourceProcessState.value = UpdateProcessState.Failed(error)
-                achievementRepository.recordEvent(
-                    AchievementEvents.UpdateFailed,
+                achievementRepository.reportEvent(
+                    AchievementEvents.UPDATE_FAILED,
                     updateAchievementPayload(
                         kind = "resource",
                         source = source,
@@ -228,8 +234,8 @@ class UpdateService(
             }
             Timber.i("downloadResource resolved URL: host=%s", safeHost(url))
             val result = downloadAndExtractResource(target, url)
-            achievementRepository.recordEvent(
-                if (result.isSuccess) AchievementEvents.UpdateCompleted else AchievementEvents.UpdateFailed,
+            achievementRepository.reportEvent(
+                if (result.isSuccess) AchievementEvents.UPDATE_COMPLETED else AchievementEvents.UPDATE_FAILED,
                 mapOf("kind" to "resource", "source" to source.name),
             )
             return result
@@ -333,11 +339,12 @@ class UpdateService(
         MirrorchyanBizError.ResourceQuotaExhausted,
         MirrorchyanBizError.KeyMismatched,
         MirrorchyanBizError.KeyBlocked -> true
+
         else -> false
     }
 
     private fun safeHost(url: String): String {
         if (url.isBlank()) return "<blank>"
-        return runCatching { Uri.parse(url).host ?: "<no-host>" }.getOrDefault("<invalid>")
+        return runCatching { url.toUri().host ?: "<no-host>" }.getOrDefault("<invalid>")
     }
 }

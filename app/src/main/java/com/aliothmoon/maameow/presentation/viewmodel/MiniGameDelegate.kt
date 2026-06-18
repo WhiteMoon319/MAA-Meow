@@ -95,8 +95,8 @@ class MiniGameDelegate(
             _state.update { it.copy(statusMessage = uiTextOf(R.string.toolbox_status_starting)) }
             val result = compositionService.startCopilot(listOf(task))
             if (result is MaaCompositionService.StartResult.Success) {
-                achievementRepository.recordEvent(
-                    AchievementEvents.MiniGameStarted,
+                achievementRepository.reportEvent(
+                    AchievementEvents.MINI_GAME_STARTED,
                     mapOf("task" to _state.value.selectedTaskName),
                 )
             }

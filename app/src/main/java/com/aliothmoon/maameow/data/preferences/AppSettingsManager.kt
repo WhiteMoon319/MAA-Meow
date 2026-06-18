@@ -390,7 +390,7 @@ class AppSettingsManager(
         with(AppSettingsSchema) {
             context.dataStore.edit { it[language] = lang.name }
         }
-        achievementRepository.recordEvent(AchievementEvents.LanguageChanged)
+        achievementRepository.reportEvent(AchievementEvents.LANGUAGE_CHANGED)
     }
 
     // 待展示的更新公告

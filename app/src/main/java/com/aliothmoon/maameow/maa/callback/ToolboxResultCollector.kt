@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 /**
  * 工具类任务的结构化结果收集器
@@ -89,8 +88,8 @@ class ToolboxResultCollector(
         }.sortedBy { it.id }
         _depotItems.value = items
         achievementScope.launch {
-            achievementRepository.recordEvent(
-                AchievementEvents.ToolboxResult,
+            achievementRepository.reportEvent(
+                AchievementEvents.TOOLBOX_RESULT,
                 mapOf(
                     "tool" to "Depot",
                     "maxCount" to (items.maxOfOrNull { it.count } ?: 0).toString(),
@@ -155,8 +154,8 @@ class ToolboxResultCollector(
             notOwned = notOwned.sortedByDescending { it.rarity },
         )
         achievementScope.launch {
-            achievementRepository.recordEvent(
-                AchievementEvents.ToolboxResult,
+            achievementRepository.reportEvent(
+                AchievementEvents.TOOLBOX_RESULT,
                 mapOf(
                     "tool" to "OperBox",
                     "hasPallas" to ownOpers.any { it.name == "帕拉斯" || it.name.equals("Pallas", ignoreCase = true) }.toString(),

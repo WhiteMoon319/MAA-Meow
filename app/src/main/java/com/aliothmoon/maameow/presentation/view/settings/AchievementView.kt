@@ -14,7 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material3.AssistChip
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -24,10 +24,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,10 +37,10 @@ import androidx.navigation.NavController
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.data.achievement.AchievementCategory
 import com.aliothmoon.maameow.data.achievement.AchievementState
-import com.aliothmoon.maameow.data.achievement.AchievementTextFormatter
-import com.aliothmoon.maameow.data.achievement.getAchievementPlaceholder
+import com.aliothmoon.maameow.data.achievement.achievementText
 import com.aliothmoon.maameow.presentation.components.InfoCard
 import com.aliothmoon.maameow.presentation.components.TopAppBar
+import com.aliothmoon.maameow.presentation.viewmodel.AchievementEvent
 import com.aliothmoon.maameow.presentation.viewmodel.AchievementViewModel
 import com.aliothmoon.maameow.theme.MaaDesignTokens
 import org.koin.androidx.compose.koinViewModel
@@ -50,19 +50,17 @@ import java.util.Date
 @Composable
 fun AchievementView(
     navController: NavController,
+    modifier: Modifier = Modifier,
     viewModel: AchievementViewModel = koinViewModel(),
 ) {
-    val achievements by viewModel.achievements.collectAsStateWithLifecycle()
-    val searchText by viewModel.searchText.collectAsStateWithLifecycle()
-    val totalCount by viewModel.totalCount.collectAsStateWithLifecycle()
-    val unlockedCount by viewModel.unlockedCount.collectAsStateWithLifecycle()
-    val languageTag = LocalConfiguration.current.locales[0]?.toLanguageTag().orEmpty()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel) {
-        viewModel.onScreenOpened()
+        viewModel.onEvent(AchievementEvent.ScreenOpened)
     }
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = stringResource(R.string.achievement_title),
@@ -80,8 +78,8 @@ fun AchievementView(
         ) {
             item {
                 OutlinedTextField(
-                    value = searchText,
-                    onValueChange = viewModel::updateSearchText,
+                    value = uiState.searchQuery,
+                    onValueChange = { viewModel.onEvent(AchievementEvent.UpdateSearchText(it)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     label = { Text(stringResource(R.string.achievement_search_hint)) },
@@ -89,13 +87,27 @@ fun AchievementView(
             }
             item {
                 Text(
-                    text = stringResource(R.string.achievement_unlocked_count, unlockedCount, totalCount),
+                    text = stringResource(
+                        R.string.achievement_unlocked_count,
+                        uiState.unlockedCount,
+                        uiState.totalCount
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            items(achievements, key = { it.definition.id }) { achievement ->
-                AchievementCard(achievement, languageTag)
+            items(uiState.achievements, key = { it.definition.id }) {
+                AchievementCard(it)
+            }
+            if (uiState.achievements.isEmpty()) {
+                item {
+                    Text(
+                        text = stringResource(R.string.achievement_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 32.dp),
+                    )
+                }
             }
             item { Spacer(modifier = Modifier.height(16.dp)) }
         }
@@ -103,9 +115,10 @@ fun AchievementView(
 }
 
 @Composable
-private fun AchievementCard(achievement: AchievementState, languageTag: String) {
+private fun AchievementCard(achievement: AchievementState) {
     val color = achievementColor(achievement)
     val context = LocalContext.current
+    val dateFormat = remember { DateFormat.getDateTimeInstance() }
     InfoCard(
         title = "",
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -132,14 +145,14 @@ private fun AchievementCard(achievement: AchievementState, languageTag: String) 
                 ) {
                     Text(
                         text = if (achievement.unlocked) {
-                            achievement.definition.title.resolve(languageTag).formatAchievementPlaceholders(context)
+                            context.achievementText(achievement.definition.id, "title")
                         } else {
                             stringResource(R.string.achievement_locked_title)
                         },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    AssistChip(
+                    SuggestionChip(
                         onClick = {},
                         label = { Text("#${achievement.definition.releasePhase}") },
                     )
@@ -147,7 +160,7 @@ private fun AchievementCard(achievement: AchievementState, languageTag: String) 
 
                 Text(
                     text = if (achievement.unlocked) {
-                        achievement.definition.description.resolve(languageTag).formatAchievementPlaceholders(context)
+                        context.achievementText(achievement.definition.id, "desc")
                     } else {
                         stringResource(R.string.achievement_locked_desc)
                     },
@@ -156,7 +169,7 @@ private fun AchievementCard(achievement: AchievementState, languageTag: String) 
                 )
                 Text(
                     text = if (!achievement.definition.hidden || achievement.unlocked) {
-                        achievement.definition.condition.resolve(languageTag).formatAchievementPlaceholders(context)
+                        context.achievementText(achievement.definition.id, "condition")
                     } else {
                         stringResource(R.string.achievement_locked_condition)
                     },
@@ -165,7 +178,12 @@ private fun AchievementCard(achievement: AchievementState, languageTag: String) 
                 )
                 if (!achievement.unlocked && achievement.progressive) {
                     LinearProgressIndicator(
-                        progress = { (achievement.progress.toFloat() / achievement.definition.target).coerceIn(0f, 1f) },
+                        progress = {
+                            (achievement.progress.toFloat() / achievement.definition.target).coerceIn(
+                                0f,
+                                1f
+                            )
+                        },
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Text(
@@ -182,7 +200,7 @@ private fun AchievementCard(achievement: AchievementState, languageTag: String) 
                     Text(
                         text = stringResource(
                             R.string.achievement_unlocked_at,
-                            DateFormat.getDateTimeInstance().format(Date(achievement.unlockedAtMillis)),
+                            dateFormat.format(Date(achievement.unlockedAtMillis)),
                         ),
                         style = MaterialTheme.typography.labelSmall,
                         color = color,
@@ -201,8 +219,4 @@ private fun achievementColor(achievement: AchievementState): Color = when {
     achievement.definition.category == AchievementCategory.BUG_RELATED -> MaterialTheme.colorScheme.error
     achievement.definition.category == AchievementCategory.AUTO_BATTLE -> MaterialTheme.colorScheme.primary
     else -> MaterialTheme.colorScheme.primary
-}
-
-private fun String.formatAchievementPlaceholders(context: android.content.Context): String {
-    return AchievementTextFormatter.formatPlaceholders(this) { key -> context.getAchievementPlaceholder(key) }
 }

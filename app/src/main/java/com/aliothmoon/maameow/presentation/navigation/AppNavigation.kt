@@ -16,7 +16,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,8 +33,7 @@ import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.announcement.AnnouncementConfig
 import com.aliothmoon.maameow.constant.Routes
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
-import com.aliothmoon.maameow.data.achievement.AchievementTextFormatter
-import com.aliothmoon.maameow.data.achievement.getAchievementPlaceholder
+import com.aliothmoon.maameow.data.achievement.achievementText
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.domain.models.RunMode
 import com.aliothmoon.maameow.domain.service.ExternalNotificationService
@@ -133,12 +131,9 @@ fun AppNavigation(
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
-
-    LaunchedEffect(achievementRepository, language) {
-        achievementRepository.unlockEvents.collect { achievement ->
-            val title = AchievementTextFormatter.formatPlaceholders(
-                achievement.definition.title.resolve(language.tag),
-            ) { key -> context.getAchievementPlaceholder(key) }
+    LaunchedEffect(achievementRepository) {
+        achievementRepository.unlockEvents.collect { id ->
+            val title = context.achievementText(id, "title")
             snackbarHostState.showSnackbar(
                 message = context.getString(
                     R.string.achievement_unlocked_message,

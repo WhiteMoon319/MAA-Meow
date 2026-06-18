@@ -122,7 +122,7 @@ class TaskChainState(
             }
             Timber.d("Added node: %s (%s)", node.name, typeInfo.name)
         }
-        achievementRepository.recordEvent(AchievementEvents.TaskNodeAdded)
+        achievementRepository.reportEvent(AchievementEvents.TASK_NODE_ADDED)
         return newNodeId
     }
 
@@ -131,7 +131,7 @@ class TaskChainState(
             current.removeAll { it.id == nodeId }
             Timber.d("Removed node: %s", nodeId)
         }
-        achievementRepository.recordEvent(AchievementEvents.TaskNodeRemoved)
+        achievementRepository.reportEvent(AchievementEvents.TASK_NODE_REMOVED)
     }
 
     /**

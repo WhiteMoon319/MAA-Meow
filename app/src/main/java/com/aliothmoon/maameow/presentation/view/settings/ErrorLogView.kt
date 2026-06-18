@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -75,7 +74,7 @@ fun ErrorLogView(
     val context = LocalContext.current
 
     LaunchedEffect(achievementRepository) {
-        achievementRepository.recordEvent(AchievementEvents.ErrorLogOpened)
+        achievementRepository.reportEvent(AchievementEvents.ERROR_LOG_OPENED)
     }
 
     // 处理导出 Intent

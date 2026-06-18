@@ -28,7 +28,6 @@ import com.aliothmoon.maameow.manager.RemoteServiceManager
 import com.aliothmoon.maameow.presentation.state.BackgroundTaskState
 import com.aliothmoon.maameow.presentation.state.PreviewTouchMarker
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogConfirmAction
-import com.aliothmoon.maameow.presentation.view.panel.PanelDialogType
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogUiState
 import com.aliothmoon.maameow.presentation.view.panel.PanelTab
 import com.aliothmoon.maameow.utils.i18n.UiText
@@ -464,8 +463,8 @@ class BackgroundTaskViewModel(
         }
         if (result is MaaCompositionService.StartResult.Success) {
             viewModelScope.launch {
-                achievementRepository.recordEvent(
-                    AchievementEvents.MissionStarted,
+                achievementRepository.reportEvent(
+                    AchievementEvents.MISSION_STARTED,
                     mapOf("taskCount" to plan.params.size.toString()),
                 )
             }

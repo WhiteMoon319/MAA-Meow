@@ -82,8 +82,8 @@ class TaskChainHandler(
         sessionLogger.append("${str("TaskError")}$taskName", LogLevel.ERROR)
         notificationCenter.notifyTaskError(taskName)
         callbackScope.launch {
-            achievementRepository.recordEvent(
-                AchievementEvents.TaskChainError,
+            achievementRepository.reportEvent(
+                AchievementEvents.TASK_CHAIN_ERROR,
                 mapOf("taskchain" to taskchain),
             )
         }
@@ -131,8 +131,7 @@ class TaskChainHandler(
      * TaskChainExtraInfo (10003): 任务链额外信息
      */
     private fun handleTaskChainExtraInfo(details: JSONObject) {
-        val what = details.getString("what")
-        when (what) {
+        when (val what = details.getString("what")) {
             "RoutingRestart" -> {
                 val why = details.getString("why")
                 if (why == "TooManyBattlesAhead") {
@@ -157,7 +156,7 @@ class TaskChainHandler(
      */
     private fun handleTaskChainStopped(details: JSONObject) {
         sessionLogger.append(str("TaskStopped"), LogLevel.INFO)
-        callbackScope.launch { achievementRepository.recordEvent(AchievementEvents.TaskStopped) }
+        callbackScope.launch { achievementRepository.reportEvent(AchievementEvents.TASK_STOPPED) }
     }
 
     /**
@@ -172,8 +171,8 @@ class TaskChainHandler(
         if (startMillis > 0) {
             val elapsed = System.currentTimeMillis() - startMillis
             callbackScope.launch {
-                achievementRepository.recordEvent(
-                    AchievementEvents.AllTasksCompleted,
+                achievementRepository.reportEvent(
+                    AchievementEvents.ALL_TASKS_COMPLETED,
                     mapOf("elapsedMillis" to elapsed.toString()),
                 )
             }
