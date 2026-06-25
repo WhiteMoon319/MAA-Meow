@@ -1,11 +1,6 @@
 ﻿package com.aliothmoon.maameow.maa.callback
 
 import android.content.Context
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import com.alibaba.fastjson2.JSONArray
 import com.alibaba.fastjson2.JSONObject
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
@@ -13,6 +8,8 @@ import com.aliothmoon.maameow.data.achievement.AchievementRepository
 import com.aliothmoon.maameow.data.model.FightConfig
 import com.aliothmoon.maameow.data.model.LogItem
 import com.aliothmoon.maameow.data.model.LogLevel
+import com.aliothmoon.maameow.data.model.RecruitCombination
+import com.aliothmoon.maameow.data.model.RecruitOper
 import com.aliothmoon.maameow.data.model.RoguelikeConfig
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.data.resource.ActivityManager
@@ -549,12 +546,12 @@ class SubTaskHandler(
 
             "RecruitResult" -> {
                 val level = subDetails?.getIntValue("level") ?: 0
-                val annotatedTooltip = buildRecruitResultTooltip(subDetails)
+                val recruitTooltip = buildRecruitResultTooltip(subDetails)
                 sessionLogger.append(
                     LogItem(
                         content = "$level ★ Tags",
                         level = if (level >= 5) LogLevel.RARE else LogLevel.INFO,
-                        annotatedTooltip = annotatedTooltip
+                        recruitTooltip = recruitTooltip
                     )
                 )
                 toolboxResultCollector.onRecruitResult(subDetails)
@@ -689,7 +686,7 @@ class SubTaskHandler(
         val curTimes = subDetails?.getIntValue("cur_times") ?: -1
         val sb = StringBuilder("$stageCode ${str("TotalDrop")}\n")
 
-        if (stats == null || stats.isEmpty()) {
+        if (stats.isNullOrEmpty()) {
             sb.append(str("NoDrop"))
         } else {
             for (i in 0 until stats.size) {
@@ -835,7 +832,7 @@ class SubTaskHandler(
 
     private fun handleCopilotAction(subDetails: JSONObject?) {
         val doc = subDetails?.getString("doc")
-        if (doc != null && doc.isNotEmpty()) {
+        if (!doc.isNullOrEmpty()) {
             append(doc, LogLevel.MESSAGE)
         } else {
             val action = subDetails?.getString("action") ?: ""
@@ -852,59 +849,39 @@ class SubTaskHandler(
     // ==================== 公招干员信息解析 ====================
 
     /**
-     * 解析 RecruitResult 回调中的 tag 组合与匹配干员信息，生成带颜色标注的富文本。
-     * 参考 WPF ToolboxViewModel.UpdateRecruitResult 逻辑。
-     *
-     * JSON 结构：details.result = [{ level, tags[], opers[{ id, name, level }] }, ...]
+     * 参考 WPF ToolboxViewModel.UpdateRecruitResult。颜色由 UI 层按主题渲染。
+     * JSON：details.result = [{ level, tags[], opers[{ id, name, level }] }, ...]
      */
-    private fun buildRecruitResultTooltip(details: JSONObject?): AnnotatedString? {
+    private fun buildRecruitResultTooltip(details: JSONObject?): List<RecruitCombination>? {
         val resultArray = details?.getJSONArray("result") ?: return null
         if (resultArray.isEmpty()) return null
 
-        val defaultColor = LogLevel.MESSAGE.color
+        val combos = (0 until resultArray.size).mapNotNull { i ->
+            val comb = resultArray.getJSONObject(i) ?: return@mapNotNull null
+            val tagLevel = comb.getIntValue("level")
+            val tagsArray = comb.getJSONArray("tags")
+            val tags = if (tagsArray != null) {
+                (0 until tagsArray.size).mapNotNull { tagsArray.getString(it) }
+            } else emptyList()
 
-        return buildAnnotatedString {
-            for (i in 0 until resultArray.size) {
-                val comb = resultArray.getJSONObject(i) ?: continue
-                val tagLevel = comb.getIntValue("level")
-                val tags = comb.getJSONArray("tags")?.joinToString("  ") ?: ""
-
-                // tag 组合标题行：按组合星级着色
-                withStyle(
-                    SpanStyle(
-                        color = LogLevel.forRecruitStar(tagLevel).color,
-                        fontWeight = FontWeight.Bold
-                    )
-                ) {
-                    append("$tagLevel★ Tags:  $tags")
-                }
-
-                // 干员列表：星标着色，干员名黑色，每个干员独占一行
-                val opers = comb.getJSONArray("opers")
-                if (opers != null && opers.isNotEmpty()) {
-                    val operList = (0 until opers.size).mapNotNull { j ->
-                        val oper = opers.getJSONObject(j) ?: return@mapNotNull null
-                        val operName = oper.getString("name") ?: return@mapNotNull null
-                        val operLevel = oper.getIntValue("level")
-                        val localizedName =
-                            resourceDataManager.getLocalizedCharacterName(operName) ?: operName
-                        operLevel to localizedName
-                    }.sortedByDescending { it.first }
-
-                    for ((star, name) in operList) {
-                        append("\n  ")
-                        withStyle(SpanStyle(color = LogLevel.forRecruitStar(star).color)) {
-                            append("★".repeat(star))
-                        }
-                        withStyle(SpanStyle(color = defaultColor)) {
-                            append(" $name")
-                        }
-                    }
-                }
-
-                if (i < resultArray.size - 1) append("\n\n")
+            val opersArray = comb.getJSONArray("opers")
+            val opers = if (opersArray != null && opersArray.isNotEmpty()) {
+                (0 until opersArray.size).mapNotNull { j ->
+                    val oper = opersArray.getJSONObject(j) ?: return@mapNotNull null
+                    val operName = oper.getString("name") ?: return@mapNotNull null
+                    val operLevel = oper.getIntValue("level")
+                    val localizedName =
+                        resourceDataManager.getLocalizedCharacterName(operName) ?: operName
+                    RecruitOper(starLevel = operLevel, name = localizedName)
+                }.sortedByDescending { it.starLevel }
+            } else {
+                emptyList()
             }
-        }.takeIf { it.isNotEmpty() }
+
+            RecruitCombination(starLevel = tagLevel, tags = tags, opers = opers)
+        }
+
+        return combos.takeIf { it.isNotEmpty() }
     }
 
     // ==================== 字符串资源辅助方法 ====================

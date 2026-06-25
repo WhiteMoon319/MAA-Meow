@@ -44,9 +44,7 @@ private val PureDarkSurfaceVariant = Color(0xFF121212)
 
 
 private fun createLightColorScheme(
-    primary: Color,
-    primaryContainer: Color,
-    onPrimaryContainer: Color
+    primary: Color, primaryContainer: Color, onPrimaryContainer: Color
 ): ColorScheme {
     return lightColorScheme(
         primary = primary,
@@ -77,10 +75,7 @@ private fun createLightColorScheme(
 }
 
 private fun createDarkColorScheme(
-    primary: Color,
-    primaryContainer: Color,
-    onPrimaryContainer: Color,
-    isPureDark: Boolean = false
+    primary: Color, primaryContainer: Color, onPrimaryContainer: Color, isPureDark: Boolean = false
 ): ColorScheme {
     val bg = if (isPureDark) PureDarkBackground else DarkBackground
     val surface = if (isPureDark) PureDarkSurface else DarkSurface
@@ -172,18 +167,20 @@ fun MaaMeowTheme(
 ) {
     val context = LocalContext.current
     val systemDarkTheme = isSystemInDarkTheme()
-    val darkTheme = when (themeMode) {
+    val isDarkTheme = when (themeMode) {
         AppSettingsManager.ThemeMode.SYSTEM -> systemDarkTheme
         AppSettingsManager.ThemeMode.WHITE -> false
-        AppSettingsManager.ThemeMode.DARK,
-        AppSettingsManager.ThemeMode.PURE_DARK -> true
+        AppSettingsManager.ThemeMode.DARK, AppSettingsManager.ThemeMode.PURE_DARK -> true
     }
     val isPureDark = themeMode == AppSettingsManager.ThemeMode.PURE_DARK
-    val colorScheme: ColorScheme = remember(themeMode, useSystemMonetColor, darkTheme, context) {
+    val colorScheme: ColorScheme = remember(themeMode, useSystemMonetColor, isDarkTheme, context) {
         when {
             // Android 12+ with monet enabled ==> system dynamic color (Material You)
             useSystemMonetColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-                val dynamic = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                val dynamic =
+                    if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(
+                        context
+                    )
                 // PURE_DARK keeps the monet-tinted primary but forces pure-black surfaces
                 if (isPureDark) {
                     dynamic.copy(
@@ -210,7 +207,8 @@ fun MaaMeowTheme(
             colorScheme = colorScheme,
             typography = Typography,
             shapes = MaaShapes,
-            content = content
-        )
+        ) {
+            ProvideLogPalette(isDark = isDarkTheme, content = content)
+        }
     }
 }
