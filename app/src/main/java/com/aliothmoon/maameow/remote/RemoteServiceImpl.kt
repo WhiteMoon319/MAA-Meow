@@ -11,12 +11,12 @@ import com.aliothmoon.maameow.constant.DefaultDisplayConfig
 import com.aliothmoon.maameow.constant.DisplayMode
 import com.aliothmoon.maameow.maa.InputControlUtils
 import android.content.Intent
-import com.aliothmoon.maameow.constant.Packages
 import com.aliothmoon.maameow.remote.internal.ActivityUtils
-import com.aliothmoon.maameow.remote.internal.AppOpsHelper
+import com.aliothmoon.maameow.remote.internal.GameAudioMuteController
 import com.aliothmoon.maameow.remote.internal.PermissionGrantHelper
 import com.aliothmoon.maameow.remote.internal.PowerController
 import com.aliothmoon.maameow.remote.internal.PrimaryDisplayManager
+import com.aliothmoon.maameow.remote.internal.RemoteUtils
 import com.aliothmoon.maameow.remote.internal.ScreenManager
 import com.aliothmoon.maameow.remote.internal.VirtualDisplayManager
 import com.aliothmoon.maameow.third.FakeContext
@@ -27,7 +27,6 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.exitProcess
@@ -37,24 +36,17 @@ class RemoteServiceImpl : RemoteService.Stub() {
     companion object {
         private const val TAG = "RemoteService"
         private const val HEARTBEAT_INTERVAL_MS = 5_000L
-        private val trackedAudioPackages = ConcurrentHashMap.newKeySet<String>()
 
         @JvmStatic
         fun performEmergencyCleanup() {
             Ln.i("$TAG: performEmergencyCleanup triggered")
             runCatching {
-                restoreTrackedAudioPackages()
+                GameAudioMuteController.restoreAll()
                 PowerController.destroy()
                 ScreenManager.destroy()
                 MaaCoreManager.destroy()
             }.onFailure {
                 Ln.e("$TAG: Emergency cleanup failed: ${it.message}")
-            }
-        }
-
-        private fun restoreTrackedAudioPackages() {
-            trackedAudioPackages.forEach { packageName ->
-                AppOpsHelper.resetPlayAudioOp(packageName)
             }
         }
     }
@@ -175,28 +167,34 @@ class RemoteServiceImpl : RemoteService.Stub() {
 
     override fun grantPermissions(request: PermissionGrantRequest): PermissionStateInfo {
         val packageName = request.packageName
-        val uid = if (request.uid > 0) request.uid else runCatching {
-            FakeContext.get().packageManager.getApplicationInfo(packageName, 0).uid
-        }.getOrElse {
-            Ln.w("$TAG: Failed to resolve UID for $packageName")
-            request.uid
-        }
+        val uid = if (request.uid > 0) request.uid
+        else RemoteUtils.getAppUid(packageName).takeIf { it > 0 } ?: request.uid
         val p = request.permissions
 
         with(PermissionGrantHelper) {
             return PermissionStateInfo(
-                accessibilityPermission = if (p and PermissionGrantRequest.PERM_ACCESSIBILITY != 0)
-                    grantAccessibilityService(request.accessibilityServiceId) else false,
-                floatingWindowPermission = if (p and PermissionGrantRequest.PERM_FLOATING_WINDOW != 0)
-                    grantFloatingWindowPermission(packageName, uid) else false,
-                notificationPermission = if (p and PermissionGrantRequest.PERM_NOTIFICATION != 0)
-                    grantNotificationPermission(packageName, uid) else false,
-                batteryOptimizationExempt = if (p and PermissionGrantRequest.PERM_BATTERY != 0)
-                    grantBatteryOptimizationExemption(packageName) else false,
-                storagePermission = if (p and PermissionGrantRequest.PERM_STORAGE != 0)
-                    grantStoragePermission(packageName, uid) else false,
-                backgroundUnrestricted = if (p and PermissionGrantRequest.PERM_BACKGROUND != 0)
-                    grantBackgroundUnrestricted(packageName, uid) else false,
+                accessibilityPermission = if (p and PermissionGrantRequest.PERM_ACCESSIBILITY != 0) grantAccessibilityService(
+                    request.accessibilityServiceId
+                ) else false,
+                floatingWindowPermission = if (p and PermissionGrantRequest.PERM_FLOATING_WINDOW != 0) grantFloatingWindowPermission(
+                    packageName,
+                    uid
+                ) else false,
+                notificationPermission = if (p and PermissionGrantRequest.PERM_NOTIFICATION != 0) grantNotificationPermission(
+                    packageName,
+                    uid
+                ) else false,
+                batteryOptimizationExempt = if (p and PermissionGrantRequest.PERM_BATTERY != 0) grantBatteryOptimizationExemption(
+                    packageName
+                ) else false,
+                storagePermission = if (p and PermissionGrantRequest.PERM_STORAGE != 0) grantStoragePermission(
+                    packageName,
+                    uid
+                ) else false,
+                backgroundUnrestricted = if (p and PermissionGrantRequest.PERM_BACKGROUND != 0) grantBackgroundUnrestricted(
+                    packageName,
+                    uid
+                ) else false,
             )
         }
     }
@@ -263,17 +261,15 @@ class RemoteServiceImpl : RemoteService.Stub() {
                 VirtualDisplayManager.stop()
             }
         }
-        restoreTrackedAudioPackages()
+        GameAudioMuteController.restoreAll()
     }
 
     override fun setPlayAudioOpAllowed(packageName: String?, isAllowed: Boolean) {
         if (packageName.isNullOrBlank()) return
-        val updated = AppOpsHelper.setPlayAudioOpAllowed(packageName, isAllowed)
-        if (!updated) {
-            Ln.w("$TAG: setPlayAudioOpAllowed skipped tracking update for $packageName")
-            return
+        val ok = GameAudioMuteController.setMuted(packageName, muted = !isAllowed)
+        if (!ok) {
+            Ln.w("$TAG: setPlayAudioOpAllowed($packageName, allowed=$isAllowed) failed")
         }
-        trackedAudioPackages.add(packageName)
     }
 
     override fun isAppAlive(packageName: String): Int {
