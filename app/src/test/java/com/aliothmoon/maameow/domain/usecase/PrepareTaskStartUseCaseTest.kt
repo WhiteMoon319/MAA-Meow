@@ -7,8 +7,8 @@ import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.data.resource.ResourceDataManager
 import com.aliothmoon.maameow.domain.models.RunMode
-import com.aliothmoon.maameow.domain.service.AppAliveChecker
 import com.aliothmoon.maameow.domain.service.AchievementReporter
+import com.aliothmoon.maameow.domain.service.AppAliveChecker
 import com.aliothmoon.maameow.remote.AppAliveStatus
 import io.mockk.every
 import io.mockk.mockk
@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
+/**
+ * 关注「链分析 + 就绪性闸门」的组合与决策映射；闸门自身的判定矩阵见 [CheckGameReadinessUseCaseTest]。
+ */
 class PrepareTaskStartUseCaseTest {
 
     private val taskChainState = mockk<TaskChainState> {
@@ -25,87 +28,35 @@ class PrepareTaskStartUseCaseTest {
     }
     private val resourceDataManager = mockk<ResourceDataManager>(relaxed = true)
     private val analyzeTaskChainUseCase = AnalyzeTaskChainUseCase(taskChainState, resourceDataManager)
-    private val appSettings = mockk<AppSettingsManager> {
-        every { runMode } returns MutableStateFlow(RunMode.BACKGROUND)
-    }
-    private val achievementReporter = mockk<AchievementReporter>(relaxed = true)
+
+    private fun useCase(aliveStatus: Int) = PrepareTaskStartUseCase(
+        analyzeTaskChainUseCase = analyzeTaskChainUseCase,
+        checkGameReadiness = CheckGameReadinessUseCase(
+            appAliveChecker = FakeAppAliveChecker(aliveStatus),
+            appSettings = mockk<AppSettingsManager> {
+                every { runMode } returns MutableStateFlow(RunMode.BACKGROUND)
+            },
+            achievementReporter = mockk<AchievementReporter>(relaxed = true),
+        ),
+    )
 
     @Test
-    fun manualStart_requiresConfirmation_whenGameIsDeadAndNoWakeUpLaunchConfigured() = runBlocking {
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = FakeAppAliveChecker(AppAliveStatus.DEAD),
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-        )
-
-        val result = useCase(
-            chain = listOf(TaskChainNode(name = "领取奖励", enabled = true, config = AwardConfig())),
+    fun analysisFailure_isForwardedAsBlockedDecision() = runBlocking {
+        val result = useCase(AppAliveStatus.ALIVE)(
+            chain = emptyList(),
             context = TaskStartContext(mode = TaskStartMode.MANUAL),
         )
 
         assertEquals(
-            TaskStartDecision.RequiresConfirmation(
-                reason = TaskStartDecisionReason.GAME_NOT_RUNNING_WITHOUT_WAKE_UP,
-                acknowledgement = TaskStartAcknowledgement.GAME_NOT_RUNNING_WITHOUT_WAKE_UP,
-            ),
+            TaskStartDecision.Blocked(reason = TaskStartDecisionReason.NO_TASK_SELECTED),
             result
         )
     }
 
     @Test
-    fun scheduledStart_blocksFast_whenGameIsDeadAndNoWakeUpLaunchConfigured() = runBlocking {
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = FakeAppAliveChecker(AppAliveStatus.DEAD),
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-        )
-
-        val result = useCase(
-            chain = listOf(TaskChainNode(name = "领取奖励", enabled = true, config = AwardConfig())),
-            context = TaskStartContext(mode = TaskStartMode.SCHEDULED),
-        )
-
-        assertEquals(
-            TaskStartDecision.Blocked(
-                reason = TaskStartDecisionReason.GAME_NOT_RUNNING_WITHOUT_WAKE_UP,
-            ),
-            result
-        )
-    }
-
-    @Test
-    fun acknowledgedManualStart_returnsReady_withoutRecheckingWarning() = runBlocking {
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = FakeAppAliveChecker(AppAliveStatus.DEAD),
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-        )
-
-        val result = useCase(
-            chain = listOf(TaskChainNode(name = "领取奖励", enabled = true, config = AwardConfig())),
-            context = TaskStartContext(
-                mode = TaskStartMode.MANUAL,
-                acknowledgements = setOf(TaskStartAcknowledgement.GAME_NOT_RUNNING_WITHOUT_WAKE_UP),
-            ),
-        )
-
-        assertTrue(result is TaskStartDecision.Ready)
-    }
-
-    @Test
-    fun launchesGame_recordsAliveStatus_andReturnsReady() = runBlocking {
-        val checker = FakeAppAliveChecker(AppAliveStatus.DEAD)
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = checker,
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-        )
-
-        val result = useCase(
+    fun readyDecision_carriesGameAliveStatusOntoPlan() = runBlocking {
+        // 含「开始唤醒(拉起游戏)」⇒ launchesGame=true ⇒ 闸门跳过存活检查但记录存活状态
+        val result = useCase(AppAliveStatus.DEAD)(
             chain = listOf(
                 TaskChainNode(
                     name = "开始唤醒",
@@ -117,129 +68,26 @@ class PrepareTaskStartUseCaseTest {
         )
 
         assertTrue(result is TaskStartDecision.Ready)
-        val ready = result as TaskStartDecision.Ready
-        assertEquals(1, checker.callCount)
-        assertEquals(false, ready.plan.gameAliveBeforeStart)
+        assertEquals(false, (result as TaskStartDecision.Ready).plan.gameAliveBeforeStart)
     }
 
     @Test
-    fun unknownAliveStatus_returnsReady() = runBlocking {
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = FakeAppAliveChecker(AppAliveStatus.UNKNOWN),
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-        )
-
-        val result = useCase(
-            chain = listOf(TaskChainNode(name = "领取奖励", enabled = true, config = AwardConfig())),
-            context = TaskStartContext(mode = TaskStartMode.MANUAL),
-        )
-
-        assertTrue(result is TaskStartDecision.Ready)
-    }
-
-    @Test
-    fun analysisFailure_isForwardedAsBlockedDecision() = runBlocking {
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = FakeAppAliveChecker(AppAliveStatus.ALIVE),
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-        )
-
-        val result = useCase(
-            chain = emptyList(),
-            context = TaskStartContext(mode = TaskStartMode.MANUAL),
-        )
-
-        assertEquals(
-            TaskStartDecision.Blocked(
-                reason = TaskStartDecisionReason.NO_TASK_SELECTED,
-            ),
-            result
-        )
-    }
-
-    @Test
-    fun manualStart_requiresConfirmation_whenGameNotInstalled() = runBlocking {
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = FakeAppAliveChecker(AppAliveStatus.ALIVE),
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-            isPackageInstalled = { false },
-        )
-
-        val result = useCase(
+    fun requiresConfirmation_isForwardedFromReadinessGate() = runBlocking {
+        val result = useCase(AppAliveStatus.DEAD)(
             chain = listOf(TaskChainNode(name = "领取奖励", enabled = true, config = AwardConfig())),
             context = TaskStartContext(mode = TaskStartMode.MANUAL),
         )
 
         assertEquals(
             TaskStartDecision.RequiresConfirmation(
-                reason = TaskStartDecisionReason.GAME_NOT_INSTALLED,
-                acknowledgement = TaskStartAcknowledgement.GAME_NOT_INSTALLED,
+                acknowledgement = TaskStartAcknowledgement.GAME_NOT_RUNNING_WITHOUT_WAKE_UP,
             ),
             result
         )
     }
 
-    @Test
-    fun scheduledStart_blocked_whenGameNotInstalled() = runBlocking {
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = FakeAppAliveChecker(AppAliveStatus.ALIVE),
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-            isPackageInstalled = { false },
-        )
-
-        val result = useCase(
-            chain = listOf(TaskChainNode(name = "领取奖励", enabled = true, config = AwardConfig())),
-            context = TaskStartContext(mode = TaskStartMode.SCHEDULED),
-        )
-
-        assertEquals(
-            TaskStartDecision.Blocked(
-                reason = TaskStartDecisionReason.GAME_NOT_INSTALLED,
-            ),
-            result
-        )
-    }
-
-    @Test
-    fun acknowledgedGameNotInstalled_skipsInstallCheck() = runBlocking {
-        val useCase = PrepareTaskStartUseCase(
-            analyzeTaskChainUseCase = analyzeTaskChainUseCase,
-            appAliveChecker = FakeAppAliveChecker(AppAliveStatus.ALIVE),
-            appSettings = appSettings,
-            achievementReporter = achievementReporter,
-            isPackageInstalled = { false },
-        )
-
-        val result = useCase(
-            chain = listOf(TaskChainNode(name = "领取奖励", enabled = true, config = AwardConfig())),
-            context = TaskStartContext(
-                mode = TaskStartMode.MANUAL,
-                acknowledgements = setOf(TaskStartAcknowledgement.GAME_NOT_INSTALLED),
-            ),
-        )
-
-        assertTrue(result is TaskStartDecision.Ready)
-    }
-
-    private class FakeAppAliveChecker(
-        private val status: Int,
-    ) : AppAliveChecker {
-        var callCount: Int = 0
-            private set
-
-        override suspend fun isAppAlive(packageName: String): Int {
-            callCount += 1
-            return status
-        }
-
+    private class FakeAppAliveChecker(private val status: Int) : AppAliveChecker {
+        override suspend fun isAppAlive(packageName: String): Int = status
         override suspend fun isAppOnBackgroundDisplay(packageName: String): Boolean? = null
     }
 }

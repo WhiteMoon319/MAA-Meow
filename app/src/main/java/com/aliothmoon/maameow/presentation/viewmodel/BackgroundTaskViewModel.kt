@@ -18,7 +18,6 @@ import com.aliothmoon.maameow.domain.service.MaaSessionLogger
 import com.aliothmoon.maameow.domain.service.AchievementReporter
 import com.aliothmoon.maameow.domain.state.MaaExecutionState
 import com.aliothmoon.maameow.domain.usecase.PrepareTaskStartUseCase
-import com.aliothmoon.maameow.domain.usecase.TaskStartAcknowledgement
 import com.aliothmoon.maameow.domain.usecase.TaskStartContext
 import com.aliothmoon.maameow.domain.usecase.TaskStartDecision
 import com.aliothmoon.maameow.domain.usecase.TaskStartMode
@@ -91,7 +90,6 @@ class BackgroundTaskViewModel(
 
     private data class PendingStart(
         val context: TaskStartContext,
-        val acknowledgement: TaskStartAcknowledgement,
         val request: ScheduledExecutionRequest? = null,
     )
 
@@ -440,7 +438,7 @@ class BackgroundTaskViewModel(
             }
 
             is TaskStartDecision.RequiresConfirmation -> {
-                pendingStart = PendingStart(context, decision.acknowledgement, request)
+                pendingStart = PendingStart(context.acknowledged(decision.acknowledgement), request)
                 val message = application.resolveTaskStartDecisionMessage(decision)
                 showDialog(application.createStartWarningDialog(message))
                 return message
@@ -569,11 +567,10 @@ class BackgroundTaskViewModel(
                 _state.update { it.copy(dialog = null) }
                 pendingStart = null
                 if (pending != null) {
-                    val acked = pending.context.acknowledged(pending.acknowledgement)
                     viewModelScope.launch {
                         val message = startTasksInternal(
                             request = pending.request,
-                            context = acked,
+                            context = pending.context,
                         )
                         if (message != null && state.value.dialog == null) {
                             showStartFailedDialog(message)

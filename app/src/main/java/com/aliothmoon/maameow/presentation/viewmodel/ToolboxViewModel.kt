@@ -5,22 +5,20 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aliothmoon.maameow.R
-import com.aliothmoon.maameow.constant.Packages
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
-import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.data.resource.ActivityManager
-import com.aliothmoon.maameow.domain.models.RunMode
-import com.aliothmoon.maameow.domain.service.AppAliveChecker
 import com.aliothmoon.maameow.domain.service.MaaCompositionService
-import com.aliothmoon.maameow.remote.AppAliveStatus
+import com.aliothmoon.maameow.domain.usecase.CheckGameReadinessUseCase
+import com.aliothmoon.maameow.domain.usecase.GameReadiness
+import com.aliothmoon.maameow.domain.usecase.TaskStartContext
+import com.aliothmoon.maameow.domain.usecase.TaskStartMode
 import com.aliothmoon.maameow.data.model.toolbox.OperBoxExportFormatter
 import com.aliothmoon.maameow.data.model.toolbox.OperBoxOperator
 import com.aliothmoon.maameow.maa.callback.ToolboxResultCollector
 import com.aliothmoon.maameow.maa.task.MaaTaskParams
 import com.aliothmoon.maameow.maa.task.MaaTaskType
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogConfirmAction
-import com.aliothmoon.maameow.presentation.view.panel.PanelDialogType
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogUiState
 import com.aliothmoon.maameow.utils.i18n.UiText
 import com.aliothmoon.maameow.utils.i18n.uiTextOf
@@ -57,9 +55,8 @@ class ToolboxViewModel(
     private val compositionService: MaaCompositionService,
     val collector: ToolboxResultCollector,
     activityManager: ActivityManager,
-    private val appAliveChecker: AppAliveChecker,
+    private val checkGameReadiness: CheckGameReadinessUseCase,
     private val chainState: TaskChainState,
-    private val appSettings: AppSettingsManager,
     achievementRepository: AchievementRepository,
 ) : ViewModel() {
 
@@ -74,7 +71,7 @@ class ToolboxViewModel(
     private val _dialog = MutableStateFlow<PanelDialogUiState?>(null)
     val dialog: StateFlow<PanelDialogUiState?> = _dialog.asStateFlow()
 
-    private var gameNotRunningAcknowledged = false
+    private var pendingStartContext: TaskStartContext? = null
 
     // ==================== 公招识别配置 ====================
 
@@ -91,36 +88,33 @@ class ToolboxViewModel(
 
     // ==================== 统一启动/停止 ====================
 
-    fun onStart() {
+    fun onStart() = onStart(TaskStartContext(TaskStartMode.MANUAL))
+
+    private fun onStart(context: TaskStartContext) {
         viewModelScope.launch {
-            val pkg = Packages[chainState.getClientType()]
-            if (pkg != null) {
-                val aliveStatus = appAliveChecker.isAppAlive(pkg)
-                if (!gameNotRunningAcknowledged && aliveStatus == AppAliveStatus.DEAD) {
-                    _dialog.value = PanelDialogUiState(
-                        type = PanelDialogType.WARNING,
-                        title = uiTextOf(R.string.toolbox_dialog_start_warning_title),
-                        message = appContext.resolveGameNotRunningWarningMessage(),
-                        confirmText = uiTextOf(R.string.toolbox_dialog_start_anyway),
-                        dismissText = uiTextOf(R.string.common_cancel),
-                        confirmAction = PanelDialogConfirmAction.CONFIRM_PENDING_START,
+            when (val readiness = checkGameReadiness(
+                clientType = chainState.getClientType(),
+                launchesGame = false,
+                context = context,
+            )) {
+                is GameReadiness.RequiresConfirmation -> {
+                    pendingStartContext = context.acknowledged(readiness.acknowledgement)
+                    _dialog.value = appContext.createStartWarningDialog(
+                        appContext.resolveTaskStartConfirmationMessage(readiness.acknowledgement)
                     )
                     return@launch
                 }
-                if (aliveStatus == AppAliveStatus.ALIVE
-                    && appSettings.runMode.value == RunMode.BACKGROUND
-                ) {
-                    val onVd = appAliveChecker.isAppOnBackgroundDisplay(pkg)
-                    if (onVd == false) {
-                        gameNotRunningAcknowledged = false
-                        _dialog.value = appContext.createStartBlockedDialog(
-                            uiTextOf(R.string.task_start_error_game_not_on_background_display)
-                        )
-                        return@launch
-                    }
+
+                is GameReadiness.Blocked -> {
+                    pendingStartContext = null
+                    _dialog.value = appContext.createStartBlockedDialog(
+                        appContext.resolveTaskStartBlockedMessage(readiness.reason)
+                    )
+                    return@launch
                 }
+
+                is GameReadiness.Ready -> pendingStartContext = null
             }
-            gameNotRunningAcknowledged = false
             doStart()
         }
     }
@@ -135,12 +129,20 @@ class ToolboxViewModel(
     }
 
     fun onDialogConfirm() {
-        _dialog.value = null
-        gameNotRunningAcknowledged = true
-        onStart()
+        when (_dialog.value?.confirmAction) {
+            PanelDialogConfirmAction.CONFIRM_PENDING_START -> {
+                val pending = pendingStartContext
+                _dialog.value = null
+                pendingStartContext = null
+                if (pending != null) onStart(pending)
+            }
+
+            else -> _dialog.value = null
+        }
     }
 
     fun onDialogDismiss() {
+        pendingStartContext = null
         _dialog.value = null
     }
 

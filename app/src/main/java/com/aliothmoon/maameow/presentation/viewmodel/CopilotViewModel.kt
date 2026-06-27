@@ -5,30 +5,29 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aliothmoon.maameow.R
-import com.aliothmoon.maameow.constant.Packages
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
 import com.aliothmoon.maameow.data.model.CopilotConfig
 import com.aliothmoon.maameow.data.model.copilot.CopilotListItem
 import com.aliothmoon.maameow.data.model.copilot.CopilotTaskData
 import com.aliothmoon.maameow.data.model.copilot.DifficultyFlags
-import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.data.preferences.TaskChainState
 import com.aliothmoon.maameow.data.repository.CopilotRepository
 import com.aliothmoon.maameow.data.resource.ResourceDataManager
-import com.aliothmoon.maameow.domain.models.RunMode
-import com.aliothmoon.maameow.domain.service.AppAliveChecker
 import com.aliothmoon.maameow.domain.service.CopilotManager
 import com.aliothmoon.maameow.domain.service.CopilotRequestException
 import com.aliothmoon.maameow.domain.service.MaaCompositionService
 import com.aliothmoon.maameow.domain.service.OperatorSummaryData
 import com.aliothmoon.maameow.domain.state.MaaExecutionState
+import com.aliothmoon.maameow.domain.usecase.CheckGameReadinessUseCase
+import com.aliothmoon.maameow.domain.usecase.GameReadiness
+import com.aliothmoon.maameow.domain.usecase.TaskStartContext
+import com.aliothmoon.maameow.domain.usecase.TaskStartMode
 import com.aliothmoon.maameow.maa.callback.CopilotRuntimeStateStore
 import com.aliothmoon.maameow.maa.task.MaaTaskType
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogConfirmAction
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogType
 import com.aliothmoon.maameow.presentation.view.panel.PanelDialogUiState
-import com.aliothmoon.maameow.remote.AppAliveStatus
 import com.aliothmoon.maameow.utils.i18n.UiText
 import com.aliothmoon.maameow.utils.i18n.resolve
 import com.aliothmoon.maameow.utils.i18n.uiTextDynamic
@@ -113,9 +112,8 @@ class CopilotViewModel(
     private val repository: CopilotRepository,
     private val resourceDataManager: ResourceDataManager,
     private val runtimeStateStore: CopilotRuntimeStateStore,
-    private val appAliveChecker: AppAliveChecker,
+    private val checkGameReadiness: CheckGameReadinessUseCase,
     private val chainState: TaskChainState,
-    private val appSettings: AppSettingsManager,
     private val achievementRepository: AchievementRepository,
 ) : ViewModel() {
 
@@ -131,7 +129,7 @@ class CopilotViewModel(
 
     val maaState: StateFlow<MaaExecutionState> = compositionService.state
 
-    private var gameNotRunningAcknowledged = false
+    private var pendingStartContext: TaskStartContext? = null
     private val pendingCopilotIds = mutableListOf<Int>()
     private val recentlyRatedCopilotIds = mutableSetOf<Int>()
     private val ratingInFlightCopilotIds = mutableSetOf<Int>()
@@ -935,9 +933,10 @@ class CopilotViewModel(
     fun onDialogConfirm() {
         when (_dialog.value?.confirmAction) {
             PanelDialogConfirmAction.CONFIRM_PENDING_START -> {
+                val pending = pendingStartContext
                 _dialog.value = null
-                gameNotRunningAcknowledged = true
-                onStart()
+                pendingStartContext = null
+                if (pending != null) onStart(pending)
             }
             else -> {
                 _dialog.value = null
@@ -949,34 +948,36 @@ class CopilotViewModel(
         _dialog.value = null
     }
 
-    fun onStart() {
+    fun onStart() = onStart(TaskStartContext(TaskStartMode.MANUAL))
+
+    private fun onStart(context: TaskStartContext) {
         viewModelScope.launch {
             val snapshot = _state.value
             if (!validateStart(snapshot)) return@launch
 
-            val pkg = Packages[chainState.getClientType()]
-            if (pkg != null) {
-                val aliveStatus = appAliveChecker.isAppAlive(pkg)
-                if (!gameNotRunningAcknowledged && aliveStatus == AppAliveStatus.DEAD) {
+            when (val readiness = checkGameReadiness(
+                clientType = chainState.getClientType(),
+                launchesGame = false,
+                context = context,
+            )) {
+                is GameReadiness.RequiresConfirmation -> {
+                    pendingStartContext = context.acknowledged(readiness.acknowledgement)
                     _dialog.value = appContext.createStartWarningDialog(
-                        appContext.resolveGameNotRunningWarningMessage()
+                        appContext.resolveTaskStartConfirmationMessage(readiness.acknowledgement)
                     )
                     return@launch
                 }
-                if (aliveStatus == AppAliveStatus.ALIVE
-                    && appSettings.runMode.value == RunMode.BACKGROUND
-                ) {
-                    val onVd = appAliveChecker.isAppOnBackgroundDisplay(pkg)
-                    if (onVd == false) {
-                        gameNotRunningAcknowledged = false
-                        _dialog.value = appContext.createStartBlockedDialog(
-                            uiTextOf(R.string.task_start_error_game_not_on_background_display)
-                        )
-                        return@launch
-                    }
+
+                is GameReadiness.Blocked -> {
+                    pendingStartContext = null
+                    _dialog.value = appContext.createStartBlockedDialog(
+                        appContext.resolveTaskStartBlockedMessage(readiness.reason)
+                    )
+                    return@launch
                 }
+
+                is GameReadiness.Ready -> pendingStartContext = null
             }
-            gameNotRunningAcknowledged = false
 
             val config = buildEffectiveConfig(snapshot)
             val tasks = if (snapshot.useCopilotList) {

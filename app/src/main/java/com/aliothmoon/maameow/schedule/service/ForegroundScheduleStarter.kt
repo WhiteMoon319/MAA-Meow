@@ -123,11 +123,9 @@ class ForegroundScheduleStarter(
                         triggerLogger.append(blockMsg)
                         recordResult(request, ExecutionResult.FAILED_VALIDATION, blockMsg)
                     }
-                    is TaskStartDecision.RequiresConfirmation -> {
-                        val confirmMsg = "需要确认，但前台模式无法自动确认，取消执行"
-                        triggerLogger.append(confirmMsg)
-                        recordResult(request, ExecutionResult.FAILED_VALIDATION, confirmMsg)
-                    }
+                    // 不可达分支：定时入口固定 TaskStartMode.SCHEDULED，闸门只会产出 Ready/Blocked，
+                    // RequiresConfirmation 仅在 MANUAL 模式产生。仅为 when 兜底，无需处理。
+                    else -> Unit
                 }
             } catch (e: Exception) {
                 val errMsg = "解析任务并启动时发生异常: ${e.message}"
