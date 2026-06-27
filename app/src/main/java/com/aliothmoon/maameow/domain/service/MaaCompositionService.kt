@@ -152,7 +152,7 @@ class MaaCompositionService(
                 setRunState(MaaExecutionState.ERROR)
                 sessionLogger.completeSessionAndWait(
                     "SERVICE_DIED",
-                    "MAA服务异常终止",
+                    context.getString(R.string.runlog_service_terminated),
                     LogLevel.ERROR
                 )
                 notificationCenter.notifyServiceDied()
@@ -163,7 +163,7 @@ class MaaCompositionService(
             appWatchdog.appDiedEvent.collect { packageName ->
                 Timber.w("App watchdog detected app died: %s", packageName)
                 sessionLogger.appendAndWait(
-                    "游戏进程未启动或被异常关闭($packageName)",
+                    context.getString(R.string.runlog_game_process_gone, packageName),
                     LogLevel.WARNING
                 )
             }
@@ -200,8 +200,8 @@ class MaaCompositionService(
         tasks = tasks,
         clientType = clientType,
         isScheduled = isScheduled,
-        startMessage = "开始执行任务，共 ${tasks.size} 项",
-        successMessage = "任务开始运行",
+        startMessage = context.getString(R.string.runlog_task_start, tasks.size),
+        successMessage = context.getString(R.string.runlog_task_started),
         onSessionStarted = onSessionStarted,
     )
 
@@ -211,8 +211,8 @@ class MaaCompositionService(
     ): StartResult = executeStart(
         tasks = tasks,
         clientType = clientType,
-        startMessage = "开始执行自动战斗",
-        successMessage = "自动战斗开始运行",
+        startMessage = context.getString(R.string.runlog_copilot_start),
+        successMessage = context.getString(R.string.runlog_copilot_started),
     )
 
     private suspend fun failStart(
@@ -242,7 +242,7 @@ class MaaCompositionService(
         val serviceState = RemoteServiceManager.state.value
         if (serviceState is RemoteServiceManager.ServiceState.Connecting) {
             return rejectStart(
-                "服务正在启动中，请稍后再试",
+                context.getString(R.string.runlog_service_connecting),
                 "SERVICE_CONNECTING",
                 StartResult.ServiceConnecting
             )
@@ -252,7 +252,7 @@ class MaaCompositionService(
         val backend = access.configuredBackend
         if (!access.isAvailable(backend)) {
             return rejectStart(
-                "${backend.display} 不可用，已取消启动",
+                context.getString(R.string.runlog_backend_unavailable, backend.display),
                 "BACKEND_UNAVAILABLE",
                 StartResult.RemoteAccessUnavailable(backend)
             )
@@ -262,7 +262,7 @@ class MaaCompositionService(
         val loaded = resourceLoader.ensureLoaded()
         if (loaded.isFailure) {
             return failStart(
-                "资源加载失败", "RESOURCE_ERROR",
+                context.getString(R.string.runlog_resource_load_failed), "RESOURCE_ERROR",
                 StartResult.ResourceError(loaded.exceptionOrNull())
             )
         }
@@ -270,7 +270,7 @@ class MaaCompositionService(
             val (width, height) = Misc.getScreenSize(context)
             if (height > width) {
                 return failStart(
-                    "当前为竖屏，无法在前台模式运行", "PORTRAIT",
+                    context.getString(R.string.runlog_portrait_orientation), "PORTRAIT",
                     StartResult.PortraitOrientationError
                 )
             }
@@ -282,13 +282,13 @@ class MaaCompositionService(
         if (maa.hasInstance()) return null
         if (!maa.CreateInstance(callback)) {
             return failStart(
-                "创建 MaaCore 实例失败", "CREATE_INSTANCE_ERROR",
+                context.getString(R.string.runlog_create_instance_failed), "CREATE_INSTANCE_ERROR",
                 StartResult.InitializationError(StartResult.InitializationError.InitPhase.CREATE_INSTANCE)
             )
         }
         if (!maa.SetInstanceOption(TOUCH_MODE, ANDROID)) {
             return failStart(
-                "设置触控模式失败", "SET_TOUCH_MODE_ERROR",
+                context.getString(R.string.runlog_set_touch_mode_failed), "SET_TOUCH_MODE_ERROR",
                 StartResult.InitializationError(StartResult.InitializationError.InitPhase.SET_TOUCH_MODE)
             )
         }
@@ -303,7 +303,7 @@ class MaaCompositionService(
         connectDeferred.set(null)
         if (ret != true) {
             return failStart(
-                "启动 MaaCore 超时或失败", "MAA_CONNECT_ERROR",
+                context.getString(R.string.runlog_maa_connect_failed), "MAA_CONNECT_ERROR",
                 StartResult.ConnectionError(StartResult.ConnectionError.ConnectPhase.MAA_CONNECT)
             )
         }
@@ -315,7 +315,7 @@ class MaaCompositionService(
     ): StartResult? {
         if (!service.setVirtualDisplayMode(mode.displayMode))
             return failStart(
-                "设置显示模式失败", "DISPLAY_MODE_ERROR",
+                context.getString(R.string.runlog_display_mode_failed), "DISPLAY_MODE_ERROR",
                 StartResult.ConnectionError(StartResult.ConnectionError.ConnectPhase.DISPLAY_MODE)
             )
         val config = when (mode) {
@@ -323,7 +323,8 @@ class MaaCompositionService(
                 val displayId = service.startVirtualDisplay()
                 if (displayId == -1)
                     return failStart(
-                        "启动虚拟显示失败", "VIRTUAL_DISPLAY_ERROR",
+                        context.getString(R.string.runlog_virtual_display_failed),
+                        "VIRTUAL_DISPLAY_ERROR",
                         StartResult.ConnectionError(StartResult.ConnectionError.ConnectPhase.VIRTUAL_DISPLAY)
                     )
                 val (w, h) = Misc.getScreenSize(context)
@@ -335,7 +336,8 @@ class MaaCompositionService(
                 val displayId = service.startVirtualDisplay()
                 if (displayId == -1)
                     return failStart(
-                        "启动虚拟显示失败", "VIRTUAL_DISPLAY_ERROR",
+                        context.getString(R.string.runlog_virtual_display_failed),
+                        "VIRTUAL_DISPLAY_ERROR",
                         StartResult.ConnectionError(StartResult.ConnectionError.ConnectPhase.VIRTUAL_DISPLAY)
                     )
                 buildConnectConfig(r.width, r.height, displayId)
@@ -366,7 +368,11 @@ class MaaCompositionService(
             }
         }
         if (!maa.Start()) {
-            return failStart("MaaCore 启动失败", "START_ERROR", StartResult.StartError)
+            return failStart(
+                context.getString(R.string.runlog_maa_start_failed),
+                "START_ERROR",
+                StartResult.StartError
+            )
         }
         setRunState(MaaExecutionState.RUNNING)
         if (mode == RunMode.BACKGROUND) {
@@ -417,7 +423,7 @@ class MaaCompositionService(
             } catch (e: Exception) {
                 Timber.e(e, "Failed to acquire remote service during start")
                 rejectStart(
-                    "无法连接远程服务：${e.message}",
+                    context.getString(R.string.runlog_remote_connect_failed, e.message ?: ""),
                     "REMOTE_ACCESS_UNAVAILABLE",
                     StartResult.RemoteAccessUnavailable(RemoteAccessCoordinator.configuredBackend())
                 )
@@ -479,7 +485,7 @@ class MaaCompositionService(
 
     suspend fun stop(): StopResult {
         setRunState(MaaExecutionState.STOPPING)
-        sessionLogger.appendAndWait("正在停止任务...", LogLevel.INFO)
+        sessionLogger.appendAndWait(context.getString(R.string.runlog_task_stopping), LogLevel.INFO)
 
         return withContext(Dispatchers.IO) {
             useRemoteService { service ->
@@ -513,7 +519,7 @@ class MaaCompositionService(
         setRunState(MaaExecutionState.IDLE)
         val status = if (result is StopResult.Success) "STOPPED" else "STOP_FAILED"
         sessionLogger.append(
-            "任务停止，状态: $status",
+            context.getString(R.string.runlog_task_stopped, status),
             if (result is StopResult.Success) LogLevel.INFO else LogLevel.ERROR
         )
         sessionLogger.endSession(status)

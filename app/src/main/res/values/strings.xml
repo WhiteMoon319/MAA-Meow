@@ -1753,4 +1753,25 @@
     <string name="achievement_SlackingOff_title">不务正业</string>
     <string name="achievement_SlackingOff_desc">正事做累了，玩点别的。</string>
     <string name="achievement_SlackingOff_condition">启动一次小游戏</string>
+
+    <!-- runtime session log (shown in log panel / history) -->
+    <string name="runlog_task_start">开始执行任务，共 %1$d 项</string>
+    <string name="runlog_task_started">任务开始运行</string>
+    <string name="runlog_copilot_start">开始执行自动战斗</string>
+    <string name="runlog_copilot_started">自动战斗开始运行</string>
+    <string name="runlog_service_connecting">服务正在启动中，请稍后再试</string>
+    <string name="runlog_backend_unavailable">%1$s 不可用，已取消启动</string>
+    <string name="runlog_resource_load_failed">资源加载失败</string>
+    <string name="runlog_portrait_orientation">当前为竖屏，无法在前台模式运行</string>
+    <string name="runlog_create_instance_failed">创建 MaaCore 实例失败</string>
+    <string name="runlog_set_touch_mode_failed">设置触控模式失败</string>
+    <string name="runlog_maa_connect_failed">启动 MaaCore 超时或失败</string>
+    <string name="runlog_display_mode_failed">设置显示模式失败</string>
+    <string name="runlog_virtual_display_failed">启动虚拟显示失败</string>
+    <string name="runlog_maa_start_failed">MaaCore 启动失败</string>
+    <string name="runlog_remote_connect_failed">无法连接远程服务：%1$s</string>
+    <string name="runlog_task_stopping">正在停止任务...</string>
+    <string name="runlog_task_stopped">任务停止，状态: %1$s</string>
+    <string name="runlog_service_terminated">MAA服务异常终止</string>
+    <string name="runlog_game_process_gone">游戏进程未启动或被异常关闭(%1$s)</string>
 </resources>
