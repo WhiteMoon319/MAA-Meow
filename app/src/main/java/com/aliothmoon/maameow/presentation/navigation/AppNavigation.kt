@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -16,6 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
@@ -45,6 +45,7 @@ import com.aliothmoon.maameow.schedule.ui.CountdownDialog
 import com.aliothmoon.maameow.schedule.ui.ScheduleEditView
 import com.aliothmoon.maameow.schedule.ui.ScheduleTriggerLogView
 import com.aliothmoon.maameow.theme.MaaAnimations
+import com.aliothmoon.maameow.utils.i18n.resolve
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -101,7 +102,7 @@ fun AppNavigation(
     }
     LaunchedEffect(notificationService) {
         notificationService.feedbackMessages.collect { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, message.resolve(context), Toast.LENGTH_SHORT).show()
         }
     }
     LaunchedEffect(achievementRepository, showAchievementSnackbar) {

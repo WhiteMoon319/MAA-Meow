@@ -1,5 +1,6 @@
 package com.aliothmoon.maameow.domain.service
 
+import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.data.api.CopilotApiService
 import com.aliothmoon.maameow.data.model.CopilotConfig
 import com.aliothmoon.maameow.data.model.copilot.CopilotListItem
@@ -9,6 +10,8 @@ import com.aliothmoon.maameow.data.repository.CopilotRepository
 import com.aliothmoon.maameow.maa.task.MaaTaskParams
 import com.aliothmoon.maameow.maa.task.MaaTaskType
 import com.aliothmoon.maameow.utils.JsonUtils
+import com.aliothmoon.maameow.utils.i18n.LocalizedException
+import com.aliothmoon.maameow.utils.i18n.uiTextOf
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonArray
@@ -125,7 +128,7 @@ class CopilotManager(
      */
     suspend fun parseFromFile(filePath: String): Result<Pair<CopilotTaskData, String>> {
         val json = repository.readCopilotJson(filePath)
-            ?: return Result.failure(Exception("文件不存在: $filePath"))
+            ?: return Result.failure(LocalizedException(uiTextOf(R.string.copilot_file_read_error)))
         val taskData = parseJson(json).getOrElse { return Result.failure(it) }
         return Result.success(Pair(taskData, json))
     }

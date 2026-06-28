@@ -1162,6 +1162,7 @@
     <string name="resource_init_preparing">Preparing…</string>
     <string name="resource_init_error_copy_failed">Copy failed</string>
     <string name="resource_init_error_unknown">Unknown error</string>
+    <string name="resource_extract_failed">File %1$s still failed after %2$d attempts</string>
 
     <!-- i18n: notifications -->
     <string name="notification_settings_title">Notifications</string>
@@ -1228,10 +1229,29 @@
     <string name="notification_event_recruit_robot_tag">Robot tag found: %1$s</string>
     <string name="notification_event_recruit_high_rarity">Found a %1$d-star combination</string>
     <string name="notification_event_subtask_failure">Subtask Error</string>
+    <string name="notification_test_title">Test Notification</string>
+    <string name="notification_test_message_full">This is a test notification from MaaMeow</string>
+    <string name="notification_feedback_no_channel">Enable at least one notification channel first</string>
+    <string name="notification_feedback_send_success">%1$s sent successfully</string>
+    <string name="notification_feedback_send_failed">%1$s failed to send</string>
 
     <!-- i18n: accessibility -->
     <string name="accessibility_navigation">Navigation</string>
     <string name="accessibility_tip">Tip</string>
+
+    <!-- i18n: screensaver -->
+    <string name="screensaver_waiting_task">Waiting for task to start…</string>
+    <string name="screensaver_swipe_to_unlock">Swipe right to unlock</string>
+
+    <!-- i18n: task override editor -->
+    <string name="editor_action_undo">Undo</string>
+    <string name="editor_action_redo">Redo</string>
+    <string name="editor_move_up">Up</string>
+    <string name="editor_move_down">Down</string>
+    <string name="editor_move_left">Left</string>
+    <string name="editor_move_right">Right</string>
+    <string name="task_override_error_json_invalid">Invalid JSON format</string>
+    <string name="task_override_error_save_failed">Save failed</string>
 
     <!-- i18n: dialogs -->
     <string name="update_confirm_title_resource">Resource update</string>
@@ -1413,6 +1433,62 @@
     <!-- i18n: update -->
     <string name="update_toast_auto_download_app_failed">Failed to auto-download the app update</string>
     <string name="update_toast_auto_download_resource_failed">Failed to auto-download the resource update</string>
+
+    <!-- i18n: errors (update / download) -->
+    <string name="update_preparing_download">Preparing to download…</string>
+    <string name="update_error_network">Network error. Please check your connection</string>
+    <string name="update_error_network_io">Network error. Please check your connection and retry</string>
+    <string name="update_error_unknown">Unknown error</string>
+    <string name="update_error_unsupported_source">Unsupported download source: %1$s</string>
+    <string name="update_error_install_failed">Installation failed: %1$s</string>
+    <string name="update_error_extract_failed">Extraction failed</string>
+    <string name="update_error_cdk_required">Please enter a valid CDK</string>
+    <string name="update_error_key_expired">CDK has expired</string>
+    <string name="update_error_key_invalid">Invalid CDK</string>
+    <string name="update_error_quota_exhausted">CDK daily download limit reached</string>
+    <string name="update_error_key_mismatched">CDK type does not match the resource to download</string>
+    <string name="update_error_key_blocked">CDK has been blocked</string>
+    <string name="update_error_resource_not_found">No resource found for this architecture and OS</string>
+    <string name="update_error_invalid_os">Invalid OS parameter</string>
+    <string name="update_error_invalid_arch">Invalid architecture parameter</string>
+    <string name="update_error_invalid_channel">Invalid update channel parameter</string>
+    <string name="update_error_service_unavailable">Update service unavailable</string>
+    <string name="update_error_empty_data">Empty data</string>
+    <string name="update_error_http_status">Server returned an error (HTTP %1$d)</string>
+    <string name="update_error_github_api_failed">GitHub API request failed (HTTP %1$d)</string>
+    <string name="update_error_github_no_apk">No APK found in the release</string>
+    <string name="update_error_empty_download_url">Download link is empty</string>
+
+    <!-- i18n: log level (badge in log panel) -->
+    <string name="log_level_message">MSG</string>
+    <string name="log_level_info">INFO</string>
+    <string name="log_level_success">SUCCESS</string>
+    <string name="log_level_warning">WRN</string>
+    <string name="log_level_error">ERR</string>
+    <string name="log_level_trace">TRACE</string>
+    <string name="log_level_recruit_star_1">1★</string>
+    <string name="log_level_recruit_star_2">2★</string>
+    <string name="log_level_recruit_star_3">3★</string>
+    <string name="log_level_recruit_star_4">4★</string>
+    <string name="log_level_recruit_star_5">5★</string>
+    <string name="log_level_recruit_star_6">6★</string>
+    <string name="log_level_recruit_robot">Robot</string>
+    <string name="log_level_roguelike_success">Win</string>
+    <string name="log_level_roguelike_combat">Combat</string>
+    <string name="log_level_roguelike_emergency">Emergency</string>
+    <string name="log_level_roguelike_boss">Boss</string>
+    <string name="log_level_roguelike_abandon">Abandon</string>
+    <string name="log_level_rare">Rare</string>
+
+    <!-- i18n: task type names (default task chain node names; intentionally shorter than panel_task_type_* labels) -->
+    <string name="task_type_wake_up">StartUp</string>
+    <string name="task_type_recruiting">Recruit</string>
+    <string name="task_type_base">Base</string>
+    <string name="task_type_combat">Combat</string>
+    <string name="task_type_mall">Credit</string>
+    <string name="task_type_mission">Rewards</string>
+    <string name="task_type_auto_roguelike">Auto I.S.</string>
+    <string name="task_type_reclamation">Reclamation</string>
 
     <!-- i18n: announcement -->
     <string name="announcement_title">Important Notice</string>

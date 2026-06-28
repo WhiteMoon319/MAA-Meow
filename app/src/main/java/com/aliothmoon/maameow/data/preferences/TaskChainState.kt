@@ -1,6 +1,7 @@
 package com.aliothmoon.maameow.data.preferences
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.Locale
 import java.util.UUID
 
 class TaskChainState(
@@ -534,7 +536,13 @@ class TaskChainState(
     }
 
     private fun defaultTaskName(typeInfo: TaskTypeInfo): String {
-        return typeInfo.defaultName(resolveSelectedLanguage(appSettings.language.value))
+        val tag = resolveSelectedLanguage(appSettings.language.value).tag
+        val localizedContext = context.createConfigurationContext(
+            Configuration(context.resources.configuration).apply {
+                setLocale(Locale.forLanguageTag(tag))
+            }
+        )
+        return typeInfo.defaultName(localizedContext)
     }
 
     suspend fun importProfiles(profiles: List<TaskProfile>, activeId: String) {

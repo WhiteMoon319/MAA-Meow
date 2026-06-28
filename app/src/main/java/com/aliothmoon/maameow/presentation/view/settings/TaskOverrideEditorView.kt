@@ -1,7 +1,7 @@
 package com.aliothmoon.maameow.presentation.view.settings
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -48,6 +49,7 @@ import androidx.navigation.NavController
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.presentation.components.TopAppBar
 import com.aliothmoon.maameow.presentation.viewmodel.TaskOverrideEditorViewModel
+import com.aliothmoon.maameow.utils.i18n.resolve
 import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
 import io.github.rosemoe.sora.langs.textmate.TextMateLanguage
@@ -105,6 +107,7 @@ fun TaskOverrideEditorView(
     val editorText by viewModel.editorText.collectAsStateWithLifecycle()
     val isJsonValid by viewModel.isJsonValid.collectAsStateWithLifecycle()
     val saveState by viewModel.saveState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     val snackbarHostState = remember { SnackbarHostState() }
     val isDark = isSystemInDarkTheme()
@@ -124,7 +127,7 @@ fun TaskOverrideEditorView(
             }
 
             is TaskOverrideEditorViewModel.SaveState.Error -> {
-                snackbarHostState.showSnackbar(s.message)
+                snackbarHostState.showSnackbar(s.text.resolve(context))
                 viewModel.clearSaveState()
             }
 
@@ -234,7 +237,7 @@ private fun SymbolInputBar(editor: CodeEditor?, editVersion: Int) {
             IconButton(onClick = { editor?.undo() }, enabled = canUndo) {
                 Icon(
                     Icons.AutoMirrored.Filled.Undo,
-                    contentDescription = "撤回",
+                    contentDescription = stringResource(R.string.editor_action_undo),
                     tint = if (canUndo) MaterialTheme.colorScheme.onSurfaceVariant
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
@@ -242,7 +245,7 @@ private fun SymbolInputBar(editor: CodeEditor?, editVersion: Int) {
             IconButton(onClick = { editor?.redo() }, enabled = canRedo) {
                 Icon(
                     Icons.AutoMirrored.Filled.Redo,
-                    contentDescription = "重做",
+                    contentDescription = stringResource(R.string.editor_action_redo),
                     tint = if (canRedo) MaterialTheme.colorScheme.onSurfaceVariant
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
@@ -258,25 +261,25 @@ private fun SymbolInputBar(editor: CodeEditor?, editVersion: Int) {
 
             IconButton(onClick = { editor?.moveSelection(SelectionMovement.UP) }) {
                 Icon(
-                    Icons.Filled.KeyboardArrowUp, contentDescription = "上",
+                    Icons.Filled.KeyboardArrowUp, contentDescription = stringResource(R.string.editor_move_up),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = { editor?.moveSelection(SelectionMovement.DOWN) }) {
                 Icon(
-                    Icons.Filled.KeyboardArrowDown, contentDescription = "下",
+                    Icons.Filled.KeyboardArrowDown, contentDescription = stringResource(R.string.editor_move_down),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = { editor?.moveSelection(SelectionMovement.LEFT) }) {
                 Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "左",
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.editor_move_left),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             IconButton(onClick = { editor?.moveSelection(SelectionMovement.RIGHT) }) {
                 Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "右",
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.editor_move_right),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

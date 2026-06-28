@@ -7,6 +7,8 @@ import com.aliothmoon.maameow.constant.MaaFiles.OVERRIDES_ASSET_TASKS
 import com.aliothmoon.maameow.data.config.MaaPathConfig
 import com.aliothmoon.maameow.data.datasource.AssetExtractor
 import com.aliothmoon.maameow.domain.state.ResourceInitState
+import com.aliothmoon.maameow.utils.i18n.LocalizedException
+import com.aliothmoon.maameow.utils.i18n.uiTextDynamicOr
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,12 +73,18 @@ class ResourceInitService(
                     _state.value = ResourceInitState.Ready
                 },
                 onFailure = { e ->
-                    _state.value = ResourceInitState.Failed(e.message ?: context.getString(R.string.resource_init_error_copy_failed))
+                    _state.value = ResourceInitState.Failed(
+                        (e as? LocalizedException)?.uiText
+                            ?: uiTextDynamicOr(e.message, R.string.resource_init_error_copy_failed)
+                    )
                 }
             )
         } catch (e: Exception) {
             Timber.e(e, "资源初始化失败")
-            _state.value = ResourceInitState.Failed(e.message ?: context.getString(R.string.resource_init_error_unknown))
+            _state.value = ResourceInitState.Failed(
+                (e as? LocalizedException)?.uiText
+                    ?: uiTextDynamicOr(e.message, R.string.resource_init_error_unknown)
+            )
         }
     }
 

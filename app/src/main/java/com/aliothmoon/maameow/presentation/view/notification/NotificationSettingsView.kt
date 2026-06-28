@@ -212,9 +212,11 @@ fun NotificationSettingsView(
             item {
                 Spacer(Modifier.height(MaaDesignTokens.Spacing.sectionGap))
                 SectionHeader(stringResource(R.string.notification_section_test))
+                val testTitle = stringResource(R.string.notification_test_title)
+                val testContent = stringResource(R.string.notification_test_message_full)
                 SettingsGroupCard {
                     Button(
-                        onClick = { viewModel.sendTest() },
+                        onClick = { viewModel.sendTest(testTitle, testContent) },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = enabledProviders.isNotEmpty(),
                         shape = MaterialTheme.shapes.small,

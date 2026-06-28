@@ -340,7 +340,7 @@ private fun LogLevelBadge(
         color = color.copy(alpha = 0.15f)
     ) {
         Text(
-            text = level.displayName,
+            text = stringResource(level.labelRes),
             style = if (compact) {
                 MaterialTheme.typography.labelSmall.copy(
                     fontSize = 10.sp,

@@ -19,10 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.aliothmoon.maameow.R
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.domain.state.ResourceInitState
+import com.aliothmoon.maameow.utils.i18n.asString
 
 /**
  * 资源初始化弹窗
@@ -106,7 +107,10 @@ fun ResourceInitDialog(
             AdaptiveTaskPromptDialog(
                 visible = true,
                 title = stringResource(R.string.resource_init_failed_title),
-                message = stringResource(R.string.resource_init_failed_message, state.message),
+                message = stringResource(
+                    R.string.resource_init_failed_message,
+                    state.text.asString()
+                ),
                 onConfirm = onRetry,
                 onDismissRequest = onDismiss,
                 confirmText = stringResource(R.string.resource_init_retry),

@@ -39,7 +39,7 @@ class MirrorChyanResourceVersionChecker(
             onFailure = { e ->
                 when (e) {
                     is MirrorChyanBizException -> UpdateCheckResult.Error(e.toUpdateError())
-                    else -> UpdateCheckResult.Error(UpdateError.NetworkError(e.message ?: "网络错误"))
+                    else -> UpdateCheckResult.Error(UpdateError.NetworkError(e.message))
                 }
             }
         )

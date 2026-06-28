@@ -1,5 +1,9 @@
 package com.aliothmoon.maameow.data.datasource
 
+import com.aliothmoon.maameow.R
+import com.aliothmoon.maameow.utils.i18n.UiText
+import com.aliothmoon.maameow.utils.i18n.uiTextDynamic
+import com.aliothmoon.maameow.utils.i18n.uiTextOf
 import java.io.IOException
 import java.util.Locale
 
@@ -20,7 +24,7 @@ internal fun formatSpeed(bytesPerSecond: Long): String = when {
     else -> "$bytesPerSecond B/s"
 }
 
-internal fun formatDownloadError(e: Exception): String = when (e) {
-    is IOException -> "网络异常，请检查网络连接后重试"
-    else -> e.message ?: "未知错误"
+internal fun formatDownloadError(e: Exception): UiText = when (e) {
+    is IOException -> uiTextOf(R.string.update_error_network_io)
+    else -> e.message?.let(::uiTextDynamic) ?: uiTextOf(R.string.update_error_unknown)
 }

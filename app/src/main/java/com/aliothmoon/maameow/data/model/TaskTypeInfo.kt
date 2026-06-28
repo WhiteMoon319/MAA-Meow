@@ -1,27 +1,21 @@
 package com.aliothmoon.maameow.data.model
 
-import com.aliothmoon.maameow.data.preferences.AppSettingsManager
-
-import com.aliothmoon.maameow.data.model.TaskParamProvider
+import android.content.Context
+import androidx.annotation.StringRes
+import com.aliothmoon.maameow.R
 
 enum class TaskTypeInfo(
-    private val defaultNameZh: String,
-    private val defaultNameEn: String,
+    @param:StringRes val nameRes: Int,
     val defaultConfig: () -> TaskParamProvider
 ) {
-    WAKE_UP("开始唤醒", "StartUp", { WakeUpConfig() }),
-    RECRUITING("自动公招", "Recruit", { RecruitConfig() }),
-    BASE("基建换班", "Base", { InfrastConfig() }),
-    COMBAT("理智作战", "Combat", { FightConfig() }),
-    MALL("信用收支", "Credit", { MallConfig() }),
-    MISSION("领取奖励", "Rewards", { AwardConfig() }),
-    AUTO_ROGUELIKE("自动肉鸽", "Auto I.S.", { RoguelikeConfig() }),
-    RECLAMATION("生息演算", "Reclamation", { ReclamationConfig() });
+    WAKE_UP(R.string.task_type_wake_up, { WakeUpConfig() }),
+    RECRUITING(R.string.task_type_recruiting, { RecruitConfig() }),
+    BASE(R.string.task_type_base, { InfrastConfig() }),
+    COMBAT(R.string.task_type_combat, { FightConfig() }),
+    MALL(R.string.task_type_mall, { MallConfig() }),
+    MISSION(R.string.task_type_mission, { AwardConfig() }),
+    AUTO_ROGUELIKE(R.string.task_type_auto_roguelike, { RoguelikeConfig() }),
+    RECLAMATION(R.string.task_type_reclamation, { ReclamationConfig() });
 
-    fun defaultName(language: AppSettingsManager.AppLanguage): String {
-        return when (language) {
-            AppSettingsManager.AppLanguage.EN -> defaultNameEn
-            else -> defaultNameZh
-        }
-    }
+    fun defaultName(context: Context): String = context.getString(nameRes)
 }

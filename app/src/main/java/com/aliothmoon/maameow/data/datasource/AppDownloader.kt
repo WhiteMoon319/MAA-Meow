@@ -1,8 +1,11 @@
 package com.aliothmoon.maameow.data.datasource
 
 import android.content.Context
+import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.data.api.HttpClientHelper
 import com.aliothmoon.maameow.data.api.await
+import com.aliothmoon.maameow.utils.i18n.LocalizedException
+import com.aliothmoon.maameow.utils.i18n.uiTextOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -106,7 +109,9 @@ class AppDownloader(
             val response = httpClient.rawClient().newCall(request).await()
 
             if (!response.isSuccessful) {
-                return Result.failure(Exception("服务器返回错误 (HTTP ${response.code})"))
+                return Result.failure(
+                    LocalizedException(uiTextOf(R.string.update_error_http_status, response.code))
+                )
             }
 
             val body = response.body
@@ -162,7 +167,7 @@ class AppDownloader(
             Result.success(apkFile)
         } catch (e: Exception) {
             Timber.e(e, "下载 APK 失败")
-            Result.failure(Exception(formatDownloadError(e), e))
+            Result.failure(LocalizedException(formatDownloadError(e), e))
         }
     }
 

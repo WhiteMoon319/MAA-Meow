@@ -54,12 +54,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.domain.service.MaaSessionLogger
 import com.aliothmoon.maameow.theme.ScreenSaverDimens
 import kotlinx.coroutines.delay
@@ -73,7 +75,7 @@ fun ScreenSaverView(
     onUnlock: () -> Unit
 ) {
     val logs by sessionLogger.logs.collectAsStateWithLifecycle()
-    val latestLog = logs.lastOrNull()?.content ?: "等待任务开始..."
+    val latestLog = logs.lastOrNull()?.content ?: stringResource(R.string.screensaver_waiting_task)
 
     val batteryState = rememberBatteryState()
     var currentTime by remember { mutableStateOf(LocalTime.now()) }
@@ -243,7 +245,7 @@ private fun SlideToUnlockBar(
             )
     ) {
         Text(
-            text = "向 右 滑 动 解 锁",
+            text = stringResource(R.string.screensaver_swipe_to_unlock),
             style = MaterialTheme.typography.bodyLarge.copy(letterSpacing = 3.sp),
             color = Color.White.copy(alpha = 0.6f),
             modifier = Modifier

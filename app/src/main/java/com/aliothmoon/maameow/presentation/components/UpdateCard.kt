@@ -28,13 +28,9 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -73,6 +69,7 @@ import com.aliothmoon.maameow.data.model.update.UpdateProcessState
 import com.aliothmoon.maameow.data.model.update.UpdateSource
 import com.aliothmoon.maameow.presentation.viewmodel.UpdateViewModel
 import com.aliothmoon.maameow.utils.Misc
+import com.aliothmoon.maameow.utils.i18n.resolve
 import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
@@ -119,7 +116,7 @@ fun UpdateCard(
             }
 
             is UpdateCheckResult.Error -> {
-                resourceErrorMessage = resourceCheckFailedFormat.format(result.error.message.orEmpty())
+                resourceErrorMessage = resourceCheckFailedFormat.format(result.error.text.resolve(context))
                 viewModel.dismissResourceCheckResult()
             }
 
@@ -141,7 +138,7 @@ fun UpdateCard(
             }
 
             is UpdateCheckResult.Error -> {
-                appErrorMessage = appCheckFailedFormat.format(result.error.message.orEmpty())
+                appErrorMessage = appCheckFailedFormat.format(result.error.text.resolve(context))
                 viewModel.dismissAppCheckResult()
             }
 
@@ -154,7 +151,7 @@ fun UpdateCard(
     LaunchedEffect(resourceUpdateState) {
         when (val state = resourceUpdateState) {
             is UpdateProcessState.Failed -> {
-                resourceErrorMessage = resourceUpdateFailedFormat.format(state.error.message.orEmpty())
+                resourceErrorMessage = resourceUpdateFailedFormat.format(state.error.text.resolve(context))
             }
 
             is UpdateProcessState.Success -> {
@@ -173,7 +170,7 @@ fun UpdateCard(
     LaunchedEffect(appUpdateState) {
         when (val state = appUpdateState) {
             is UpdateProcessState.Failed -> {
-                appErrorMessage = state.error.message.orEmpty()
+                appErrorMessage = state.error.text.resolve(context)
             }
 
             is UpdateProcessState.Success -> {

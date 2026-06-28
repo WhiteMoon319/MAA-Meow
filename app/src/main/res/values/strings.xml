@@ -1218,6 +1218,7 @@
     <string name="resource_init_preparing">准备中…</string>
     <string name="resource_init_error_copy_failed">复制失败</string>
     <string name="resource_init_error_unknown">未知错误</string>
+    <string name="resource_extract_failed">文件 %1$s 在 %2$d 次尝试后仍失败</string>
 
     <!-- i18n: notifications -->
     <string name="notification_settings_title">通知设置</string>
@@ -1284,10 +1285,29 @@
     <string name="notification_event_recruit_robot_tag">发现小车 Tag: %1$s</string>
     <string name="notification_event_recruit_high_rarity">发现 %1$d ★ 组合</string>
     <string name="notification_event_subtask_failure">子任务异常</string>
+    <string name="notification_test_title">测试通知</string>
+    <string name="notification_test_message_full">这是一条来自 MaaMeow 的测试通知</string>
+    <string name="notification_feedback_no_channel">请先启用至少一个通知渠道</string>
+    <string name="notification_feedback_send_success">%1$s 发送成功</string>
+    <string name="notification_feedback_send_failed">%1$s 发送失败</string>
 
     <!-- i18n: accessibility -->
     <string name="accessibility_navigation">导航</string>
     <string name="accessibility_tip">提示</string>
+
+    <!-- i18n: screensaver -->
+    <string name="screensaver_waiting_task">等待任务开始…</string>
+    <string name="screensaver_swipe_to_unlock">向 右 滑 动 解 锁</string>
+
+    <!-- i18n: task override editor -->
+    <string name="editor_action_undo">撤回</string>
+    <string name="editor_action_redo">重做</string>
+    <string name="editor_move_up">上</string>
+    <string name="editor_move_down">下</string>
+    <string name="editor_move_left">左</string>
+    <string name="editor_move_right">右</string>
+    <string name="task_override_error_json_invalid">JSON 格式错误</string>
+    <string name="task_override_error_save_failed">保存失败</string>
 
     <!-- i18n: dialogs -->
     <string name="update_confirm_title_resource">发现资源更新</string>
@@ -1469,6 +1489,62 @@
     <!-- i18n: update -->
     <string name="update_toast_auto_download_app_failed">自动下载 App 更新失败</string>
     <string name="update_toast_auto_download_resource_failed">自动下载资源更新失败</string>
+
+    <!-- i18n: errors (update / download) -->
+    <string name="update_preparing_download">准备下载…</string>
+    <string name="update_error_network">网络错误，请检查网络连接</string>
+    <string name="update_error_network_io">网络异常，请检查网络连接后重试</string>
+    <string name="update_error_unknown">未知错误</string>
+    <string name="update_error_unsupported_source">不支持的下载源: %1$s</string>
+    <string name="update_error_install_failed">安装失败: %1$s</string>
+    <string name="update_error_extract_failed">解压失败</string>
+    <string name="update_error_cdk_required">请输入正确的 CDK</string>
+    <string name="update_error_key_expired">CDK 已过期</string>
+    <string name="update_error_key_invalid">CDK 不正确</string>
+    <string name="update_error_quota_exhausted">CDK 今日下载次数已达上限</string>
+    <string name="update_error_key_mismatched">CDK 类型和待下载的资源不匹配</string>
+    <string name="update_error_key_blocked">CDK 已被封禁</string>
+    <string name="update_error_resource_not_found">对应架构和系统下的资源不存在</string>
+    <string name="update_error_invalid_os">错误的系统参数</string>
+    <string name="update_error_invalid_arch">错误的架构参数</string>
+    <string name="update_error_invalid_channel">错误的更新通道参数</string>
+    <string name="update_error_service_unavailable">更新服务不可用</string>
+    <string name="update_error_empty_data">数据为空</string>
+    <string name="update_error_http_status">服务器返回错误 (HTTP %1$d)</string>
+    <string name="update_error_github_api_failed">GitHub API 请求失败 (HTTP %1$d)</string>
+    <string name="update_error_github_no_apk">Release 中未找到 APK 文件</string>
+    <string name="update_error_empty_download_url">下载链接为空</string>
+
+    <!-- i18n: log level (badge in log panel) -->
+    <string name="log_level_message">MSG</string>
+    <string name="log_level_info">INFO</string>
+    <string name="log_level_success">SUCCESS</string>
+    <string name="log_level_warning">WRN</string>
+    <string name="log_level_error">ERR</string>
+    <string name="log_level_trace">TRACE</string>
+    <string name="log_level_recruit_star_1">1星</string>
+    <string name="log_level_recruit_star_2">2星</string>
+    <string name="log_level_recruit_star_3">3星</string>
+    <string name="log_level_recruit_star_4">4星</string>
+    <string name="log_level_recruit_star_5">5星</string>
+    <string name="log_level_recruit_star_6">6星</string>
+    <string name="log_level_recruit_robot">机械</string>
+    <string name="log_level_roguelike_success">战斗成功</string>
+    <string name="log_level_roguelike_combat">作战</string>
+    <string name="log_level_roguelike_emergency">紧急</string>
+    <string name="log_level_roguelike_boss">领袖</string>
+    <string name="log_level_roguelike_abandon">放弃</string>
+    <string name="log_level_rare">稀有</string>
+
+    <!-- i18n: task type names (默认任务链节点名；EN 刻意比 panel_task_type_* 标签更简短) -->
+    <string name="task_type_wake_up">开始唤醒</string>
+    <string name="task_type_recruiting">自动公招</string>
+    <string name="task_type_base">基建换班</string>
+    <string name="task_type_combat">理智作战</string>
+    <string name="task_type_mall">信用收支</string>
+    <string name="task_type_mission">领取奖励</string>
+    <string name="task_type_auto_roguelike">自动肉鸽</string>
+    <string name="task_type_reclamation">生息演算</string>
 
     <!-- i18n: announcement -->
     <string name="announcement_title">重要公告</string>

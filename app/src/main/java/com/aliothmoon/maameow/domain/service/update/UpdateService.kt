@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.aliothmoon.maameow.BuildConfig
+import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.constant.MaaFiles
 import com.aliothmoon.maameow.data.achievement.AchievementEvents
 import com.aliothmoon.maameow.data.achievement.AchievementRepository
@@ -31,6 +32,9 @@ import com.aliothmoon.maameow.domain.service.update.checker.AppVersionChecker
 import com.aliothmoon.maameow.domain.service.update.checker.ResourceVersionChecker
 import com.aliothmoon.maameow.domain.service.update.resolver.AppDownloadUrlResolver
 import com.aliothmoon.maameow.domain.service.update.resolver.ResourceDownloadUrlResolver
+import com.aliothmoon.maameow.utils.i18n.LocalizedException
+import com.aliothmoon.maameow.utils.i18n.resolve
+import com.aliothmoon.maameow.utils.i18n.uiTextOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -94,10 +98,10 @@ class UpdateService(
                 version,
                 channel
             )
-            _appProcessState.value = UpdateProcessState.Downloading(0, "准备下载...", 0L, 0L)
+            _appProcessState.value = UpdateProcessState.Downloading(0, context.getString(R.string.update_preparing_download), 0L, 0L)
 
             val resolver = appDownloadResolvers[source]
-                ?: return failApp(UpdateError.UnknownError("不支持的下载源: $source"))
+                ?: return failApp(UpdateError.UnknownError(uiTextOf(R.string.update_error_unsupported_source, source)))
 
             val url = resolver.resolve(version, channel).getOrElse { e ->
                 val error = mapToUpdateError(e)
@@ -149,7 +153,7 @@ class UpdateService(
 
         val apkFile = downloadResult.getOrElse { e ->
             _appProcessState.value =
-                UpdateProcessState.Failed(UpdateError.NetworkError(e.message ?: "下载失败"))
+                UpdateProcessState.Failed(mapToUpdateError(e))
             return Result.failure(e)
         }
 
@@ -165,7 +169,15 @@ class UpdateService(
         } catch (e: Exception) {
             Timber.e(e, "Failed to install APK")
             _appProcessState.value =
-                UpdateProcessState.Failed(UpdateError.UnknownError("安装失败: ${e.message}"))
+                UpdateProcessState.Failed(
+                    UpdateError.UnknownError(
+                        uiTextOf(
+                            R.string.update_error_install_failed,
+                            e.message?.takeIf { it.isNotBlank() }
+                                ?: context.getString(R.string.update_error_unknown)
+                        )
+                    )
+                )
             Result.failure(e)
         }
     }
@@ -186,7 +198,7 @@ class UpdateService(
 
     private fun failApp(error: UpdateError): Result<Unit> {
         _appProcessState.value = UpdateProcessState.Failed(error)
-        return Result.failure(Exception(error.message))
+        return Result.failure(Exception(error.text.resolve(context)))
     }
 
     // ==================== 资源更新 ====================
@@ -210,10 +222,10 @@ class UpdateService(
         }
         try {
             Timber.i("downloadResource start: source=%s", source)
-            _resourceProcessState.value = UpdateProcessState.Downloading(0, "准备下载...", 0L, 0L)
+            _resourceProcessState.value = UpdateProcessState.Downloading(0, context.getString(R.string.update_preparing_download), 0L, 0L)
 
             val resolver = resourceDownloadResolvers[source]
-                ?: return failResource(UpdateError.UnknownError("不支持的下载源: $source"))
+                ?: return failResource(UpdateError.UnknownError(uiTextOf(R.string.update_error_unsupported_source, source)))
 
             val url = resolver.resolve(currentVersion).getOrElse { e ->
                 val error = mapToUpdateError(e)
@@ -260,7 +272,7 @@ class UpdateService(
 
         val tempFile = downloadResult.getOrElse { e ->
             _resourceProcessState.value =
-                UpdateProcessState.Failed(UpdateError.NetworkError(e.message ?: "下载失败"))
+                UpdateProcessState.Failed(mapToUpdateError(e))
             return Result.failure(e)
         }
 
@@ -301,7 +313,9 @@ class UpdateService(
                 // 解压中途失败时资源目录处于残缺状态，删除 version.json 让下次重新触发完整更新
                 File(target, MaaFiles.VERSION_FILE).delete()
                 _resourceProcessState.value =
-                    UpdateProcessState.Failed(UpdateError.UnknownError("解压失败"))
+                    UpdateProcessState.Failed(
+                        UpdateError.UnknownError(uiTextOf(R.string.update_error_extract_failed))
+                    )
                 Result.failure(e)
             }
         )
@@ -309,15 +323,16 @@ class UpdateService(
 
     private fun failResource(error: UpdateError): Result<Unit> {
         _resourceProcessState.value = UpdateProcessState.Failed(error)
-        return Result.failure(Exception(error.message))
+        return Result.failure(Exception(error.text.resolve(context)))
     }
 
     // ==================== 工具方法 ====================
 
     private fun mapToUpdateError(e: Throwable): UpdateError = when (e) {
         is CdkRequiredException -> UpdateError.CdkRequired
+        is LocalizedException -> UpdateError.UnknownError(e.uiText)
         is MirrorChyanBizException -> e.toUpdateError()
-        else -> UpdateError.NetworkError(e.message ?: "未知错误")
+        else -> UpdateError.NetworkError(e.message)
     }
 
     private fun updateAchievementPayload(

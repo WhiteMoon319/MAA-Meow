@@ -65,7 +65,7 @@ class NotificationSettingsViewModel(
         }
     }
 
-    fun sendTest() {
-        notificationService.sendTest()
+    fun sendTest(title: String, content: String) {
+        notificationService.sendTest(title, content)
     }
 }
