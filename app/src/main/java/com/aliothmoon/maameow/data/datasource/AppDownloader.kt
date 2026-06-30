@@ -1,6 +1,7 @@
 package com.aliothmoon.maameow.data.datasource
 
 import android.content.Context
+import com.aliothmoon.maameow.BuildConfig
 import com.aliothmoon.maameow.R
 import com.aliothmoon.maameow.data.api.HttpClientHelper
 import com.aliothmoon.maameow.data.api.await
@@ -92,11 +93,25 @@ class AppDownloader(
      */
     fun cleanOldApks(keepVersion: String) {
         val keepName = apkFileName(keepVersion)
-        listCachedApks()?.filter { it.name != keepName }?.forEach { it.delete() }
+        context.cacheDir.listFiles()?.filter {
+            it.name.startsWith("MaaMeow-") && (it.name.endsWith(".apk") || it.name.endsWith(
+                ".apk.dl"
+            ))
+        }?.filter { it.name != keepName }?.forEach { it.delete() }
     }
 
-    fun cleanCachedInstalledApks() {
-        listCachedApks(includeDownloading = false)?.forEach { it.delete() }
+
+    fun cleanInstalledApks() {
+        val current = BuildConfig.VERSION_NAME
+        context.cacheDir.listFiles()
+            ?.filter {
+                if (!it.name.startsWith("MaaMeow-") || !it.name.endsWith(".apk")) {
+                    return@filter false
+                }
+                val version = it.name.removePrefix("MaaMeow-").removeSuffix(".apk")
+                compareVersions(version, current) <= 0
+            }
+            ?.forEach { it.delete() }
     }
 
     suspend fun downloadToTempFile(
@@ -172,10 +187,4 @@ class AppDownloader(
     }
 
     private fun apkFileName(version: String): String = "MaaMeow-${version}.apk"
-
-    private fun listCachedApks(includeDownloading: Boolean = true): List<File>? {
-        return context.cacheDir.listFiles()?.filter {
-            it.name.startsWith("MaaMeow-") && (it.name.endsWith(".apk") || (includeDownloading && it.name.endsWith(".apk.dl")))
-        }
-    }
 }

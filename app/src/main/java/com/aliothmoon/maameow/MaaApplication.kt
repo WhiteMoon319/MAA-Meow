@@ -65,7 +65,7 @@ class MaaApplication : Application() {
 
     private fun cleanCachedUpdateApks() {
         applicationScope.launch {
-            appDownloader.cleanCachedInstalledApks()
+            appDownloader.cleanInstalledApks()
         }
     }
 
