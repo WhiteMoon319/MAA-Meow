@@ -95,8 +95,8 @@ class AppDownloader(
         listCachedApks()?.filter { it.name != keepName }?.forEach { it.delete() }
     }
 
-    fun cleanCachedApks() {
-        listCachedApks()?.forEach { it.delete() }
+    fun cleanCachedInstalledApks() {
+        listCachedApks(includeDownloading = false)?.forEach { it.delete() }
     }
 
     suspend fun downloadToTempFile(
@@ -173,9 +173,9 @@ class AppDownloader(
 
     private fun apkFileName(version: String): String = "MaaMeow-${version}.apk"
 
-    private fun listCachedApks(): List<File>? {
+    private fun listCachedApks(includeDownloading: Boolean = true): List<File>? {
         return context.cacheDir.listFiles()?.filter {
-            it.name.startsWith("MaaMeow-") && (it.name.endsWith(".apk") || it.name.endsWith(".apk.dl"))
+            it.name.startsWith("MaaMeow-") && (it.name.endsWith(".apk") || (includeDownloading && it.name.endsWith(".apk.dl")))
         }
     }
 }

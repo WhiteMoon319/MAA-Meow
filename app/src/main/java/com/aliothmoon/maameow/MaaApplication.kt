@@ -29,6 +29,8 @@ import org.koin.core.logger.Level
 
 class MaaApplication : Application() {
 
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private val appSettingsManager: AppSettingsManager by inject()
     private val crashHandler: CrashHandler by inject()
     private val unifiedStateDispatcher: UnifiedStateDispatcher by inject()
@@ -62,8 +64,8 @@ class MaaApplication : Application() {
     }
 
     private fun cleanCachedUpdateApks() {
-        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-            appDownloader.cleanCachedApks()
+        applicationScope.launch {
+            appDownloader.cleanCachedInstalledApks()
         }
     }
 
@@ -71,7 +73,7 @@ class MaaApplication : Application() {
     // 但国产 ROM 在自启动未开启时会拦截该广播，导致闹钟丢失后无法恢复。
     // 每次应用启动时执行一次幂等同步，作为兜底保障。
     private fun doSyncScheduleAlarms() {
-        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+        applicationScope.launch {
             scheduleRepository.isLoaded.filter { it }.first()
             scheduleAlarmManager.rescheduleAll(scheduleRepository.strategies.value)
         }
