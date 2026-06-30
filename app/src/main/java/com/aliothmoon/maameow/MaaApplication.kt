@@ -1,6 +1,7 @@
 package com.aliothmoon.maameow
 
 import android.app.Application
+import com.aliothmoon.maameow.data.datasource.AppDownloader
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
 import com.aliothmoon.maameow.domain.service.UnifiedStateDispatcher
 import com.aliothmoon.maameow.koin.appModule
@@ -32,6 +33,7 @@ class MaaApplication : Application() {
     private val crashHandler: CrashHandler by inject()
     private val unifiedStateDispatcher: UnifiedStateDispatcher by inject()
     private val overlayController: OverlayController by inject()
+    private val appDownloader: AppDownloader by inject()
     private val treeHolder: LogTreeHolder by inject()
     private val scheduleRepository: ScheduleStrategyRepository by inject()
     private val scheduleAlarmManager: ScheduleAlarmManager by inject()
@@ -55,7 +57,14 @@ class MaaApplication : Application() {
         crashHandler.init(this)
         overlayController.setup()
         unifiedStateDispatcher.start()
+        cleanCachedUpdateApks()
         doSyncScheduleAlarms()
+    }
+
+    private fun cleanCachedUpdateApks() {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            appDownloader.cleanCachedApks()
+        }
     }
 
     // BootReceiver 依赖 ACTION_MY_PACKAGE_REPLACED / BOOT_COMPLETED 恢复闹钟，

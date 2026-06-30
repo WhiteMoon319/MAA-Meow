@@ -92,11 +92,11 @@ class AppDownloader(
      */
     fun cleanOldApks(keepVersion: String) {
         val keepName = apkFileName(keepVersion)
-        context.cacheDir.listFiles()?.filter {
-                it.name.startsWith("MaaMeow-") && (it.name.endsWith(".apk") || it.name.endsWith(
-                    ".apk.dl"
-                ))
-            }?.filter { it.name != keepName }?.forEach { it.delete() }
+        listCachedApks()?.filter { it.name != keepName }?.forEach { it.delete() }
+    }
+
+    fun cleanCachedApks() {
+        listCachedApks()?.forEach { it.delete() }
     }
 
     suspend fun downloadToTempFile(
@@ -172,4 +172,10 @@ class AppDownloader(
     }
 
     private fun apkFileName(version: String): String = "MaaMeow-${version}.apk"
+
+    private fun listCachedApks(): List<File>? {
+        return context.cacheDir.listFiles()?.filter {
+            it.name.startsWith("MaaMeow-") && (it.name.endsWith(".apk") || it.name.endsWith(".apk.dl"))
+        }
+    }
 }
