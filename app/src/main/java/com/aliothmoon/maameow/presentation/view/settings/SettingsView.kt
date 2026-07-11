@@ -6,8 +6,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Matrix
-import android.graphics.Rect
-import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
@@ -31,12 +29,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -46,7 +42,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Build
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -82,7 +77,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -93,8 +87,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -1354,129 +1346,6 @@ private fun WallpaperCropFullScreen(
     }
 }
 
-@Composable
-private fun WallpaperCropDialog(
-    uri: Uri,
-    onDismiss: () -> Unit,
-    onSaved: (String) -> Unit,
-) {
-    val context = LocalContext.current
-    val displayMetrics = context.resources.displayMetrics
-    val targetWidth = displayMetrics.widthPixels
-    val targetHeight = displayMetrics.heightPixels
-    val sourceBitmap = remember(uri) { decodeBitmap(context, uri) }
-    var cropSize by remember { mutableStateOf(IntSize.Zero) }
-    var imageOffsetX by remember(uri) { mutableStateOf(0f) }
-    var imageOffsetY by remember(uri) { mutableStateOf(0f) }
-    var zoom by remember(uri) { mutableStateOf(1f) }
-    val targetRatio = targetWidth.toFloat() / targetHeight.toFloat()
-    val previewPlacement = remember(sourceBitmap, cropSize, targetRatio) {
-        sourceBitmap?.let { calculatePreviewPlacement(it, cropSize, targetRatio) }
-    }
-    LaunchedEffect(previewPlacement, zoom) {
-        previewPlacement?.let { placement ->
-            val bounds = placement.boundsForZoom(zoom)
-            imageOffsetX = imageOffsetX.coerceIn(-bounds.first, bounds.first)
-            imageOffsetY = imageOffsetY.coerceIn(-bounds.second, bounds.second)
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_custom_wallpaper_crop_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = stringResource(
-                        R.string.settings_custom_wallpaper_crop_desc,
-                        targetWidth,
-                        targetHeight,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .height(360.dp)
-                        .aspectRatio(targetRatio)
-                        .clip(RoundedCornerShape(16.dp))
-                        .onSizeChanged { cropSize = it }
-                        .pointerInput(previewPlacement) {
-                            detectTransformGestures { _, pan, zoomChange, _ ->
-                                val placement = previewPlacement ?: return@detectTransformGestures
-                                zoom = (zoom * zoomChange).coerceIn(1f, 4f)
-                                val bounds = placement.boundsForZoom(zoom)
-                                imageOffsetX = (imageOffsetX + pan.x).coerceIn(-bounds.first, bounds.first)
-                                imageOffsetY = (imageOffsetY + pan.y).coerceIn(-bounds.second, bounds.second)
-                            }
-                        }
-                ) {
-                    val placement = previewPlacement
-                    if (sourceBitmap != null && placement != null) {
-                        val density = LocalDensity.current
-                        val displayScale = placement.scale * zoom
-                        val imageWidth = sourceBitmap.width * displayScale
-                        val imageHeight = sourceBitmap.height * displayScale
-                        Image(
-                            bitmap = sourceBitmap.asImageBitmap(),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(
-                                    width = with(density) { imageWidth.toDp() },
-                                    height = with(density) { imageHeight.toDp() },
-                                )
-                                .offset {
-                                    IntOffset(
-                                        x = ((placement.cropWidth - imageWidth) / 2f + imageOffsetX).roundToInt(),
-                                        y = ((placement.cropHeight - imageHeight) / 2f + imageOffsetY).roundToInt(),
-                                    )
-                                },
-                            contentScale = ContentScale.FillBounds,
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(R.string.settings_custom_wallpaper_load_failed),
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                enabled = sourceBitmap != null && previewPlacement != null,
-                onClick = {
-                    val source = sourceBitmap ?: return@Button
-                    val placement = previewPlacement ?: return@Button
-                    val bitmap = cropBitmap(
-                        source = source,
-                        targetWidth = targetWidth,
-                        targetHeight = targetHeight,
-                        placement = placement,
-                        imageOffsetX = imageOffsetX,
-                        imageOffsetY = imageOffsetY,
-                        zoom = zoom,
-                    )
-                    val file = File(context.filesDir, "custom_wallpaper_${System.currentTimeMillis()}.jpg")
-                    file.outputStream().use { out ->
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 92, out)
-                    }
-                    onSaved(file.absolutePath)
-                },
-            ) {
-                Text(stringResource(R.string.settings_custom_wallpaper_save))
-            }
-        },
-        dismissButton = {
-            OutlinedButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        },
-    )
-}
-
 private fun decodeBitmap(context: Context, uri: Uri): Bitmap? = runCatching {
     val orientation = runCatching {
         context.contentResolver.openInputStream(uri)?.use {
@@ -1515,77 +1384,6 @@ private fun decodeBitmap(context: Context, uri: Uri): Bitmap? = runCatching {
         }
     }
 }.getOrNull()
-
-private data class WallpaperPreviewPlacement(
-    val cropWidth: Int,
-    val cropHeight: Int,
-    val sourceWidth: Int,
-    val sourceHeight: Int,
-    val scale: Float,
-)
-
-private fun WallpaperPreviewPlacement.boundsForZoom(zoom: Float): Pair<Float, Float> {
-    val displayScale = scale * zoom
-    val imageWidth = sourceWidth * displayScale
-    val imageHeight = sourceHeight * displayScale
-    return Pair(
-        ((imageWidth - cropWidth) / 2f).coerceAtLeast(0f),
-        ((imageHeight - cropHeight) / 2f).coerceAtLeast(0f),
-    )
-}
-
-private fun calculatePreviewPlacement(
-    source: Bitmap,
-    cropSize: IntSize,
-    targetRatio: Float,
-): WallpaperPreviewPlacement? {
-    if (cropSize.width <= 0 || cropSize.height <= 0) return null
-    val sourceRatio = source.width.toFloat() / source.height.toFloat()
-    val scale = if (sourceRatio > targetRatio) {
-        cropSize.height.toFloat() / source.height.toFloat()
-    } else {
-        cropSize.width.toFloat() / source.width.toFloat()
-    }
-    return WallpaperPreviewPlacement(
-        cropWidth = cropSize.width,
-        cropHeight = cropSize.height,
-        sourceWidth = source.width,
-        sourceHeight = source.height,
-        scale = scale,
-    )
-}
-
-private fun cropBitmap(
-    source: Bitmap,
-    targetWidth: Int,
-    targetHeight: Int,
-    placement: WallpaperPreviewPlacement,
-    imageOffsetX: Float,
-    imageOffsetY: Float,
-    zoom: Float,
-): Bitmap {
-    val displayScale = placement.scale * zoom
-    val imageWidth = source.width * displayScale
-    val imageHeight = source.height * displayScale
-    val baseOffsetX = (placement.cropWidth - imageWidth) / 2f
-    val baseOffsetY = (placement.cropHeight - imageHeight) / 2f
-    val srcLeft = (-(baseOffsetX + imageOffsetX) / displayScale)
-        .roundToInt()
-        .coerceIn(0, source.width - 1)
-    val srcTop = (-(baseOffsetY + imageOffsetY) / displayScale)
-        .roundToInt()
-        .coerceIn(0, source.height - 1)
-    val srcWidth = (placement.cropWidth / displayScale)
-        .roundToInt()
-        .coerceAtMost(source.width - srcLeft)
-    val srcHeight = (placement.cropHeight / displayScale)
-        .roundToInt()
-        .coerceAtMost(source.height - srcTop)
-    val srcRect = Rect(srcLeft, srcTop, srcLeft + srcWidth, srcTop + srcHeight)
-    val output = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-    Canvas(output).drawBitmap(source, srcRect, RectF(0f, 0f, targetWidth.toFloat(), targetHeight.toFloat()), null)
-    return output
-}
 
 @Composable
 private fun CardOpacitySetting(

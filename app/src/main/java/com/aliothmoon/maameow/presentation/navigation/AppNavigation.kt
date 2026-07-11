@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -172,6 +173,10 @@ fun AppNavigation(
                 // Keep the current setting and retry validation on the next launch.
             }
         }
+    }
+    DisposableEffect(wallpaperBitmap) {
+        val bitmap = wallpaperBitmap
+        onDispose { bitmap?.recycle() }
     }
     Box(
         modifier = Modifier

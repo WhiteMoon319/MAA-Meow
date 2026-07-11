@@ -611,8 +611,12 @@ class AppSettingsManager(
         .stateIn(scope, SharingStarted.Eagerly, parseCardOpacity(initialSettings.cardOpacity))
 
     suspend fun setCardOpacity(opacity: Int) {
-        with(AppSettingsSchema) {
-            context.dataStore.edit { it[cardOpacity] = opacity.coerceIn(CARD_OPACITY_MIN, CARD_OPACITY_MAX).toString() }
+        settingsMutex.withLock {
+            with(AppSettingsSchema) {
+                context.dataStore.edit {
+                    it[cardOpacity] = opacity.coerceIn(CARD_OPACITY_MIN, CARD_OPACITY_MAX).toString()
+                }
+            }
         }
     }
 
