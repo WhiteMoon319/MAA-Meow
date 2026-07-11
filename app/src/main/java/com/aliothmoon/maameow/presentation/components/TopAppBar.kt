@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import com.aliothmoon.maameow.R
+import com.aliothmoon.maameow.theme.LocalControlOpacity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +26,9 @@ fun TopAppBar(
     onActionClick: () -> Unit = {},
     actions: @Composable (RowScope.() -> Unit)? = null
 ) {
+    val containerColor = MaterialTheme.colorScheme.surface.copy(
+        alpha = MaterialTheme.colorScheme.surface.alpha * LocalControlOpacity.current
+    )
     TopAppBar(
         title = {
             Text(
@@ -60,8 +64,9 @@ fun TopAppBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            titleContentColor = MaterialTheme.colorScheme.onBackground,
+            containerColor = containerColor,
+            scrolledContainerColor = containerColor,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor = MaterialTheme.colorScheme.primary
         )
     )
