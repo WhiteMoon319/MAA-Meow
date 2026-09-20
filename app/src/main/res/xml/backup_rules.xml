@@ -10,4 +10,6 @@
    <include domain="sharedpref" path="."/>
    <exclude domain="sharedpref" path="device.xml"/>
 -->
+    <!-- 自定义背景图体积大，不随云备份/换机迁移，用户需重新设置 -->
+    <exclude domain="file" path="backgrounds/"/>
 </full-backup-content>
