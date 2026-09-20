@@ -603,6 +603,9 @@ class SettingsViewModel(
     val customBackgroundScrim: StateFlow<Int> = appSettingsManager.customBackgroundScrim
     val customBackgroundBlur: StateFlow<Int> = appSettingsManager.customBackgroundBlur
     val backgroundImage: StateFlow<ImageBitmap?> = backgroundImageStore.imageBitmap
+    val customBackgroundRotateMode: StateFlow<String> = appSettingsManager.customBackgroundRotateMode
+    val customBackgroundShuffle: StateFlow<Boolean> = appSettingsManager.customBackgroundShuffle
+    val customBackgroundImageIds: StateFlow<String> = appSettingsManager.customBackgroundImageIds
 
     fun setCustomBackgroundEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -618,18 +621,36 @@ class SettingsViewModel(
     suspend fun decodeBackgroundSource(path: String): Bitmap? =
         backgroundImageStore.decodeSource(path)
 
-    /** 保存裁剪结果并启用背景；返回是否成功。 */
-    suspend fun saveCroppedBackground(bitmap: Bitmap): Boolean =
-        backgroundImageStore.saveCropped(bitmap)
+    /** 把裁剪结果追加为一张新背景并设为当前图；返回是否成功。 */
+    suspend fun addCroppedBackground(bitmap: Bitmap): Boolean =
+        backgroundImageStore.addCropped(bitmap)
 
     /** 取消裁剪或保存完成后清理源图片缓存。 */
     fun discardBackgroundSource() {
         backgroundImageStore.clearSourceCache()
     }
 
+    /** 移除当前背景图；删空后自动关闭背景。 */
     fun removeBackgroundImage() {
         viewModelScope.launch {
-            backgroundImageStore.clear()
+            val current = appSettingsManager.customBackgroundCurrentId.value
+            if (current.isBlank()) {
+                backgroundImageStore.clear()
+            } else {
+                backgroundImageStore.removeImage(current)
+            }
+        }
+    }
+
+    fun setCustomBackgroundRotateMode(mode: String) {
+        viewModelScope.launch {
+            appSettingsManager.setCustomBackgroundRotateMode(mode)
+        }
+    }
+
+    fun setCustomBackgroundShuffle(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setCustomBackgroundShuffle(enabled)
         }
     }
 

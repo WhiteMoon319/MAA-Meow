@@ -95,6 +95,7 @@ import com.aliothmoon.maameow.constant.OFFICIAL_SHIZUKU_PACKAGE
 import com.aliothmoon.maameow.constant.Routes
 import com.aliothmoon.maameow.data.model.update.UpdateChannel
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
+import com.aliothmoon.maameow.data.resource.BackgroundImageStore
 import com.aliothmoon.maameow.domain.models.CoreDataLocation
 import com.aliothmoon.maameow.domain.models.RemoteBackend
 import com.aliothmoon.maameow.domain.models.UnlockGesture
@@ -112,6 +113,7 @@ import com.aliothmoon.maameow.presentation.components.ListItemDivider
 import com.aliothmoon.maameow.presentation.components.LogExportController
 import com.aliothmoon.maameow.presentation.components.ReInitializeConfirmDialog
 import com.aliothmoon.maameow.presentation.components.ResourceInitDialog
+import com.aliothmoon.maameow.presentation.components.SelectableChipGroup
 import com.aliothmoon.maameow.presentation.components.SettingRow
 import com.aliothmoon.maameow.presentation.components.SettingsGroupCard
 import com.aliothmoon.maameow.presentation.components.TopAppBar
@@ -193,6 +195,9 @@ fun SettingsView(
     val customBackgroundScrim by viewModel.customBackgroundScrim.collectAsStateWithLifecycle()
     val customBackgroundBlur by viewModel.customBackgroundBlur.collectAsStateWithLifecycle()
     val backgroundImage by viewModel.backgroundImage.collectAsStateWithLifecycle()
+    val customBackgroundRotateMode by viewModel.customBackgroundRotateMode.collectAsStateWithLifecycle()
+    val customBackgroundShuffle by viewModel.customBackgroundShuffle.collectAsStateWithLifecycle()
+    val customBackgroundImageIds by viewModel.customBackgroundImageIds.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val settingsMessage by viewModel.settingsMessage.collectAsStateWithLifecycle()
     val showRestartDialog by viewModel.showRestartDialog.collectAsStateWithLifecycle()
@@ -685,6 +690,9 @@ fun SettingsView(
                             imageAlpha = customBackgroundImageAlpha,
                             scrim = customBackgroundScrim,
                             blur = customBackgroundBlur,
+                            rotateMode = customBackgroundRotateMode,
+                            shuffle = customBackgroundShuffle,
+                            imageCount = customBackgroundImageIds.split(',').count { it.isNotBlank() },
                             onEnabledChange = { viewModel.setCustomBackgroundEnabled(it) },
                             onPickImage = {
                                 pickBackgroundLauncher.launch(
@@ -695,6 +703,8 @@ fun SettingsView(
                             onImageAlphaChange = { viewModel.setCustomBackgroundImageAlpha(it) },
                             onScrimChange = { viewModel.setCustomBackgroundScrim(it) },
                             onBlurChange = { viewModel.setCustomBackgroundBlur(it) },
+                            onRotateModeChange = { viewModel.setCustomBackgroundRotateMode(it) },
+                            onShuffleChange = { viewModel.setCustomBackgroundShuffle(it) },
                         )
                     }
                 }
@@ -1678,12 +1688,17 @@ private fun SettingCustomBackgroundSection(
     imageAlpha: Int,
     scrim: Int,
     blur: Int,
+    rotateMode: String,
+    shuffle: Boolean,
+    imageCount: Int,
     onEnabledChange: (Boolean) -> Unit,
     onPickImage: () -> Unit,
     onRemoveImage: () -> Unit,
     onImageAlphaChange: (Int) -> Unit,
     onScrimChange: (Int) -> Unit,
     onBlurChange: (Int) -> Unit,
+    onRotateModeChange: (String) -> Unit,
+    onShuffleChange: (Boolean) -> Unit,
 ) {
     val hasImage = previewImage != null
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -1723,7 +1738,7 @@ private fun SettingCustomBackgroundSection(
                     ) {
                         Text(
                             text = stringResource(
-                                if (hasImage) R.string.settings_background_replace
+                                if (hasImage) R.string.settings_background_add
                                 else R.string.settings_background_pick
                             )
                         )
@@ -1739,6 +1754,11 @@ private fun SettingCustomBackgroundSection(
                     }
                 }
                 if (hasImage) {
+                    Text(
+                        text = stringResource(R.string.settings_background_count, imageCount),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = contentColor
+                    )
                     BackgroundPercentSlider(
                         label = stringResource(R.string.settings_background_image_alpha),
                         value = imageAlpha,
@@ -1759,6 +1779,27 @@ private fun SettingCustomBackgroundSection(
                             onValueChange = onBlurChange
                         )
                     }
+                    SelectableChipGroup(
+                        label = stringResource(R.string.settings_background_rotate),
+                        selectedValue = rotateMode,
+                        options = listOf(
+                            BackgroundImageStore.MODE_OFF to
+                                    stringResource(R.string.settings_background_rotate_off),
+                            BackgroundImageStore.MODE_LAUNCH to
+                                    stringResource(R.string.settings_background_rotate_launch),
+                            BackgroundImageStore.MODE_DAILY to
+                                    stringResource(R.string.settings_background_rotate_daily),
+                        ),
+                        onSelected = onRotateModeChange,
+                        enabled = imageCount >= 2,
+                    )
+                    SettingSwitchItem(
+                        title = stringResource(R.string.settings_background_shuffle),
+                        contentColor = contentColor,
+                        checked = shuffle,
+                        enabled = imageCount >= 2,
+                        onCheckedChange = onShuffleChange,
+                    )
                 }
             }
         }

@@ -69,6 +69,9 @@ class ConfigBackupManager(
             backup.appSettings.normalizedForImport().copy(
                 customBackgroundEnabled = localSettings.customBackgroundEnabled,
                 customBackgroundToken = localSettings.customBackgroundToken,
+                customBackgroundImageIds = localSettings.customBackgroundImageIds,
+                customBackgroundCurrentId = localSettings.customBackgroundCurrentId,
+                customBackgroundLastRotateDate = localSettings.customBackgroundLastRotateDate,
             )
         )
         notificationSettingsManager.updateSettings(backup.notificationSettings.reapplyWebhookPresetIfBlank())
@@ -95,6 +98,9 @@ class ConfigBackupManager(
             operBoxUseYituliuApi = "false",
             customBackgroundEnabled = "false",
             customBackgroundToken = "",
+            customBackgroundImageIds = "",
+            customBackgroundCurrentId = "",
+            customBackgroundLastRotateDate = "",
         )
 
         /**

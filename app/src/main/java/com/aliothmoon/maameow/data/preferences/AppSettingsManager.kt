@@ -607,6 +607,54 @@ class AppSettingsManager internal constructor(
         }
     }
 
+    val customBackgroundImageIds: StateFlow<String> = setting { it.customBackgroundImageIds }
+
+    val customBackgroundCurrentId: StateFlow<String> = setting { it.customBackgroundCurrentId }
+
+    val customBackgroundRotateMode: StateFlow<String> = setting { it.customBackgroundRotateMode }
+
+    val customBackgroundShuffle: StateFlow<Boolean> =
+        setting { it.customBackgroundShuffle.toBooleanStrictOrNull() ?: false }
+
+    val customBackgroundLastRotateDate: StateFlow<String> =
+        setting { it.customBackgroundLastRotateDate }
+
+    suspend fun setCustomBackgroundRotateMode(mode: String) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[customBackgroundRotateMode] = mode }
+        }
+    }
+
+    suspend fun setCustomBackgroundShuffle(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[customBackgroundShuffle] = enabled.toString() }
+        }
+    }
+
+    /** 图片列表或当前图变化时成对写入，并同步启用态与令牌。 */
+    suspend fun setCustomBackgroundImages(ids: List<String>, currentId: String) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit {
+                it[customBackgroundImageIds] = ids.joinToString(",")
+                it[customBackgroundCurrentId] = currentId
+                it[customBackgroundEnabled] =
+                    (ids.isNotEmpty() && currentId.isNotBlank()).toString()
+                it[customBackgroundToken] = System.currentTimeMillis().toString()
+            }
+        }
+    }
+
+    /** 轮播切换当前图：更新当前 id、上次轮播日期并刷新令牌触发重载。 */
+    suspend fun setCustomBackgroundRotated(currentId: String, date: String) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit {
+                it[customBackgroundCurrentId] = currentId
+                it[customBackgroundLastRotateDate] = date
+                it[customBackgroundToken] = System.currentTimeMillis().toString()
+            }
+        }
+    }
+
     // ───────────────── 唤醒 + 解锁 ─────────────────
 
     val wakeUnlockType: StateFlow<String> = setting {

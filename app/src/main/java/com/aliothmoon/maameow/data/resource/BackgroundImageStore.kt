@@ -26,15 +26,17 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
+import java.time.LocalDate
 
 /**
- * 自定义主界面背景图的单一数据源。
+ * 自定义主界面背景图的单一数据源（支持多图与轮播）。
  *
  * 职责：
  * - [prepareSource] / [decodeSource]：把用户选中的图片复制到缓存并按 EXIF 方向解码，供裁剪页使用；
- * - [saveCropped]：把裁剪结果写入 filesDir/backgrounds/bg.jpg，并更新令牌触发重载；
- * - [clear]：删除文件并关闭背景；
- * - [imageBitmap]：监听「启用状态 + 令牌」，在 IO 线程解码并缓存为 [ImageBitmap]，供主界面绘制。
+ * - [addCropped]：把裁剪结果追加为一张新背景（filesDir/backgrounds/bg_<id>.jpg）并选中；
+ * - [removeImage] / [clear]：删除单张或全部背景；
+ * - [rotateIfNeeded]：按偏好（每次启动 / 每天，可随机）切换当前图；
+ * - [imageBitmap]：监听「启用状态 + 令牌」，解码当前图供主界面绘制。
  *
  * 只负责数据与解码，不含任何 UI；玻璃主题与遮罩绘制在 presentation/theme 层完成。
  */
@@ -48,11 +50,16 @@ class BackgroundImageStore(
     // 重建后的页面再次保存会与之共写同一临时文件，必须互斥。
     private val writeMutex = Mutex()
 
+    // LAUNCH 模式下，进程内只轮播一次，避免转屏重建重复切换。
+    @Volatile
+    private var launchRotated = false
+
     private val backgroundsDir: File
         get() = File(context.filesDir, DIR_NAME)
 
-    private val backgroundFile: File
-        get() = File(backgroundsDir, BG_FILE_NAME)
+    // 旧版单图文件名，仅用于迁移。
+    private val legacyFile: File
+        get() = File(backgroundsDir, LEGACY_FILE_NAME)
 
     /** 当前生效的背景位图；未启用或无文件时为 null。scope 即 IO 调度器，解码在 IO 线程执行。 */
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -61,7 +68,7 @@ class BackgroundImageStore(
             appSettingsManager.customBackgroundEnabled,
             appSettingsManager.customBackgroundToken,
         ) { enabled, token -> enabled to token }
-            .mapLatest { (enabled, _) -> if (enabled) loadBitmap() else null }
+            .mapLatest { (enabled, _) -> if (enabled) loadCurrentBitmap() else null }
             .stateIn(scope, SharingStarted.Eagerly, null)
 
     /**
@@ -142,46 +149,113 @@ class BackgroundImageStore(
     }
 
     /**
-     * 把裁剪结果写入背景文件：成功后更新令牌并启用背景。
+     * 把裁剪结果追加为一张新背景并设为当前图；成功后同步启用态与令牌。
      */
-    suspend fun saveCropped(bitmap: Bitmap): Boolean =
+    suspend fun addCropped(bitmap: Bitmap): Boolean =
         withContext(NonCancellable + Dispatchers.IO) {
             writeMutex.withLock {
                 runCatching {
                     backgroundsDir.mkdirs()
-                    // 先写临时文件再同目录原子重命名：压缩失败或进程被杀不会破坏已有背景。
-                    val temporaryFile = File(backgroundsDir, "$BG_FILE_NAME.tmp")
+                    val id = System.currentTimeMillis().toString()
+                    val target = File(backgroundsDir, fileFor(id))
+                    // 先写临时文件再同目录原子重命名：压缩失败或进程被杀不会留下半截文件。
+                    val temporaryFile = File(backgroundsDir, "${target.name}.tmp")
                     try {
                         temporaryFile.outputStream().use { out ->
                             check(bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out))
                         }
-                        check(temporaryFile.renameTo(backgroundFile)) { "重命名背景文件失败" }
+                        check(temporaryFile.renameTo(target)) { "重命名背景文件失败" }
                     } finally {
                         temporaryFile.delete()
                     }
-                    appSettingsManager.setCustomBackgroundState(
-                        enabled = true,
-                        token = System.currentTimeMillis().toString(),
-                    )
+                    val ids = parseIds(appSettingsManager.customBackgroundImageIds.value) + id
+                    appSettingsManager.setCustomBackgroundImages(ids, id)
                     true
-                }.onFailure { Timber.e(it, "saveCropped failed") }.getOrDefault(false)
+                }.onFailure { Timber.e(it, "addCropped failed") }.getOrDefault(false)
             }
         }
 
-    /** 关闭并清除自定义背景。 */
-    suspend fun clear() = withContext(Dispatchers.IO) {
+    /** 删除指定背景图；若删的是当前图则切换到剩余的第一张，删空则关闭背景。 */
+    suspend fun removeImage(id: String) = withContext(Dispatchers.IO) {
         writeMutex.withLock {
-            appSettingsManager.setCustomBackgroundState(enabled = false, token = "")
-            runCatching { backgroundFile.delete() }
-            // 顺带清理进程被杀可能残留的临时文件
-            runCatching { File(backgroundsDir, "$BG_FILE_NAME.tmp").delete() }
+            val ids = parseIds(appSettingsManager.customBackgroundImageIds.value)
+            if (id !in ids) return@withLock
+            runCatching { File(backgroundsDir, fileFor(id)).delete() }
+            val remaining = ids - id
+            val current = appSettingsManager.customBackgroundCurrentId.value
+            val next = if (current == id) remaining.firstOrNull().orEmpty() else current
+            appSettingsManager.setCustomBackgroundImages(remaining, next)
         }
     }
 
-    private fun loadBitmap(): ImageBitmap? {
-        val (screenWidth, screenHeight) = Misc.getScreenSize(context)
-        return decodeScaled(backgroundFile, screenWidth, screenHeight)?.asImageBitmap()
+    /** 关闭并清除全部自定义背景。 */
+    suspend fun clear() = withContext(Dispatchers.IO) {
+        writeMutex.withLock {
+            backgroundsDir.listFiles()?.forEach { runCatching { it.delete() } }
+            appSettingsManager.setCustomBackgroundImages(emptyList(), "")
+        }
     }
+
+    /**
+     * 按偏好轮播当前图：LAUNCH 每次启动一次，DAILY 跨天一次；均需至少两张图。
+     * 随机模式从其余图中挑选，顺序模式取下一张。
+     */
+    suspend fun rotateIfNeeded() = withContext(Dispatchers.IO) {
+        val mode = appSettingsManager.customBackgroundRotateMode.value
+        if (mode == MODE_OFF) return@withContext
+        val ids = parseIds(appSettingsManager.customBackgroundImageIds.value)
+        if (ids.size < 2) return@withContext
+        val today = LocalDate.now().toString()
+        when (mode) {
+            MODE_LAUNCH -> {
+                if (launchRotated) return@withContext
+                launchRotated = true
+            }
+
+            MODE_DAILY -> if (appSettingsManager.customBackgroundLastRotateDate.value == today) {
+                return@withContext
+            }
+
+            else -> return@withContext
+        }
+        val current = appSettingsManager.customBackgroundCurrentId.value
+        val shuffle = appSettingsManager.customBackgroundShuffle.value
+        val next = if (shuffle) {
+            ids.filter { it != current }.random()
+        } else {
+            val index = ids.indexOf(current).let { if (it < 0) 0 else it }
+            ids[(index + 1) % ids.size]
+        }
+        runCatching { appSettingsManager.setCustomBackgroundRotated(next, today) }
+            .onFailure { Timber.e(it, "rotateIfNeeded failed") }
+    }
+
+    private suspend fun loadCurrentBitmap(): ImageBitmap? {
+        migrateLegacyIfNeeded()
+        val ids = parseIds(appSettingsManager.customBackgroundImageIds.value)
+        val current = appSettingsManager.customBackgroundCurrentId.value
+            .ifBlank { ids.firstOrNull().orEmpty() }
+        if (current.isBlank()) return null
+        val (screenWidth, screenHeight) = Misc.getScreenSize(context)
+        val file = File(backgroundsDir, fileFor(current))
+        return decodeScaled(file, screenWidth, screenHeight)?.asImageBitmap()
+    }
+
+    /** 旧版单图 bg.jpg 迁移为多图列表首项。 */
+    private suspend fun migrateLegacyIfNeeded() = writeMutex.withLock {
+        if (appSettingsManager.customBackgroundImageIds.value.isNotBlank()) return@withLock
+        if (!legacyFile.exists()) return@withLock
+        val id = System.currentTimeMillis().toString()
+        val target = File(backgroundsDir, fileFor(id))
+        if (legacyFile.renameTo(target)) {
+            appSettingsManager.setCustomBackgroundImages(listOf(id), id)
+        }
+    }
+
+    private fun parseIds(raw: String): List<String> =
+        raw.split(',').map { it.trim() }.filter { it.isNotBlank() }
+
+    private fun fileFor(id: String): String = "bg_$id.jpg"
 
     private fun decodeScaled(file: File, requestedWidth: Int, requestedHeight: Int): Bitmap? {
         if (!file.exists() || file.length() == 0L) return null
@@ -219,10 +293,15 @@ class BackgroundImageStore(
 
     companion object {
         private const val DIR_NAME = "backgrounds"
-        private const val BG_FILE_NAME = "bg.jpg"
+        private const val LEGACY_FILE_NAME = "bg.jpg"
         private const val SOURCE_TMP_NAME = "bg_source_tmp"
 
         /** 裁剪源图片解码的最长边限制 */
         private const val MAX_SOURCE_SIDE = 2400
+
+        /** 轮播模式 */
+        const val MODE_OFF = "OFF"
+        const val MODE_LAUNCH = "LAUNCH"
+        const val MODE_DAILY = "DAILY"
     }
 }
