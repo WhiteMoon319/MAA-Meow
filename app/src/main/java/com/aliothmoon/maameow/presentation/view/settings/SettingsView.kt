@@ -199,6 +199,7 @@ fun SettingsView(
     val customBackgroundRotateMode by viewModel.customBackgroundRotateMode.collectAsStateWithLifecycle()
     val customBackgroundShuffle by viewModel.customBackgroundShuffle.collectAsStateWithLifecycle()
     val customBackgroundImageIds by viewModel.customBackgroundImageIds.collectAsStateWithLifecycle()
+    val customBackgroundFollowSystem by viewModel.customBackgroundFollowSystem.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val settingsMessage by viewModel.settingsMessage.collectAsStateWithLifecycle()
     val showRestartDialog by viewModel.showRestartDialog.collectAsStateWithLifecycle()
@@ -310,6 +311,14 @@ fun SettingsView(
     val pickBackgroundLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri -> uri?.let(backgroundCrop::pick) }
+
+    val batchBackgroundLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(20)
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            coroutineScope.launch { viewModel.addBackgroundImages(uris) }
+        }
+    }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -724,9 +733,15 @@ fun SettingsView(
                             rotateMode = customBackgroundRotateMode,
                             shuffle = customBackgroundShuffle,
                             imageCount = customBackgroundImageIds.split(',').count { it.isNotBlank() },
+                            followSystem = customBackgroundFollowSystem,
                             onEnabledChange = { viewModel.setCustomBackgroundEnabled(it) },
                             onPickImage = {
                                 pickBackgroundLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
+                            onBatchAdd = {
+                                batchBackgroundLauncher.launch(
                                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                 )
                             },
@@ -736,6 +751,7 @@ fun SettingsView(
                             onBlurChange = { viewModel.setCustomBackgroundBlur(it) },
                             onRotateModeChange = { viewModel.setCustomBackgroundRotateMode(it) },
                             onShuffleChange = { viewModel.setCustomBackgroundShuffle(it) },
+                            onFollowSystemChange = { viewModel.setCustomBackgroundFollowSystem(it) },
                         )
                     }
                 }
@@ -1718,14 +1734,17 @@ private fun SettingCustomBackgroundSection(
     rotateMode: String,
     shuffle: Boolean,
     imageCount: Int,
+    followSystem: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     onPickImage: () -> Unit,
+    onBatchAdd: () -> Unit,
     onRemoveImage: () -> Unit,
     onImageAlphaChange: (Int) -> Unit,
     onScrimChange: (Int) -> Unit,
     onBlurChange: (Int) -> Unit,
     onRotateModeChange: (String) -> Unit,
     onShuffleChange: (Boolean) -> Unit,
+    onFollowSystemChange: (Boolean) -> Unit,
 ) {
     val hasImage = previewImage != null
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -1746,6 +1765,13 @@ private fun SettingCustomBackgroundSection(
                 modifier = Modifier.padding(bottom = MaaDesignTokens.Spacing.listItemVertical),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                SettingSwitchItem(
+                    title = stringResource(R.string.settings_background_follow_system),
+                    description = stringResource(R.string.settings_background_follow_system_desc),
+                    contentColor = contentColor,
+                    checked = followSystem,
+                    onCheckedChange = onFollowSystemChange,
+                )
                 if (previewImage != null) {
                     Image(
                         bitmap = previewImage,
@@ -1770,14 +1796,21 @@ private fun SettingCustomBackgroundSection(
                             )
                         )
                     }
-                    if (hasImage) {
-                        OutlinedButton(
-                            onClick = onRemoveImage,
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Text(text = stringResource(R.string.settings_background_remove))
-                        }
+                    Button(
+                        onClick = onBatchAdd,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(text = stringResource(R.string.settings_background_batch))
+                    }
+                }
+                if (hasImage) {
+                    OutlinedButton(
+                        onClick = onRemoveImage,
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(text = stringResource(R.string.settings_background_remove))
                     }
                 }
                 if (hasImage) {

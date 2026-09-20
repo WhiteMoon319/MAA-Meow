@@ -606,6 +606,7 @@ class SettingsViewModel(
     val customBackgroundRotateMode: StateFlow<String> = appSettingsManager.customBackgroundRotateMode
     val customBackgroundShuffle: StateFlow<Boolean> = appSettingsManager.customBackgroundShuffle
     val customBackgroundImageIds: StateFlow<String> = appSettingsManager.customBackgroundImageIds
+    val customBackgroundFollowSystem: StateFlow<Boolean> = appSettingsManager.customBackgroundFollowSystem
 
     fun setCustomBackgroundEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -624,6 +625,20 @@ class SettingsViewModel(
     /** 把裁剪结果追加为一张新背景并设为当前图；返回是否成功。 */
     suspend fun addCroppedBackground(bitmap: Bitmap): Boolean =
         backgroundImageStore.addCropped(bitmap)
+
+    /** 批量添加背景图：不做交互裁剪，按原图（EXIF 摆正）保存，显示时按屏比裁剪。 */
+    suspend fun addBackgroundImages(uris: List<Uri>) {
+        uris.forEach { uri ->
+            val path = backgroundImageStore.prepareSource(uri) ?: return@forEach
+            val bitmap = backgroundImageStore.decodeSource(path) ?: return@forEach
+            try {
+                backgroundImageStore.addCropped(bitmap)
+            } finally {
+                bitmap.recycle()
+            }
+        }
+        backgroundImageStore.clearSourceCache()
+    }
 
     /** 取消裁剪或保存完成后清理源图片缓存。 */
     fun discardBackgroundSource() {
@@ -651,6 +666,12 @@ class SettingsViewModel(
     fun setCustomBackgroundShuffle(enabled: Boolean) {
         viewModelScope.launch {
             appSettingsManager.setCustomBackgroundShuffle(enabled)
+        }
+    }
+
+    fun setCustomBackgroundFollowSystem(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setCustomBackgroundFollowSystem(enabled)
         }
     }
 

@@ -610,6 +610,19 @@ class AppSettingsManager internal constructor(
     val customBackgroundLastRotateDate: StateFlow<String> =
         setting { it.customBackgroundLastRotateDate }
 
+    val customBackgroundFollowSystem: StateFlow<Boolean> =
+        setting { it.customBackgroundFollowSystem.toBooleanStrictOrNull() ?: false }
+
+    /** 切换是否跟随系统壁纸，并刷新令牌触发重载。 */
+    suspend fun setCustomBackgroundFollowSystem(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit {
+                it[customBackgroundFollowSystem] = enabled.toString()
+                it[customBackgroundToken] = System.currentTimeMillis().toString()
+            }
+        }
+    }
+
     suspend fun setCustomBackgroundRotateMode(mode: String) {
         with(AppSettingsSchema) {
             context.dataStore.edit { it[customBackgroundRotateMode] = mode }

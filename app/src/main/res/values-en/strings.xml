@@ -94,6 +94,9 @@
     <string name="settings_background_scrim">Scrim</string>
     <string name="settings_background_blur">Blur</string>
     <string name="settings_background_add">Add Image</string>
+    <string name="settings_background_batch">Batch add</string>
+    <string name="settings_background_follow_system">Use system wallpaper</string>
+    <string name="settings_background_follow_system_desc">Local images are ignored when enabled</string>
     <string name="settings_background_count">%1$d image(s) added</string>
     <string name="settings_background_rotate">Rotation</string>
     <string name="settings_background_rotate_off">Off</string>

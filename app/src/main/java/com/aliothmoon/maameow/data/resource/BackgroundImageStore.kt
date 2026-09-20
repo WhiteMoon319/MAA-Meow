@@ -1,9 +1,12 @@
 package com.aliothmoon.maameow.data.resource
 
+import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Matrix
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -231,6 +234,10 @@ class BackgroundImageStore(
     }
 
     private suspend fun loadCurrentBitmap(): ImageBitmap? {
+        if (appSettingsManager.customBackgroundFollowSystem.value) {
+            systemWallpaperBitmap()?.let { return it }
+            // 取不到系统壁纸时回退本地图片
+        }
         migrateLegacyIfNeeded()
         val ids = parseIds(appSettingsManager.customBackgroundImageIds.value)
         val current = appSettingsManager.customBackgroundCurrentId.value
@@ -240,6 +247,23 @@ class BackgroundImageStore(
         val file = File(backgroundsDir, fileFor(current))
         return decodeScaled(file, screenWidth, screenHeight)?.asImageBitmap()
     }
+
+    /** 读取系统壁纸；部分版本可能无权限或返回空，失败一律返回 null 由调用方回退。 */
+    private fun systemWallpaperBitmap(): ImageBitmap? = runCatching {
+        val drawable = WallpaperManager.getInstance(context).drawable ?: return@runCatching null
+        val bitmap = if (drawable is BitmapDrawable) {
+            drawable.bitmap
+        } else {
+            val width = drawable.intrinsicWidth
+            val height = drawable.intrinsicHeight
+            if (width <= 0 || height <= 0) return@runCatching null
+            Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also { target ->
+                drawable.setBounds(0, 0, width, height)
+                drawable.draw(Canvas(target))
+            }
+        }
+        bitmap.asImageBitmap()
+    }.onFailure { Timber.e(it, "read system wallpaper failed") }.getOrNull()
 
     /** 旧版单图 bg.jpg 迁移为多图列表首项。 */
     private suspend fun migrateLegacyIfNeeded() = writeMutex.withLock {
