@@ -302,6 +302,9 @@
     <string name="settings_background_scrim">遮罩强度</string>
     <string name="settings_background_blur">模糊</string>
     <string name="settings_background_add">添加图片</string>
+    <string name="settings_background_batch">批量添加</string>
+    <string name="settings_background_follow_system">跟随系统壁纸</string>
+    <string name="settings_background_follow_system_desc">开启后忽略本地图片</string>
     <string name="settings_background_count">已添加 %1$d 张</string>
     <string name="settings_background_rotate">轮播</string>
     <string name="settings_background_rotate_off">关闭</string>

@@ -193,6 +193,10 @@ data class AppSettings(
     @PrefKey(default = "")
     val customBackgroundLastRotateDate: String = "",
 
+    /** 是否使用系统壁纸作为背景（优先于本地图片） */
+    @PrefKey(default = "false")
+    val customBackgroundFollowSystem: String = "false",
+
     // ───────────────── 定时唤醒 + 解锁 ─────────────────
 
     /** 解锁方式：swipe / pin，默认滑动（无密码） */
