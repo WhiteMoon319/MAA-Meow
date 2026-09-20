@@ -301,6 +301,13 @@
     <string name="settings_background_image_alpha">图片不透明度</string>
     <string name="settings_background_scrim">遮罩强度</string>
     <string name="settings_background_blur">模糊</string>
+    <string name="settings_background_add">添加图片</string>
+    <string name="settings_background_count">已添加 %1$d 张</string>
+    <string name="settings_background_rotate">轮播</string>
+    <string name="settings_background_rotate_off">关闭</string>
+    <string name="settings_background_rotate_launch">每次启动</string>
+    <string name="settings_background_rotate_daily">每天</string>
+    <string name="settings_background_shuffle">随机切换</string>
     <string name="settings_background_import_failed">背景图片导入失败</string>
     <string name="settings_background_crop_reset">复位</string>
     <string name="settings_background_crop_rotate">旋转 90°</string>

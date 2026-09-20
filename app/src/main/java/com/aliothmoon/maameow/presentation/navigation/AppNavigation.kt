@@ -143,6 +143,11 @@ fun AppNavigation(
     val backgroundScrim by appSettings.customBackgroundScrim.collectAsStateWithLifecycle()
     val backgroundBlur by appSettings.customBackgroundBlur.collectAsStateWithLifecycle()
 
+    // 启动时按偏好轮播当前背景（每次启动 / 跨天）
+    LaunchedEffect(backgroundStore) {
+        backgroundStore.rotateIfNeeded()
+    }
+
     LaunchedEffect(backgroundTaskViewModel) {
         backgroundTaskViewModel.launchEffects.collect { effect ->
             when (effect) {

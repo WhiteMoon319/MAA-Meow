@@ -71,7 +71,7 @@ internal class BackgroundCropController(
     /** 保存裁剪结果；成功后结束会话并清理缓存，失败提示后停留在裁剪页。 */
     suspend fun confirm(cropped: Bitmap) {
         try {
-            if (viewModel.saveCroppedBackground(cropped)) {
+            if (viewModel.addCroppedBackground(cropped)) {
                 endSession()
             } else {
                 showFailureToast()

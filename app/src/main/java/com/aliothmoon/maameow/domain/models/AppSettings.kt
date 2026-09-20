@@ -156,7 +156,7 @@ data class AppSettings(
     val customBackgroundEnabled: String = "false",
 
     /**
-     * 图片文件固定存放在 filesDir/backgrounds/bg.jpg，路径本身无需持久化。
+     * 背景图变化令牌，用于触发重新解码；路径本身不持久化（文件为 filesDir/backgrounds/）。
      */
     @PrefKey(default = "")
     val customBackgroundToken: String = "",
@@ -172,6 +172,26 @@ data class AppSettings(
     /** 背景模糊强度 0~100（默认 0，仅 API 31+ 生效） */
     @PrefKey(default = "0")
     val customBackgroundBlur: String = "0",
+
+    /** 多图顺序：逗号分隔的图片 id 列表（文件为 filesDir/backgrounds/bg_<id>.jpg） */
+    @PrefKey(default = "")
+    val customBackgroundImageIds: String = "",
+
+    /** 当前生效的背景图 id */
+    @PrefKey(default = "")
+    val customBackgroundCurrentId: String = "",
+
+    /** 轮播模式：OFF / LAUNCH（每次启动）/ DAILY（每天） */
+    @PrefKey(default = "OFF")
+    val customBackgroundRotateMode: String = "OFF",
+
+    /** 轮播是否随机挑选 */
+    @PrefKey(default = "false")
+    val customBackgroundShuffle: String = "false",
+
+    /** 上次轮播日期 yyyy-MM-dd，DAILY 模式用于判断是否跨天 */
+    @PrefKey(default = "")
+    val customBackgroundLastRotateDate: String = "",
 
     // ───────────────── 定时唤醒 + 解锁 ─────────────────
 
