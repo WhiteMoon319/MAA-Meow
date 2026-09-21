@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import java.time.LocalDate
+import java.util.UUID
 
 /**
  * 自定义主界面背景图的单一数据源（支持多图与轮播）。
@@ -159,7 +160,7 @@ class BackgroundImageStore(
             writeMutex.withLock {
                 runCatching {
                     backgroundsDir.mkdirs()
-                    val id = System.currentTimeMillis().toString()
+                    val id = UUID.randomUUID().toString()
                     val target = File(backgroundsDir, fileFor(id))
                     // 先写临时文件再同目录原子重命名：压缩失败或进程被杀不会留下半截文件。
                     val temporaryFile = File(backgroundsDir, "${target.name}.tmp")
@@ -269,10 +270,24 @@ class BackgroundImageStore(
     private suspend fun migrateLegacyIfNeeded() = writeMutex.withLock {
         if (appSettingsManager.customBackgroundImageIds.value.isNotBlank()) return@withLock
         if (!legacyFile.exists()) return@withLock
-        val id = System.currentTimeMillis().toString()
+        val id = UUID.randomUUID().toString()
         val target = File(backgroundsDir, fileFor(id))
         if (legacyFile.renameTo(target)) {
-            appSettingsManager.setCustomBackgroundImages(listOf(id), id)
+            // 元数据写入失败时回滚重命名，避免旧文件被挪走却无记录、背景丢失。
+            runCatching { appSettingsManager.setCustomBackgroundImages(listOf(id), id) }
+                .onFailure { error ->
+                    Timber.e(error, "迁移旧背景元数据失败，回滚文件重命名")
+                    target.renameTo(legacyFile)
+                }
+        }
+    }
+
+    /** 跟随系统壁纸时，前台恢复后刷新令牌，让运行中变更的系统壁纸生效。 */
+    fun refreshIfFollowingSystem() {
+        if (!appSettingsManager.customBackgroundFollowSystem.value) return
+        scope.launch {
+            runCatching { appSettingsManager.refreshCustomBackgroundToken() }
+                .onFailure { Timber.e(it, "refresh system wallpaper failed") }
         }
     }
 

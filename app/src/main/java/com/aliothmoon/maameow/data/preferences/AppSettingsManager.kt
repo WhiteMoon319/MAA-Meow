@@ -623,6 +623,15 @@ class AppSettingsManager internal constructor(
         }
     }
 
+    /** 仅刷新背景令牌，用于让运行中变更的外部来源（如系统壁纸）重新加载。 */
+    suspend fun refreshCustomBackgroundToken() {
+        with(AppSettingsSchema) {
+            context.dataStore.edit {
+                it[customBackgroundToken] = System.currentTimeMillis().toString()
+            }
+        }
+    }
+
     val customBackgroundMonet: StateFlow<Boolean> =
         setting { it.customBackgroundMonet.toBooleanStrictOrNull() ?: false }
 
