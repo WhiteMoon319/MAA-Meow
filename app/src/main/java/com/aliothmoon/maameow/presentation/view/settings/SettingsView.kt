@@ -199,6 +199,7 @@ fun SettingsView(
     val customBackgroundShuffle by viewModel.customBackgroundShuffle.collectAsStateWithLifecycle()
     val customBackgroundImageIds by viewModel.customBackgroundImageIds.collectAsStateWithLifecycle()
     val customBackgroundFollowSystem by viewModel.customBackgroundFollowSystem.collectAsStateWithLifecycle()
+    val customBackgroundMonet by viewModel.customBackgroundMonet.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val settingsMessage by viewModel.settingsMessage.collectAsStateWithLifecycle()
     val showRestartDialog by viewModel.showRestartDialog.collectAsStateWithLifecycle()
@@ -703,6 +704,7 @@ fun SettingsView(
                             shuffle = customBackgroundShuffle,
                             imageCount = customBackgroundImageIds.split(',').count { it.isNotBlank() },
                             followSystem = customBackgroundFollowSystem,
+                            monet = customBackgroundMonet,
                             onEnabledChange = { viewModel.setCustomBackgroundEnabled(it) },
                             onPickImage = {
                                 pickBackgroundLauncher.launch(
@@ -721,6 +723,7 @@ fun SettingsView(
                             onRotateModeChange = { viewModel.setCustomBackgroundRotateMode(it) },
                             onShuffleChange = { viewModel.setCustomBackgroundShuffle(it) },
                             onFollowSystemChange = { viewModel.setCustomBackgroundFollowSystem(it) },
+                            onMonetChange = { viewModel.setCustomBackgroundMonet(it) },
                         )
                     }
                 }
@@ -1708,6 +1711,7 @@ private fun SettingCustomBackgroundSection(
     shuffle: Boolean,
     imageCount: Int,
     followSystem: Boolean,
+    monet: Boolean,
     onEnabledChange: (Boolean) -> Unit,
     onPickImage: () -> Unit,
     onBatchAdd: () -> Unit,
@@ -1718,6 +1722,7 @@ private fun SettingCustomBackgroundSection(
     onRotateModeChange: (String) -> Unit,
     onShuffleChange: (Boolean) -> Unit,
     onFollowSystemChange: (Boolean) -> Unit,
+    onMonetChange: (Boolean) -> Unit,
 ) {
     val hasImage = previewImage != null
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -1832,6 +1837,13 @@ private fun SettingCustomBackgroundSection(
                         checked = shuffle,
                         enabled = imageCount >= 2,
                         onCheckedChange = onShuffleChange,
+                    )
+                    SettingSwitchItem(
+                        title = stringResource(R.string.settings_background_monet),
+                        description = stringResource(R.string.settings_background_monet_desc),
+                        contentColor = contentColor,
+                        checked = monet,
+                        onCheckedChange = onMonetChange,
                     )
                 }
             }

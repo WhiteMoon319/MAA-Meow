@@ -632,6 +632,15 @@ class AppSettingsManager internal constructor(
         }
     }
 
+    val customBackgroundMonet: StateFlow<Boolean> =
+        setting { it.customBackgroundMonet.toBooleanStrictOrNull() ?: false }
+
+    suspend fun setCustomBackgroundMonet(enabled: Boolean) {
+        with(AppSettingsSchema) {
+            context.dataStore.edit { it[customBackgroundMonet] = enabled.toString() }
+        }
+    }
+
     suspend fun setCustomBackgroundRotateMode(mode: String) {
         with(AppSettingsSchema) {
             context.dataStore.edit { it[customBackgroundRotateMode] = mode }

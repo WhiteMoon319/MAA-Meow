@@ -142,6 +142,7 @@ fun AppNavigation(
     val backgroundImageAlpha by appSettings.customBackgroundImageAlpha.collectAsStateWithLifecycle()
     val backgroundScrim by appSettings.customBackgroundScrim.collectAsStateWithLifecycle()
     val backgroundBlur by appSettings.customBackgroundBlur.collectAsStateWithLifecycle()
+    val backgroundMonet by appSettings.customBackgroundMonet.collectAsStateWithLifecycle()
 
     // 启动时按偏好轮播当前背景（每次启动 / 跨天）
     LaunchedEffect(backgroundStore) {
@@ -205,9 +206,9 @@ fun AppNavigation(
             AppBackgroundHost(
                 image = backgroundImage,
                 imageAlpha = backgroundImageAlpha / 100f,
-                scrimColor = MaterialTheme.colorScheme.background,
                 scrimAlpha = backgroundScrim / 100f,
                 blurRadius = MaxBackgroundBlur * (backgroundBlur / 100f),
+                monetFromWallpaper = backgroundMonet,
             ) {
                 MainScreen(
                     navController = navController,
