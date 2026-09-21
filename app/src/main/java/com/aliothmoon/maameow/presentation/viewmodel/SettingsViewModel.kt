@@ -607,6 +607,7 @@ class SettingsViewModel(
     val customBackgroundShuffle: StateFlow<Boolean> = appSettingsManager.customBackgroundShuffle
     val customBackgroundImageIds: StateFlow<String> = appSettingsManager.customBackgroundImageIds
     val customBackgroundFollowSystem: StateFlow<Boolean> = appSettingsManager.customBackgroundFollowSystem
+    val customBackgroundMonet: StateFlow<Boolean> = appSettingsManager.customBackgroundMonet
 
     fun setCustomBackgroundEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -672,6 +673,12 @@ class SettingsViewModel(
     fun setCustomBackgroundFollowSystem(enabled: Boolean) {
         viewModelScope.launch {
             appSettingsManager.setCustomBackgroundFollowSystem(enabled)
+        }
+    }
+
+    fun setCustomBackgroundMonet(enabled: Boolean) {
+        viewModelScope.launch {
+            appSettingsManager.setCustomBackgroundMonet(enabled)
         }
     }
 

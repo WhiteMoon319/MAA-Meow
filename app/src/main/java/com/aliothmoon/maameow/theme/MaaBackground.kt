@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -61,15 +62,16 @@ fun MaaBackgroundHost(
  * 应用级背景包装：有背景图时套用玻璃配色并在内容之下绘制背景，无图时透传内容。
  *
  * 挂到导航根层（[com.aliothmoon.maameow.presentation.navigation.AppNavigation]），
- * 让主界面与所有子页面共用同一背景；[scrimColor] 需传入背景作用域外的不透明基色。
+ * 让主界面与所有子页面共用同一背景；[monetFromWallpaper] 为真时用背景图做原生莫奈取色，
+ * 以其结果作为玻璃配色的底本。
  */
 @Composable
 fun AppBackgroundHost(
     image: ImageBitmap?,
     imageAlpha: Float,
-    scrimColor: Color,
     scrimAlpha: Float,
     blurRadius: Dp,
+    monetFromWallpaper: Boolean,
     content: @Composable () -> Unit,
 ) {
     if (image == null) {
@@ -77,12 +79,18 @@ fun AppBackgroundHost(
         return
     }
     val baseScheme = MaterialTheme.colorScheme
-    val glassScheme = remember(baseScheme) { baseScheme.toGlass() }
+    val isDark = baseScheme.background.luminance() < 0.5f
+    val effectiveBase = if (monetFromWallpaper) {
+        remember(image, isDark) { monetColorScheme(image, isDark) } ?: baseScheme
+    } else {
+        baseScheme
+    }
+    val glassScheme = remember(effectiveBase) { effectiveBase.toGlass() }
     ProvideColorScheme(glassScheme) {
         MaaBackgroundHost(
             image = image,
             imageAlpha = imageAlpha,
-            scrimColor = scrimColor,
+            scrimColor = effectiveBase.background,
             scrimAlpha = scrimAlpha,
             blurRadius = blurRadius,
             content = content,
