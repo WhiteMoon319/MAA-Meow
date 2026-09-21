@@ -10,6 +10,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -26,6 +27,7 @@ import com.aliothmoon.maameow.presentation.viewmodel.BackgroundTaskViewModel
 import com.aliothmoon.maameow.schedule.ui.ScheduleListView
 import com.aliothmoon.maameow.theme.LocalReduceMotion
 import com.aliothmoon.maameow.theme.MaaMotion
+import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import kotlin.math.abs
@@ -40,11 +42,22 @@ fun MainScreen(
     onViewOnboarding: () -> Unit = {},
     visible: Boolean = true,
     fullscreen: Boolean = false,
+    parallax: MutableFloatState,
 ) {
     val pagerState = rememberPagerState(pageCount = { BottomNavTab.all.size })
     val scope = rememberCoroutineScope()
     val reduceMotion = LocalReduceMotion.current
     val chromeHidden = fullscreen || LocalIsInPip.current
+
+    // 把分页偏移实时上报给背景层做视差；减弱动效时归零。
+    LaunchedEffect(pagerState, reduceMotion) {
+        if (reduceMotion) {
+            parallax.floatValue = 0f
+            return@LaunchedEffect
+        }
+        snapshotFlow { pagerState.currentPageOffsetFraction }
+            .collect { parallax.floatValue = it }
+    }
 
     // targetPage：点击/滑动一旦确定目标即生效，停稳后等于 currentPage。
     // animateScrollToPage 内部走 MutatorMutex，连续调用时后者自动接管，无需手动取消。
