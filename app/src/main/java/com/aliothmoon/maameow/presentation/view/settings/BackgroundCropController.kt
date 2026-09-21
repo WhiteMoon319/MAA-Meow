@@ -44,7 +44,7 @@ internal class BackgroundCropController(
                 sourcePathState.value = path
                 sourceBitmap = bitmap
             } else {
-                viewModel.discardBackgroundSource()
+                viewModel.discardBackgroundSource(path)
                 showFailureToast()
             }
         }
@@ -59,7 +59,7 @@ internal class BackgroundCropController(
             sourceBitmap = bitmap
         } else {
             sourcePathState.value = null
-            viewModel.discardBackgroundSource()
+            viewModel.discardBackgroundSource(path)
             showFailureToast()
         }
     }
@@ -82,9 +82,10 @@ internal class BackgroundCropController(
     }
 
     private fun endSession() {
+        val path = sourcePathState.value
         sourceBitmap = null
         sourcePathState.value = null
-        viewModel.discardBackgroundSource()
+        viewModel.discardBackgroundSource(path)
     }
 
     private fun showFailureToast() {

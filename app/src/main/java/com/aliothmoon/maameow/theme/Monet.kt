@@ -1,10 +1,12 @@
 package com.aliothmoon.maameow.theme
 
+import android.graphics.Bitmap
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import com.google.android.material.color.utilities.DynamicScheme
 import com.google.android.material.color.utilities.Hct
 import com.google.android.material.color.utilities.QuantizerCelebi
@@ -22,28 +24,39 @@ fun monetColorScheme(image: ImageBitmap, dark: Boolean): ColorScheme? {
     return SchemeTonalSpot(Hct.fromInt(seed), dark, 0.0).toComposeColorScheme()
 }
 
-/** 降采样到约 64 像素量级后量化取种子色。 */
+/** 取色用的采样边长上限；先降采样到该量级再取像素，避免高分辨率壁纸产生大块临时分配。 */
+private const val TARGET_SAMPLE_SIDE = 64
+
+/** 降采样到约 [TARGET_SAMPLE_SIDE] 像素量级后量化取种子色。 */
 private fun extractSeedColor(image: ImageBitmap): Int? {
-    val width = image.width
-    val height = image.height
+    val source = image.asAndroidBitmap()
+    val width = source.width
+    val height = source.height
     if (width <= 0 || height <= 0) return null
     return runCatching {
-        val buffer = IntArray(width * height)
-        image.readPixels(buffer)
-        val step = (minOf(width, height) / 64).coerceAtLeast(1)
-        val sampled = ArrayList<Int>((width / step + 1) * (height / step + 1))
-        var y = 0
-        while (y < height) {
-            var x = 0
-            while (x < width) {
-                sampled.add(buffer[y * width + x])
-                x += step
-            }
-            y += step
+        val longSide = maxOf(width, height)
+        val scaled = if (longSide > TARGET_SAMPLE_SIDE) {
+            val ratio = TARGET_SAMPLE_SIDE.toFloat() / longSide
+            Bitmap.createScaledBitmap(
+                source,
+                (width * ratio).toInt().coerceAtLeast(1),
+                (height * ratio).toInt().coerceAtLeast(1),
+                false,
+            )
+        } else {
+            null
         }
-        if (sampled.isEmpty()) return null
-        val quantized = QuantizerCelebi.quantize(sampled.toIntArray(), 128)
-        Score.score(quantized).firstOrNull()
+        try {
+            val sample = scaled ?: source
+            val buffer = IntArray(sample.width * sample.height)
+            sample.getPixels(buffer, 0, sample.width, 0, 0, sample.width, sample.height)
+            if (buffer.isEmpty()) return null
+            val quantized = QuantizerCelebi.quantize(buffer, 128)
+            Score.score(quantized).firstOrNull()
+        } finally {
+            // 只回收自己创建的缩放副本，源位图归 ImageBitmap 所有。
+            scaled?.recycle()
+        }
     }.getOrNull()
 }
 

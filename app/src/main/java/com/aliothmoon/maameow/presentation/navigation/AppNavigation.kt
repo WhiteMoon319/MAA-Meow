@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -152,6 +154,11 @@ fun AppNavigation(
     // 启动时按偏好轮播当前背景（每次启动 / 跨天）
     LaunchedEffect(backgroundStore) {
         backgroundStore.rotateIfNeeded()
+    }
+
+    // 前台恢复时刷新系统壁纸（跟随系统模式下响应运行中变更）
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        backgroundStore.refreshIfFollowingSystem()
     }
 
     LaunchedEffect(backgroundTaskViewModel) {

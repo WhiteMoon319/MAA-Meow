@@ -50,6 +50,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.io.InputStream
 import java.io.OutputStream
@@ -598,6 +600,7 @@ class SettingsViewModel(
     }
 
     // ============ 自定义图片背景 ============
+    private val backgroundImportMutex = Mutex()
     val customBackgroundEnabled: StateFlow<Boolean> = appSettingsManager.customBackgroundEnabled
     val customBackgroundImageAlpha: StateFlow<Int> = appSettingsManager.customBackgroundImageAlpha
     val customBackgroundScrim: StateFlow<Int> = appSettingsManager.customBackgroundScrim
@@ -627,18 +630,23 @@ class SettingsViewModel(
     suspend fun addCroppedBackground(bitmap: Bitmap): Boolean =
         backgroundImageStore.addCropped(bitmap)
 
-    /** 批量添加背景图：不做交互裁剪，按原图（EXIF 摆正）保存，显示时按屏比裁剪。 */
+    /** 批量添加背景图：不做交互裁剪，按原图（EXIF 摆正）保存，显示时按屏比裁剪。并发调用串行化。 */
     suspend fun addBackgroundImages(uris: List<Uri>) {
-        uris.forEach { uri ->
-            val path = backgroundImageStore.prepareSource(uri) ?: return@forEach
-            val bitmap = backgroundImageStore.decodeSource(path) ?: return@forEach
-            try {
-                backgroundImageStore.addCropped(bitmap)
-            } finally {
-                bitmap.recycle()
+        backgroundImportMutex.withLock {
+            uris.forEach { uri ->
+                val path = backgroundImageStore.prepareSource(uri) ?: return@forEach
+                try {
+                    val bitmap = backgroundImageStore.decodeSource(path) ?: return@forEach
+                    try {
+                        backgroundImageStore.addCropped(bitmap)
+                    } finally {
+                        bitmap.recycle()
+                    }
+                } finally {
+                    backgroundImageStore.clearSourceCache(path)
+                }
             }
         }
-        backgroundImageStore.clearSourceCache()
     }
 
     /** 供 UI 直接调用的批量添加入口（内部自行启动协程）。 */
@@ -646,9 +654,9 @@ class SettingsViewModel(
         viewModelScope.launch { addBackgroundImages(uris) }
     }
 
-    /** 取消裁剪或保存完成后清理源图片缓存。 */
-    fun discardBackgroundSource() {
-        backgroundImageStore.clearSourceCache()
+    /** 取消裁剪或保存完成后清理该会话的源图片缓存。 */
+    fun discardBackgroundSource(path: String?) {
+        backgroundImageStore.clearSourceCache(path)
     }
 
     /** 移除当前背景图；删空后自动关闭背景。 */

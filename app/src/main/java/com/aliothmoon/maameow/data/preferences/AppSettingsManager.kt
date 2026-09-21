@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 
 
@@ -560,6 +561,10 @@ class AppSettingsManager internal constructor(
     private fun parsePercent(raw: String, default: Int): Int =
         raw.toIntOrNull()?.coerceIn(0, 100) ?: default
 
+    /** 背景令牌：毫秒时间戳无法区分同毫秒内的多次更新，追加随机串保证每次唯一。 */
+    private fun newBackgroundToken(): String =
+        "${System.currentTimeMillis()}-${UUID.randomUUID().toString().take(8)}"
+
     val customBackgroundEnabled: StateFlow<Boolean> =
         setting { it.customBackgroundEnabled.toBooleanStrictOrNull() ?: false }
 
@@ -570,16 +575,6 @@ class AppSettingsManager internal constructor(
     }
 
     val customBackgroundToken: StateFlow<String> = setting { it.customBackgroundToken }
-
-    /** 保存/清除背景时开关与令牌总是成对变更，合并为一次写入避免中间态。 */
-    suspend fun setCustomBackgroundState(enabled: Boolean, token: String) {
-        with(AppSettingsSchema) {
-            context.dataStore.edit {
-                it[customBackgroundEnabled] = enabled.toString()
-                it[customBackgroundToken] = token
-            }
-        }
-    }
 
     val customBackgroundImageAlpha: StateFlow<Int> = setting { parsePercent(it.customBackgroundImageAlpha, 80) }
 
@@ -627,7 +622,16 @@ class AppSettingsManager internal constructor(
         with(AppSettingsSchema) {
             context.dataStore.edit {
                 it[customBackgroundFollowSystem] = enabled.toString()
-                it[customBackgroundToken] = System.currentTimeMillis().toString()
+                it[customBackgroundToken] = newBackgroundToken()
+            }
+        }
+    }
+
+    /** 仅刷新背景令牌，用于让运行中变更的外部来源（如系统壁纸）重新加载。 */
+    suspend fun refreshCustomBackgroundToken() {
+        with(AppSettingsSchema) {
+            context.dataStore.edit {
+                it[customBackgroundToken] = newBackgroundToken()
             }
         }
     }
@@ -661,7 +665,7 @@ class AppSettingsManager internal constructor(
                 it[customBackgroundCurrentId] = currentId
                 it[customBackgroundEnabled] =
                     (ids.isNotEmpty() && currentId.isNotBlank()).toString()
-                it[customBackgroundToken] = System.currentTimeMillis().toString()
+                it[customBackgroundToken] = newBackgroundToken()
             }
         }
     }
@@ -672,7 +676,7 @@ class AppSettingsManager internal constructor(
             context.dataStore.edit {
                 it[customBackgroundCurrentId] = currentId
                 it[customBackgroundLastRotateDate] = date
-                it[customBackgroundToken] = System.currentTimeMillis().toString()
+                it[customBackgroundToken] = newBackgroundToken()
             }
         }
     }

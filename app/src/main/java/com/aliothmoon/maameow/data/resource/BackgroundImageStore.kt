@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import java.time.LocalDate
+import java.util.UUID
 
 /**
  * 自定义主界面背景图的单一数据源（支持多图与轮播）。
@@ -80,7 +81,8 @@ class BackgroundImageStore(
      */
     suspend fun prepareSource(uri: Uri): String? = withContext(Dispatchers.IO) {
         runCatching {
-            val sourceFile = File(context.cacheDir, SOURCE_TMP_NAME)
+            // 每次会话用独立临时文件，避免批量导入与裁剪共用同一路径互相覆盖。
+            val sourceFile = File(context.cacheDir, "$SOURCE_TMP_PREFIX${UUID.randomUUID()}")
             context.contentResolver.openInputStream(uri)?.use { input ->
                 sourceFile.outputStream().use { output -> input.copyTo(output) }
             } ?: return@runCatching null
@@ -146,9 +148,10 @@ class BackgroundImageStore(
         }.onFailure { Timber.e(it, "decodeSource failed") }.getOrNull()
     }
 
-    /** 删除裁剪源缓存文件（取消裁剪或保存完成后调用）。 */
-    fun clearSourceCache() {
-        scope.launch { runCatching { File(context.cacheDir, SOURCE_TMP_NAME).delete() } }
+    /** 删除指定的源缓存文件（取消裁剪、保存完成或批量单张处理完后调用）。 */
+    fun clearSourceCache(path: String?) {
+        if (path.isNullOrBlank()) return
+        scope.launch { runCatching { File(path).delete() } }
     }
 
     /**
@@ -159,7 +162,7 @@ class BackgroundImageStore(
             writeMutex.withLock {
                 runCatching {
                     backgroundsDir.mkdirs()
-                    val id = System.currentTimeMillis().toString()
+                    val id = UUID.randomUUID().toString()
                     val target = File(backgroundsDir, fileFor(id))
                     // 先写临时文件再同目录原子重命名：压缩失败或进程被杀不会留下半截文件。
                     val temporaryFile = File(backgroundsDir, "${target.name}.tmp")
@@ -183,19 +186,34 @@ class BackgroundImageStore(
         writeMutex.withLock {
             val ids = parseIds(appSettingsManager.customBackgroundImageIds.value)
             if (id !in ids) return@withLock
-            runCatching { File(backgroundsDir, fileFor(id)).delete() }
             val remaining = ids - id
             val current = appSettingsManager.customBackgroundCurrentId.value
             val next = if (current == id) remaining.firstOrNull().orEmpty() else current
-            appSettingsManager.setCustomBackgroundImages(remaining, next)
+            // 先落元数据再删文件：元数据写入失败则整体放弃，避免出现指向已删文件的悬空引用。
+            val persisted = runCatching {
+                appSettingsManager.setCustomBackgroundImages(remaining, next)
+            }.isSuccess
+            if (!persisted) {
+                Timber.w("更新背景元数据失败，取消删除: %s", id)
+                return@withLock
+            }
+            runCatching { File(backgroundsDir, fileFor(id)).delete() }
+                .onFailure { Timber.w(it, "删除背景文件失败: %s", id) }
         }
     }
 
     /** 关闭并清除全部自定义背景。 */
     suspend fun clear() = withContext(Dispatchers.IO) {
         writeMutex.withLock {
+            // 先清元数据（关闭背景），再删文件；元数据失败则不动文件。
+            val persisted = runCatching {
+                appSettingsManager.setCustomBackgroundImages(emptyList(), "")
+            }.isSuccess
+            if (!persisted) {
+                Timber.w("清空背景元数据失败")
+                return@withLock
+            }
             backgroundsDir.listFiles()?.forEach { runCatching { it.delete() } }
-            appSettingsManager.setCustomBackgroundImages(emptyList(), "")
         }
     }
 
@@ -204,33 +222,35 @@ class BackgroundImageStore(
      * 随机模式从其余图中挑选，顺序模式取下一张。
      */
     suspend fun rotateIfNeeded() = withContext(Dispatchers.IO) {
-        val mode = appSettingsManager.customBackgroundRotateMode.value
-        if (mode == MODE_OFF) return@withContext
-        val ids = parseIds(appSettingsManager.customBackgroundImageIds.value)
-        if (ids.size < 2) return@withContext
-        val today = LocalDate.now().toString()
-        when (mode) {
-            MODE_LAUNCH -> {
-                if (launchRotated) return@withContext
-                launchRotated = true
-            }
+        // 与增删/清空共用同一把锁，避免读到的 ids 在写入前被其他操作改动。
+        writeMutex.withLock {
+            val mode = appSettingsManager.customBackgroundRotateMode.value
+            if (mode == MODE_OFF) return@withContext
+            val ids = parseIds(appSettingsManager.customBackgroundImageIds.value)
+            if (ids.size < 2) return@withContext
+            val today = LocalDate.now().toString()
+            when (mode) {
+                MODE_LAUNCH -> if (launchRotated) return@withContext
 
-            MODE_DAILY -> if (appSettingsManager.customBackgroundLastRotateDate.value == today) {
-                return@withContext
-            }
+                MODE_DAILY -> if (appSettingsManager.customBackgroundLastRotateDate.value == today) {
+                    return@withContext
+                }
 
-            else -> return@withContext
+                else -> return@withContext
+            }
+            val current = appSettingsManager.customBackgroundCurrentId.value
+            val shuffle = appSettingsManager.customBackgroundShuffle.value
+            val next = if (shuffle) {
+                ids.filter { it != current }.random()
+            } else {
+                val index = ids.indexOf(current).let { if (it < 0) 0 else it }
+                ids[(index + 1) % ids.size]
+            }
+            // 落库成功后才标记本次启动已轮播，避免写入失败时整轮启动都跳过。
+            val result = runCatching { appSettingsManager.setCustomBackgroundRotated(next, today) }
+            result.onFailure { Timber.e(it, "rotateIfNeeded failed") }
+            if (result.isSuccess && mode == MODE_LAUNCH) launchRotated = true
         }
-        val current = appSettingsManager.customBackgroundCurrentId.value
-        val shuffle = appSettingsManager.customBackgroundShuffle.value
-        val next = if (shuffle) {
-            ids.filter { it != current }.random()
-        } else {
-            val index = ids.indexOf(current).let { if (it < 0) 0 else it }
-            ids[(index + 1) % ids.size]
-        }
-        runCatching { appSettingsManager.setCustomBackgroundRotated(next, today) }
-            .onFailure { Timber.e(it, "rotateIfNeeded failed") }
     }
 
     private suspend fun loadCurrentBitmap(): ImageBitmap? {
@@ -269,10 +289,24 @@ class BackgroundImageStore(
     private suspend fun migrateLegacyIfNeeded() = writeMutex.withLock {
         if (appSettingsManager.customBackgroundImageIds.value.isNotBlank()) return@withLock
         if (!legacyFile.exists()) return@withLock
-        val id = System.currentTimeMillis().toString()
+        val id = UUID.randomUUID().toString()
         val target = File(backgroundsDir, fileFor(id))
         if (legacyFile.renameTo(target)) {
-            appSettingsManager.setCustomBackgroundImages(listOf(id), id)
+            // 元数据写入失败时回滚重命名，避免旧文件被挪走却无记录、背景丢失。
+            runCatching { appSettingsManager.setCustomBackgroundImages(listOf(id), id) }
+                .onFailure { error ->
+                    Timber.e(error, "迁移旧背景元数据失败，回滚文件重命名")
+                    target.renameTo(legacyFile)
+                }
+        }
+    }
+
+    /** 跟随系统壁纸时，前台恢复后刷新令牌，让运行中变更的系统壁纸生效。 */
+    fun refreshIfFollowingSystem() {
+        if (!appSettingsManager.customBackgroundFollowSystem.value) return
+        scope.launch {
+            runCatching { appSettingsManager.refreshCustomBackgroundToken() }
+                .onFailure { Timber.e(it, "refresh system wallpaper failed") }
         }
     }
 
@@ -318,7 +352,7 @@ class BackgroundImageStore(
     companion object {
         private const val DIR_NAME = "backgrounds"
         private const val LEGACY_FILE_NAME = "bg.jpg"
-        private const val SOURCE_TMP_NAME = "bg_source_tmp"
+        private const val SOURCE_TMP_PREFIX = "bg_source_tmp_"
 
         /** 裁剪源图片解码的最长边限制 */
         private const val MAX_SOURCE_SIDE = 2400

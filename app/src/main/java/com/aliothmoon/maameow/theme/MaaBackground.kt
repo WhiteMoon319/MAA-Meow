@@ -4,10 +4,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
@@ -17,6 +22,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 /** 模糊滑块 100% 对应的最大模糊半径。 */
@@ -94,11 +101,18 @@ fun AppBackgroundHost(
     }
     val baseScheme = MaterialTheme.colorScheme
     val isDark = baseScheme.background.luminance() < 0.5f
-    val effectiveBase = if (monetFromWallpaper) {
-        remember(image, isDark) { monetColorScheme(image, isDark) } ?: baseScheme
-    } else {
-        baseScheme
+    // 取色（含缩放与大图取样）较重，放后台线程算；算完前先用原配色，避免组合期阻塞主线程。
+    var monetScheme by remember(image, isDark, monetFromWallpaper) {
+        mutableStateOf<ColorScheme?>(null)
     }
+    LaunchedEffect(image, isDark, monetFromWallpaper) {
+        monetScheme = if (monetFromWallpaper) {
+            withContext(Dispatchers.Default) { monetColorScheme(image, isDark) }
+        } else {
+            null
+        }
+    }
+    val effectiveBase = monetScheme ?: baseScheme
     val glassScheme = remember(effectiveBase) { effectiveBase.toGlass() }
     ProvideColorScheme(glassScheme) {
         MaaBackgroundHost(
