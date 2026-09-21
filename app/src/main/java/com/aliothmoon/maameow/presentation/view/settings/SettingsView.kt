@@ -12,7 +12,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -71,8 +70,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -95,7 +92,6 @@ import com.aliothmoon.maameow.constant.OFFICIAL_SHIZUKU_PACKAGE
 import com.aliothmoon.maameow.constant.Routes
 import com.aliothmoon.maameow.data.model.update.UpdateChannel
 import com.aliothmoon.maameow.data.preferences.AppSettingsManager
-import com.aliothmoon.maameow.data.resource.BackgroundImageStore
 import com.aliothmoon.maameow.domain.models.CoreDataLocation
 import com.aliothmoon.maameow.domain.models.RemoteBackend
 import com.aliothmoon.maameow.domain.models.UnlockGesture
@@ -113,7 +109,6 @@ import com.aliothmoon.maameow.presentation.components.ListItemDivider
 import com.aliothmoon.maameow.presentation.components.LogExportController
 import com.aliothmoon.maameow.presentation.components.ReInitializeConfirmDialog
 import com.aliothmoon.maameow.presentation.components.ResourceInitDialog
-import com.aliothmoon.maameow.presentation.components.SelectableChipGroup
 import com.aliothmoon.maameow.presentation.components.SettingRow
 import com.aliothmoon.maameow.presentation.components.SettingsGroupCard
 import com.aliothmoon.maameow.presentation.components.TopAppBar
@@ -190,16 +185,6 @@ fun SettingsView(
     val fontSizeScale by viewModel.fontSizeScale.collectAsStateWithLifecycle()
     val showAchievementSnackbar by viewModel.showAchievementSnackbar.collectAsStateWithLifecycle()
     val backgroundResolution by viewModel.backgroundResolution.collectAsStateWithLifecycle()
-    val customBackgroundEnabled by viewModel.customBackgroundEnabled.collectAsStateWithLifecycle()
-    val customBackgroundImageAlpha by viewModel.customBackgroundImageAlpha.collectAsStateWithLifecycle()
-    val customBackgroundScrim by viewModel.customBackgroundScrim.collectAsStateWithLifecycle()
-    val customBackgroundBlur by viewModel.customBackgroundBlur.collectAsStateWithLifecycle()
-    val backgroundImage by viewModel.backgroundImage.collectAsStateWithLifecycle()
-    val customBackgroundRotateMode by viewModel.customBackgroundRotateMode.collectAsStateWithLifecycle()
-    val customBackgroundShuffle by viewModel.customBackgroundShuffle.collectAsStateWithLifecycle()
-    val customBackgroundImageIds by viewModel.customBackgroundImageIds.collectAsStateWithLifecycle()
-    val customBackgroundFollowSystem by viewModel.customBackgroundFollowSystem.collectAsStateWithLifecycle()
-    val customBackgroundMonet by viewModel.customBackgroundMonet.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val settingsMessage by viewModel.settingsMessage.collectAsStateWithLifecycle()
     val showRestartDialog by viewModel.showRestartDialog.collectAsStateWithLifecycle()
@@ -274,19 +259,6 @@ fun SettingsView(
             }
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
             viewModel.clearGestureRecordState()
-        }
-    }
-
-    val backgroundCrop = rememberBackgroundCropController(viewModel)
-    val pickBackgroundLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let(backgroundCrop::pick) }
-
-    val batchBackgroundLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickMultipleVisualMedia(20)
-    ) { uris ->
-        if (uris.isNotEmpty()) {
-            coroutineScope.launch { viewModel.addBackgroundImages(uris) }
         }
     }
 
@@ -379,17 +351,6 @@ fun SettingsView(
             dismissText = stringResource(R.string.common_restart_later),
             onConfirm = { viewModel.confirmRestart() },
             onDismissRequest = { viewModel.dismissRestartDialog() }
-        )
-    }
-
-    // 全屏裁剪弹窗：选图后先裁剪，确认保存为背景，取消则清理源图片缓存。
-    val cropSourceBitmap = backgroundCrop.sourceBitmap
-    if (backgroundCrop.sourcePath != null && cropSourceBitmap != null) {
-        WallpaperCropFullScreen(
-            sourceBitmap = cropSourceBitmap,
-            cropState = backgroundCrop.cropState,
-            onCancel = backgroundCrop::cancel,
-            onConfirm = backgroundCrop::confirm,
         )
     }
 
@@ -693,38 +654,13 @@ fun SettingsView(
                             onFontSizeScaleChanged = { viewModel.setFontSizeScale(it) }
                         )
                         ListItemDivider()
-                        SettingCustomBackgroundSection(
-                            contentColor = contentColor,
-                            enabled = customBackgroundEnabled,
-                            previewImage = backgroundImage,
-                            imageAlpha = customBackgroundImageAlpha,
-                            scrim = customBackgroundScrim,
-                            blur = customBackgroundBlur,
-                            rotateMode = customBackgroundRotateMode,
-                            shuffle = customBackgroundShuffle,
-                            imageCount = customBackgroundImageIds.split(',').count { it.isNotBlank() },
-                            followSystem = customBackgroundFollowSystem,
-                            monet = customBackgroundMonet,
-                            onEnabledChange = { viewModel.setCustomBackgroundEnabled(it) },
-                            onPickImage = {
-                                pickBackgroundLauncher.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            },
-                            onBatchAdd = {
-                                batchBackgroundLauncher.launch(
-                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                                )
-                            },
-                            onRemoveImage = { viewModel.removeBackgroundImage() },
-                            onImageAlphaChange = { viewModel.setCustomBackgroundImageAlpha(it) },
-                            onScrimChange = { viewModel.setCustomBackgroundScrim(it) },
-                            onBlurChange = { viewModel.setCustomBackgroundBlur(it) },
-                            onRotateModeChange = { viewModel.setCustomBackgroundRotateMode(it) },
-                            onShuffleChange = { viewModel.setCustomBackgroundShuffle(it) },
-                            onFollowSystemChange = { viewModel.setCustomBackgroundFollowSystem(it) },
-                            onMonetChange = { viewModel.setCustomBackgroundMonet(it) },
-                        )
+                        SettingClickItem(
+                            title = stringResource(R.string.settings_background_title),
+                            description = stringResource(R.string.settings_background_desc),
+                            contentColor = contentColor
+                        ) {
+                            navController.navigate(Routes.WALLPAPER)
+                        }
                     }
                 }
             }
@@ -1699,197 +1635,6 @@ private fun SettingWakePinSection(
     }
 }
 
-@Composable
-private fun SettingCustomBackgroundSection(
-    contentColor: Color,
-    enabled: Boolean,
-    previewImage: ImageBitmap?,
-    imageAlpha: Int,
-    scrim: Int,
-    blur: Int,
-    rotateMode: String,
-    shuffle: Boolean,
-    imageCount: Int,
-    followSystem: Boolean,
-    monet: Boolean,
-    onEnabledChange: (Boolean) -> Unit,
-    onPickImage: () -> Unit,
-    onBatchAdd: () -> Unit,
-    onRemoveImage: () -> Unit,
-    onImageAlphaChange: (Int) -> Unit,
-    onScrimChange: (Int) -> Unit,
-    onBlurChange: (Int) -> Unit,
-    onRotateModeChange: (String) -> Unit,
-    onShuffleChange: (Boolean) -> Unit,
-    onFollowSystemChange: (Boolean) -> Unit,
-    onMonetChange: (Boolean) -> Unit,
-) {
-    val hasImage = previewImage != null
-    Column(modifier = Modifier.fillMaxWidth()) {
-        SettingSwitchItem(
-            title = stringResource(R.string.settings_background_title),
-            description = stringResource(R.string.settings_background_desc),
-            contentColor = contentColor,
-            checked = enabled,
-            onCheckedChange = onEnabledChange,
-        )
-
-        MaaAnimatedVisibility(
-            visible = enabled,
-            enter = expandVertically(),
-            exit = shrinkVertically()
-        ) {
-            Column(
-                modifier = Modifier.padding(bottom = MaaDesignTokens.Spacing.listItemVertical),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                SettingSwitchItem(
-                    title = stringResource(R.string.settings_background_follow_system),
-                    description = stringResource(R.string.settings_background_follow_system_desc),
-                    contentColor = contentColor,
-                    checked = followSystem,
-                    onCheckedChange = onFollowSystemChange,
-                )
-                if (previewImage != null) {
-                    Image(
-                        bitmap = previewImage,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = onPickImage,
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(
-                            text = stringResource(
-                                if (hasImage) R.string.settings_background_add
-                                else R.string.settings_background_pick
-                            )
-                        )
-                    }
-                    Button(
-                        onClick = onBatchAdd,
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(text = stringResource(R.string.settings_background_batch))
-                    }
-                }
-                if (hasImage) {
-                    OutlinedButton(
-                        onClick = onRemoveImage,
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(text = stringResource(R.string.settings_background_remove))
-                    }
-                }
-                if (hasImage) {
-                    Text(
-                        text = stringResource(R.string.settings_background_count, imageCount),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = contentColor
-                    )
-                    BackgroundPercentSlider(
-                        label = stringResource(R.string.settings_background_image_alpha),
-                        value = imageAlpha,
-                        contentColor = contentColor,
-                        onValueChange = onImageAlphaChange
-                    )
-                    BackgroundPercentSlider(
-                        label = stringResource(R.string.settings_background_scrim),
-                        value = scrim,
-                        contentColor = contentColor,
-                        onValueChange = onScrimChange
-                    )
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        BackgroundPercentSlider(
-                            label = stringResource(R.string.settings_background_blur),
-                            value = blur,
-                            contentColor = contentColor,
-                            onValueChange = onBlurChange
-                        )
-                    }
-                    SelectableChipGroup(
-                        label = stringResource(R.string.settings_background_rotate),
-                        selectedValue = rotateMode,
-                        options = listOf(
-                            BackgroundImageStore.MODE_OFF to
-                                    stringResource(R.string.settings_background_rotate_off),
-                            BackgroundImageStore.MODE_LAUNCH to
-                                    stringResource(R.string.settings_background_rotate_launch),
-                            BackgroundImageStore.MODE_DAILY to
-                                    stringResource(R.string.settings_background_rotate_daily),
-                        ),
-                        onSelected = onRotateModeChange,
-                        enabled = imageCount >= 2,
-                    )
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_background_shuffle),
-                        contentColor = contentColor,
-                        checked = shuffle,
-                        enabled = imageCount >= 2,
-                        onCheckedChange = onShuffleChange,
-                    )
-                    SettingSwitchItem(
-                        title = stringResource(R.string.settings_background_monet),
-                        description = stringResource(R.string.settings_background_monet_desc),
-                        contentColor = contentColor,
-                        checked = monet,
-                        onCheckedChange = onMonetChange,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BackgroundPercentSlider(
-    label: String,
-    value: Int,
-    contentColor: Color,
-    onValueChange: (Int) -> Unit,
-) {
-    var sliderValue by remember { mutableFloatStateOf(value.toFloat()) }
-    LaunchedEffect(value) { sliderValue = value.toFloat() }
-    val current = sliderValue.roundToInt().coerceIn(0, 100)
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = contentColor,
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = "$current%",
-                style = MaterialTheme.typography.bodyMedium,
-                color = contentColor
-            )
-        }
-        Slider(
-            value = sliderValue,
-            onValueChange = { sliderValue = it },
-            onValueChangeFinished = {
-                onValueChange(sliderValue.roundToInt().coerceIn(0, 100))
-            },
-            valueRange = 0f..100f,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
 /**
  * 页面缩放：自动（按屏幕推荐）或手动 80~110。
  * 拖动滑块即进入手动；可一键「使用推荐」回到自动。
@@ -2043,7 +1788,7 @@ private fun FontSizeSetting(
 }
 
 @Composable
-private fun SettingSwitchItem(
+internal fun SettingSwitchItem(
     title: String,
     description: String? = null,
     contentColor: Color,

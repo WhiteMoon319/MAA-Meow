@@ -641,6 +641,11 @@ class SettingsViewModel(
         backgroundImageStore.clearSourceCache()
     }
 
+    /** 供 UI 直接调用的批量添加入口（内部自行启动协程）。 */
+    fun importBackgroundImages(uris: List<Uri>) {
+        viewModelScope.launch { addBackgroundImages(uris) }
+    }
+
     /** 取消裁剪或保存完成后清理源图片缓存。 */
     fun discardBackgroundSource() {
         backgroundImageStore.clearSourceCache()
